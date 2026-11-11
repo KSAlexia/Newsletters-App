@@ -255,3 +255,7 @@ Pruebas automáticas repetidas: `node --check js/app.js`, `node --check js/hub.j
 - No se probó Cvent ni rendering de email en Outlook/Gmail. La diferencia BASE se mantiene documentada, sin modificar el email.
 - Sin cambios en plantillas cerradas, rediseño del email, guiones de banners ni importación profunda.
 - Sin commit, push ni despliegue.
+
+## 12. Creación directa de newsletters · 11/11/2026
+
+El desplegable «Nuevo proyecto…» del hub se sustituye por el botón «＋ Nueva newsletter», con ancho ajustado al texto. Un clic abre directamente una newsletter en blanco en el torneo y carpeta actuales; desde la pantalla general usa el torneo predeterminado. Las recetas siguen disponibles dentro del editor. README actualizado. Verificado con comprobación de sintaxis, las pruebas existentes del hub (ahora crean mediante clic y comprueban receta vacía y ubicación), comparación BASE con la diferencia conocida y `git diff --check`. Este ajuste no incluye una nueva validación visual en navegador. Sin commit, push ni despliegue.

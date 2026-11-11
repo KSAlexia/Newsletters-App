@@ -203,8 +203,7 @@
   function fillSettings() {
     $('#tournament').innerHTML = ''; K.CLIENT.tournaments.forEach(function (t) { $('#tournament').appendChild(el('option', { value: t.id, text: t.name })); });
     $('#recipe').innerHTML = ''; $('#recipe').appendChild(el('option', { value: '', text: 'Nueva desde receta…' }));
-    $('#new').innerHTML = ''; $('#new').appendChild(el('option', { value: '', text: '＋ Nuevo proyecto…' }));
-    K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); $('#new').appendChild(el('option', { value: r.id, text: r.name })); });
+    K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); });
     $('#add').innerHTML = ''; $('#add').appendChild(el('option', { value: '', text: '＋ Añadir módulo…' }));
     K.MODULE_ORDER.forEach(function (id) { $('#add').appendChild(el('option', { value: id, text: K.MODULES[id].letter + ' · ' + K.MODULES[id].name })); });
   }
@@ -293,7 +292,11 @@
     fillSettings();
     loadAll(); initHub(); showLobby();
     $('#back').addEventListener('click', function () { var id = currentId; showLobby(); focusHubItem(id); });
-    $('#new').addEventListener('change', function () { var id = this.value; this.value = ''; if (id) { var st = K.fromRecipe(id, hubTournament || undefined); if (hubTournament) { st.tournament = hubTournament; st.headerAlt = ''; } createProject(st); } });
+    $('#new').addEventListener('click', function () {
+      var st = K.fromRecipe('blank', hubTournament || undefined);
+      if (hubTournament) { st.tournament = hubTournament; st.headerAlt = ''; }
+      createProject(st);
+    });
     $('#franja').addEventListener('input', function () { state.franjaLeft = this.value; update(); });
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).addEventListener('change', function () { state.off[k] = !this.checked; update(); }); });
     window.addEventListener('beforeunload', function () { if (currentId) persist(); });

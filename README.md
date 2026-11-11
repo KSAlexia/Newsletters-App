@@ -4,7 +4,7 @@ App interna para montar newsletters de Cvent con piezas fijas. Sin IA y sin cost
 
 ## Cómo usarla
 1. Abre `index.html` con doble clic (Chrome o Edge). No hay que instalar nada.
-2. En la pantalla de Proyectos, crea uno con «Nuevo proyecto…». Se guarda solo dentro del torneo y la carpeta que tengas abierta.
+2. En la pantalla de Proyectos, pulsa «Nueva newsletter» para abrir una en blanco. Se guarda solo dentro del torneo y la carpeta que tengas abierta.
 3. Rellena los módulos. La vista previa se actualiza sola.
 4. Mira la pestaña **Revisión** y descarga el `.txt` para pegarlo en Cvent.
 
