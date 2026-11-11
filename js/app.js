@@ -3,11 +3,194 @@
 // ============================================================
 (function () {
   var K = window.KSA, $ = function (s) { return document.querySelector(s); };
-  var STORE = 'kaptiva-newsletters-v1', state, html = '', checks = [], timer;
+  var STORE = 'kaptiva-newsletters-v1', PROJ = 'kaptiva-newsletters-projects-v1', state, html = '', checks = [], timer, projects = {}, currentId = null;
+  var HUB = 'kaptiva-newsletters-hub-v1', organization = { folders: {}, sorts: {}, orders: {} }, hubTournament = '', hubFolder = '', savedContent = '';
 
   // ---------- Guardado automático en este navegador ----------
   function load() { try { var s = JSON.parse(localStorage.getItem(STORE)); if (s && s.sections) return s; } catch (e) {} return null; }
-  function persist() { try { localStorage.setItem(STORE, JSON.stringify(state)); } catch (e) {} }
+  function saveAll() { try { localStorage.setItem(PROJ, JSON.stringify(projects)); localStorage.setItem(HUB, JSON.stringify(organization)); $('#storage-error').hidden = true; return true; } catch (e) { $('#storage-error').hidden = false; return false; } }
+  function persist() {
+    if (!currentId) return;
+    var p = projects[currentId], content = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
+    if (content !== savedContent) { p.updated = Date.now(); savedContent = content; }
+    p.state = state;
+    if (p.folder && (!organization.folders[p.folder] || organization.folders[p.folder].tournament !== K.tournament(state.tournament).id)) p.folder = '';
+    saveAll();
+  }
+  function loadAll() {
+    try { projects = JSON.parse(localStorage.getItem(PROJ)) || {}; } catch (e) { projects = {}; }
+    try { var hub = JSON.parse(localStorage.getItem(HUB)); if (hub && hub.folders && hub.sorts && hub.orders) organization = hub; } catch (e) {}
+    Object.keys(projects).forEach(function (id) {
+      var p = projects[id], f = organization.folders[p.folder];
+      if (!f || f.tournament !== K.tournament(p.state.tournament).id) p.folder = '';
+    });
+    var old = load(); // proyecto único de la versión anterior
+    if (old && !Object.keys(projects).length) { var id = 'p' + Date.now(); projects[id] = { id: id, updated: Date.now(), state: old }; saveAll(); try { localStorage.removeItem(STORE); } catch (e) {} }
+  }
+
+  // ---------- Hub: torneos, carpetas y newsletters ----------
+  function newId() { return 'p' + Date.now() + Math.floor(Math.random() * 1000000); }
+  function openProject(id) {
+    currentId = id; state = K.normalize(projects[id].state);
+    savedContent = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
+    document.body.classList.remove('in-lobby'); syncSettings(); renderSections(); refresh(); $('#name').focus();
+  }
+  function createProject(st) {
+    var id = newId(), tournament = K.tournament(st.tournament).id;
+    projects[id] = { id: id, updated: Date.now(), folder: tournament === hubTournament ? hubFolder : '', state: K.normalize(st) };
+    saveAll(); openProject(id);
+  }
+  function locationKey() { return K.Hub.location(hubTournament, hubFolder); }
+  function navigate(t, f) {
+    hubTournament = t || ''; hubFolder = f || '';
+    $('#hub-search').value = ''; $('#hub-from').value = ''; $('#hub-to').value = '';
+    showLobby();
+    var crumbs = $('#hub-path').querySelectorAll('button'); if (crumbs.length) crumbs[crumbs.length - 1].focus();
+  }
+  function folderName(f) { return f ? organization.folders[f].name : K.tournament(hubTournament).name; }
+  function editFolder(f) {
+    var dialog = $('#folder-dialog'), input = $('#folder-name');
+    $('#folder-title').textContent = f ? 'Renombrar carpeta' : 'Nueva carpeta';
+    input.value = f ? f.name : ''; input.setCustomValidity('');
+    $('#folder-form').onsubmit = function (event) {
+      event.preventDefault();
+      var name = input.value.trim();
+      if (!name) { input.setCustomValidity('Escribe un nombre para la carpeta.'); input.reportValidity(); return; }
+      if (f) { if (f.name !== name) { f.name = name; f.updated = Date.now(); } }
+      else { var id = 'f' + newId(); organization.folders[id] = { id: id, name: name, tournament: hubTournament, parent: hubFolder, updated: Date.now() }; }
+      saveAll(); dialog.close(); showLobby();
+      focusHubItem(f ? f.id : id);
+    };
+    dialog.showModal(); input.focus(); input.select();
+  }
+  function focusHubItem(id, label) {
+    var card;
+    Array.prototype.forEach.call(document.querySelectorAll('[data-hub-id]'), function (node) { if (node.getAttribute('data-hub-id') === id) card = node; });
+    if (!card) { $(hubTournament ? '#hub-search' : '#new').focus(); return; }
+    var buttons = card.querySelectorAll('button'), target = buttons[0];
+    Array.prototype.forEach.call(buttons, function (b) { if (b.getAttribute('aria-label') === label && !b.disabled) target = b; });
+    if (target) target.focus();
+  }
+  function folderPath(id) {
+    var names = [], seen = {};
+    while (id && organization.folders[id] && !seen[id]) { seen[id] = true; var f = organization.folders[id]; names.unshift(f.name); id = f.parent; }
+    return names.join(' / ');
+  }
+  function moveItem(item) {
+    var dialog = $('#move-dialog'), select = $('#move-destination'); select.innerHTML = '';
+    select.appendChild(el('option', { value: '', text: K.tournament(hubTournament).name + ' (carpeta principal)' }));
+    Object.keys(organization.folders).filter(function (id) {
+      var f = organization.folders[id];
+      return f.tournament === hubTournament && (item.kind !== 'folder' || K.Hub.canMove(organization.folders, item.id, id));
+    }).sort(function (a, b) { return folderPath(a).localeCompare(folderPath(b), 'es'); }).forEach(function (id) {
+      select.appendChild(el('option', { value: id, text: folderPath(id) }));
+    });
+    select.value = hubFolder; $('#move-title').textContent = 'Mover «' + item.name + '»';
+    $('#move-confirm').onclick = function () {
+      var dest = select.value;
+      if (item.kind === 'folder') {
+        if (!K.Hub.canMove(organization.folders, item.id, dest)) return;
+        organization.folders[item.id].parent = dest;
+      } else projects[item.id].folder = dest;
+      saveAll(); dialog.close(); showLobby(); focusHubItem(item.id);
+    };
+    dialog.showModal();
+  }
+  function currentItems() {
+    var items = [];
+    Object.keys(organization.folders).forEach(function (id) {
+      var f = organization.folders[id];
+      if (f.tournament === hubTournament && (f.parent || '') === hubFolder) items.push({ kind: 'folder', id: id, name: f.name, updated: f.updated });
+    });
+    Object.keys(projects).forEach(function (id) {
+      var p = projects[id];
+      if (K.tournament(p.state.tournament).id === hubTournament && (p.folder || '') === hubFolder) items.push({ kind: 'project', id: id, name: p.state.name || 'Sin nombre', updated: p.updated });
+    });
+    return items;
+  }
+  function showLobby() {
+    clearTimeout(timer); if (currentId) persist(); currentId = null;
+    document.body.classList.add('in-lobby');
+    if (hubFolder && !organization.folders[hubFolder]) hubFolder = '';
+    var box = $('#folders'); box.innerHTML = '';
+    var crumbs = $('#hub-path'); crumbs.innerHTML = '';
+    crumbs.appendChild(el('button', { class: 'crumb', text: 'Todos los torneos', onclick: function () { navigate('', ''); } }));
+    $('#hub-controls').hidden = !hubTournament; $('#new-folder').hidden = !hubTournament;
+    $('#hub-count').textContent = '';
+    if (!hubTournament) {
+      var grid = el('div', { class: 'grid' });
+      K.CLIENT.tournaments.forEach(function (t) {
+        var count = Object.keys(projects).filter(function (id) { return K.tournament(projects[id].state.tournament).id === t.id; }).length;
+        grid.appendChild(el('button', { class: 'tournament-card', onclick: function () { navigate(t.id, ''); }, style: 'border-top-color:' + t.principal }, [el('span', { text: '📁 ' + t.name }), el('small', { text: count + (count === 1 ? ' newsletter' : ' newsletters') })]));
+      });
+      box.appendChild(grid); return;
+    }
+    crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
+    crumbs.appendChild(el('button', { class: 'crumb', text: K.tournament(hubTournament).name, onclick: function () { navigate(hubTournament, ''); } }));
+    var path = [], cursor = hubFolder, seen = {};
+    while (cursor && organization.folders[cursor] && !seen[cursor]) { seen[cursor] = true; path.unshift(cursor); cursor = organization.folders[cursor].parent; }
+    path.forEach(function (id) {
+      crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
+      crumbs.appendChild(el('button', { class: 'crumb', text: folderName(id), onclick: function () { navigate(hubTournament, id); } }));
+    });
+    var key = locationKey(), mode = organization.sorts[key] || 'newest'; $('#hub-sort').value = mode;
+    var all = K.Hub.sort(currentItems(), mode, organization.orders[key]);
+    var query = $('#hub-search').value, from = $('#hub-from').value, to = $('#hub-to').value;
+    if (from && to && from > to) { box.appendChild(el('p', { class: 'empty', text: 'La fecha inicial debe ser anterior o igual a la final.' })); return; }
+    var visible = all.filter(function (item) { return K.Hub.matches(item, query, from, to); });
+    $('#hub-count').textContent = visible.length + ' de ' + all.length + ' elementos en esta carpeta';
+    if (!visible.length) { box.appendChild(el('p', { class: 'empty', text: all.length ? 'No hay resultados con estos filtros.' : 'Esta carpeta está vacía. Crea una subcarpeta o una newsletter.' })); return; }
+    var grid = el('div', { class: 'grid' });
+    visible.forEach(function (item) {
+      var isFolder = item.kind === 'folder', p = projects[item.id], t = K.tournament(hubTournament);
+      var actions = el('div', { class: 'proj-actions' });
+      function action(label, fn) { actions.appendChild(el('button', { text: label, onclick: fn })); }
+      action('Mover', function () { moveItem(item); });
+      if (isFolder) {
+        action('Renombrar', function () { editFolder(organization.folders[item.id]); });
+        action('Eliminar', function () {
+          var occupied = Object.keys(organization.folders).some(function (id) { return organization.folders[id].parent === item.id; }) || Object.keys(projects).some(function (id) { return projects[id].folder === item.id; });
+          if (occupied) { alert('Mueve primero el contenido de esta carpeta. Solo se pueden eliminar carpetas vacías.'); return; }
+          if (confirm('¿Eliminar la carpeta «' + item.name + '»?')) { delete organization.folders[item.id]; saveAll(); showLobby(); }
+        });
+      } else {
+        action('Duplicar', function () {
+          var copy = JSON.parse(JSON.stringify(p)), id = newId(); copy.id = id; copy.updated = Date.now(); copy.state.name = item.name + ' (copia)'; projects[id] = copy; saveAll(); showLobby(); focusHubItem(id);
+        });
+        action('Eliminar', function () { if (confirm('¿Eliminar «' + item.name + '»? No se puede deshacer.')) { delete projects[item.id]; saveAll(); showLobby(); } });
+      }
+      if (mode === 'manual') {
+        [-1, 1].forEach(function (dir) {
+          var index = all.indexOf(item), b = el('button', { text: dir < 0 ? '↑' : '↓', 'aria-label': (dir < 0 ? 'Subir ' : 'Bajar ') + item.name, onclick: function () {
+            var ids = all.map(function (x) { return x.id; }), next = index + dir;
+            ids[index] = ids[next]; ids[next] = item.id; organization.orders[key] = ids; saveAll(); showLobby(); focusHubItem(item.id, (dir < 0 ? 'Subir ' : 'Bajar ') + item.name);
+          } });
+          b.disabled = !!(query || from || to) || index + dir < 0 || index + dir >= all.length; actions.appendChild(b);
+        });
+      }
+      var card = el('div', { class: 'proj hub-card', 'data-hub-id': item.id }, [
+        el('span', { class: 'swatch', style: 'background:' + (isFolder ? '#e4e0ee' : t.principal) + ';border-bottom:4px solid ' + t.acento }),
+        el('button', { class: 'item-open', title: item.name, text: (isFolder ? '📁 ' : '') + item.name, onclick: function () { if (isFolder) navigate(hubTournament, item.id); else openProject(item.id); } }),
+        el('small', { text: isFolder ? 'Carpeta' : (p.state.sections || []).length + ' módulos' }),
+        el('small', { text: 'Modificado: ' + new Date(item.updated).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) }), actions
+      ]);
+      grid.appendChild(card);
+    });
+    box.appendChild(grid);
+  }
+  function initHub() {
+    $('#new-folder').addEventListener('click', function () { editFolder(null); });
+    $('#folder-cancel').addEventListener('click', function () { $('#folder-dialog').close(); });
+    $('#folder-name').addEventListener('input', function () { this.setCustomValidity(''); });
+    $('#hub-sort').addEventListener('change', function () {
+      var key = locationKey();
+      if (this.value === 'manual' && !organization.orders[key]) organization.orders[key] = K.Hub.sort(currentItems(), organization.sorts[key] || 'newest', organization.orders[key]).map(function (x) { return x.id; });
+      organization.sorts[key] = this.value; saveAll(); showLobby();
+    });
+    ['hub-search', 'hub-from', 'hub-to'].forEach(function (id) { $('#' + id).addEventListener('input', showLobby); });
+    $('#hub-clear').addEventListener('click', function () { navigate(hubTournament, hubFolder); });
+    $('#move-cancel').addEventListener('click', function () { $('#move-dialog').close(); });
+  }
 
   function el(tag, props, kids) {
     var n = document.createElement(tag), k;
@@ -20,12 +203,15 @@
   function fillSettings() {
     $('#tournament').innerHTML = ''; K.CLIENT.tournaments.forEach(function (t) { $('#tournament').appendChild(el('option', { value: t.id, text: t.name })); });
     $('#recipe').innerHTML = ''; $('#recipe').appendChild(el('option', { value: '', text: 'Nueva desde receta…' }));
-    K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); });
+    $('#new').innerHTML = ''; $('#new').appendChild(el('option', { value: '', text: '＋ Nuevo proyecto…' }));
+    K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); $('#new').appendChild(el('option', { value: r.id, text: r.name })); });
     $('#add').innerHTML = ''; $('#add').appendChild(el('option', { value: '', text: '＋ Añadir módulo…' }));
     K.MODULE_ORDER.forEach(function (id) { $('#add').appendChild(el('option', { value: id, text: K.MODULES[id].letter + ' · ' + K.MODULES[id].name })); });
   }
   function syncSettings() {
-    $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages;
+    $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || '';
+    ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
+    document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
   }
 
   // ---------- Editor de módulos ----------
@@ -105,8 +291,12 @@
   // ---------- Eventos ----------
   function init() {
     fillSettings();
-    state = load() || K.fromRecipe('blank');
-    syncSettings(); renderSections(); refresh();
+    loadAll(); initHub(); showLobby();
+    $('#back').addEventListener('click', function () { var id = currentId; showLobby(); focusHubItem(id); });
+    $('#new').addEventListener('change', function () { var id = this.value; this.value = ''; if (id) { var st = K.fromRecipe(id, hubTournament || undefined); if (hubTournament) { st.tournament = hubTournament; st.headerAlt = ''; } createProject(st); } });
+    $('#franja').addEventListener('input', function () { state.franjaLeft = this.value; update(); });
+    ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).addEventListener('change', function () { state.off[k] = !this.checked; update(); }); });
+    window.addEventListener('beforeunload', function () { if (currentId) persist(); });
 
     $('#tournament').addEventListener('change', function () { state.tournament = this.value; update(); });
     $('#name').addEventListener('input', function () { state.name = this.value; update(); });
@@ -115,8 +305,8 @@
 
     $('#recipe').addEventListener('change', function () {
       var id = this.value; this.value = ''; if (!id) return;
-      if (state.sections.length > 1 && !confirm('Se sustituirá la newsletter actual. ¿Continuar?')) return;
-      state = K.fromRecipe(id, state.tournament); syncSettings(); renderSections(); refresh();
+      if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
+      state = K.fromRecipe(id, state.tournament); persist(); syncSettings(); renderSections(); refresh();
     });
     $('#add').addEventListener('change', function () {
       var id = this.value; this.value = ''; if (!id) return;
@@ -132,7 +322,7 @@
     $('#file').addEventListener('change', function () {
       var f = this.files[0]; if (!f) return; var r = new FileReader();
       r.onload = function () {
-        try { var s = JSON.parse(r.result); if (!s.sections) throw 0; state = s; syncSettings(); renderSections(); refresh(); }
+        try { var s = JSON.parse(r.result); if (!s.sections) throw 0; createProject(s); }
         catch (e) { alert('Este archivo no es un proyecto de newsletter válido.'); }
       };
       r.readAsText(f); this.value = '';
@@ -154,8 +344,8 @@
     $('#imp-go').addEventListener('click', function () {
       try {
         var r = K.importProject($('#imp-text').value, state.tournament);
-        if (state.sections.length > 1 && !confirm('Se sustituirá la newsletter actual. ¿Continuar?')) return;
-        state = r.state; syncSettings(); renderSections(); refresh();
+        if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
+        state = r.state; persist(); syncSettings(); renderSections(); refresh();
         $('#imp-text').value = ''; $('#dlg').close();
         alert('Importados ' + state.sections.length + ' módulos.' + (r.notes.length ? '\n\nAvisos:\n· ' + r.notes.join('\n· ') : '') + '\n\nRevisa los textos frente al original y mira la pestaña Revisión.');
       } catch (e) { $('#imp-err').textContent = 'No se ha podido importar: ' + (e.message || 'el texto pegado no es válido') + ' Copia la respuesta completa de ChatGPT.'; }

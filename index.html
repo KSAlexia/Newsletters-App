@@ -8,18 +8,42 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.2</span></div>
-  <div class="actions">
+  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.3</span><button id="back" class="ed">← Proyectos</button></div>
+  <div class="actions ed">
     <select id="recipe" title="Empezar desde una receta"></select>
     <button id="import">Importar</button>
-    <button id="open" class="ghost">Abrir proyecto</button>
-    <button id="save" class="ghost">Guardar proyecto</button>
+    <button id="save" class="ghost">Exportar proyecto</button>
     <input type="file" id="file" accept=".json" hidden>
     <button id="dl-txt" class="primary">Descargar .txt (Cvent)</button>
     <button id="dl-html">Descargar .html</button>
   </div>
 </header>
 
+<section id="lobby">
+  <div class="lobby-bar">
+    <h1>Proyectos</h1>
+    <span class="spacer"></span>
+    <button id="new-folder" class="btn ghost2" hidden>＋ Nueva carpeta</button>
+    <select id="new" aria-label="Nueva newsletter"></select>
+    <button id="open" class="btn ghost2">Abrir archivo de proyecto</button>
+  </div>
+  <p class="muted lobby-note">Organiza tus newsletters en carpetas dentro de cada torneo. Se guardan en este navegador. Para pasárselo a otra persona, usa «Exportar proyecto» dentro del proyecto.</p>
+  <nav id="hub-path" aria-label="Ubicación actual"></nav>
+  <div id="hub-controls" hidden>
+    <label>Buscar en esta carpeta<input id="hub-search" type="search" placeholder="Nombre…"></label>
+    <label>Ordenar<select id="hub-sort">
+      <option value="newest">Modificación: más recientes</option><option value="oldest">Modificación: más antiguas</option>
+      <option value="az">Nombre: A–Z</option><option value="za">Nombre: Z–A</option><option value="manual">Orden manual (↑ ↓)</option>
+    </select></label>
+    <label>Modificado desde<input id="hub-from" type="date"></label>
+    <label>Hasta<input id="hub-to" type="date"></label>
+    <button id="hub-clear" class="btn ghost2">Limpiar filtros</button>
+  </div>
+  <p id="hub-count" class="muted" aria-live="polite"></p>
+  <div id="folders"></div>
+</section>
+
+<p id="storage-error" role="alert" hidden>No se han podido guardar los últimos cambios en este navegador. No cierres la app; exporta las newsletters que hayas editado para conservar su contenido.</p>
 <main>
   <section class="editor">
     <div class="card settings">
@@ -27,7 +51,15 @@
       <label>Nombre de la newsletter<input id="name" type="text" placeholder="Media Packages"></label>
       <label>Nombre de archivo<input id="desc" type="text" placeholder="media_packages"><small id="filename"></small></label>
       <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner común bajo el header)</label>
-      <p class="fixed">Fijo y automático: header del torneo, footer de imagen y footer legal con la baja.</p>
+      <label>Franja identificadora · etiqueta izquierda *<input id="franja" type="text" placeholder="Media Packages"></label>
+      <p class="fixed">Fijo y automático: header del torneo, franja identificadora, footer de imagen y footer legal con la baja.</p>
+      <details class="more">
+        <summary>Más opciones</summary>
+        <label class="check"><input id="on-header" type="checkbox"> Mostrar el header del torneo</label>
+        <label class="check"><input id="on-franja" type="checkbox"> Mostrar la franja identificadora</label>
+        <label class="check"><input id="on-footer" type="checkbox"> Mostrar el footer de imagen</label>
+        <small>Solo para casos puntuales: se aplica a este proyecto y la revisión lo avisa. El footer legal con la baja no se puede quitar.</small>
+      </details>
     </div>
     <div id="sections"></div>
     <div class="add">
@@ -68,6 +100,19 @@
   <div class="dlg-actions"><button id="imp-cancel" class="btn ghost2">Cancelar</button><button id="imp-go" class="btn">Importar</button></div>
 </dialog>
 
+<dialog id="folder-dialog" aria-labelledby="folder-title">
+  <form id="folder-form">
+    <h2 id="folder-title">Nueva carpeta</h2>
+    <label>Nombre de la carpeta<input id="folder-name" type="text" required autocomplete="off"></label>
+    <div class="dlg-actions"><button id="folder-cancel" type="button" class="btn ghost2">Cancelar</button><button type="submit" class="btn">Guardar carpeta</button></div>
+  </form>
+</dialog>
+<dialog id="move-dialog" aria-labelledby="move-title">
+  <h2 id="move-title">Mover</h2>
+  <label>Carpeta de destino<select id="move-destination"></select></label>
+  <div class="dlg-actions"><button id="move-cancel" class="btn ghost2">Cancelar</button><button id="move-confirm" class="btn">Mover aquí</button></div>
+</dialog>
+<script src="js/hub.js"></script>
 <script src="js/head.js"></script>
 <script src="js/brands.js"></script>
 <script src="js/modules.js"></script>

@@ -1,0 +1,22 @@
+NOTAS DEL PROYECTO · 11 de noviembre de 2026
+
+Contexto y dirección de producto
+- La herramienta debe permitir que los PMs monten newsletters sin depender de una revisión de diseño para cada envío.
+- El flujo actual parte de newsletters base existentes. De ellas se recuperan textos, imágenes, custom links y custom fields de Cvent mediante el contexto que se prepara para ChatGPT y la importación posterior.
+- No asumir que se necesita convertir ahora las imágenes de paquetes en campos de precios editables. Se reutilizan los recursos de las newsletters originales.
+- Futuro: generar también desde un guion escrito por bloques, por ejemplo: «BANNER 1: texto… / BANNER 2: texto… / BANNER 3: foto / BANNER 4: botón». Pendiente definir el formato, el reparto en módulos y cómo comprobar que no se pierde contenido.
+- La IA puede ayudar a repartir el contenido; el diseño debe seguir construyéndose con piezas controladas por la app.
+- Se aplaza el trabajo de cerrar plantillas y validaciones de diseño. No se ha decidido bloquear la estructura de la BASE en esta iteración.
+
+Comparación de la BASE
+- El ejemplo ref1 coincide con la BASE al normalizar comentarios y espacios, salvo el parámetro ?d=650 de la imagen del pie.
+- Pendiente validación visual en Cvent y clientes de correo.
+- Actualmente se pueden eliminar bloques, variar tamaños de imagen y usar enlaces dentro del texto sin todas las comprobaciones necesarias para una plantilla cerrada.
+
+Prioridad actual: organización del hub
+- Torneos como carpetas principales por ahora.
+- Carpetas y subcarpetas dentro de cada torneo; crear, renombrar y mover.
+- Clasificación de newsletters por carpeta.
+- Orden por nombre A–Z/Z–A, modificación reciente/antigua y manual.
+- Buscar y filtrar por fechas de modificación dentro de la carpeta abierta.
+- Organización guardada en el navegador. Exportar una newsletter individual conserva su contenido, no el árbol de carpetas del hub.

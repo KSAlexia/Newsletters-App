@@ -354,7 +354,7 @@
     }
   };
 
-  K.MODULE_ORDER = ['franja', 'intro', 'titulo', 'lista', 'datos', 'tarjetas', 'info', 'producto', 'separador', 'imagen', 'cierre', 'compra', 'contacto'];
+  K.MODULE_ORDER = ['intro', 'titulo', 'lista', 'datos', 'tarjetas', 'info', 'producto', 'separador', 'imagen', 'cierre', 'compra', 'contacto'];
 
   // ============================================================
   // MONTAJE
@@ -364,10 +364,12 @@
   K.build = function (st) {
     var t = K.tournament(st.tournament), parts = [], n = 0;
     function add(tag, html) { parts.push('<!-- [' + (n++) + '] ' + tag + ' -->\n' + html); }
-    add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : K.CLIENT.name + ' · ' + t.name));
+    var off = st.off || {};
+    if (!off.header) add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : K.CLIENT.name + ' · ' + t.name));
     if (st.mediaPackages) add('BANNER', imgFull(K.CLIENT.mediaBanner, 'Media Packages - ' + t.name));
+    if (!off.franja) add('FRANJA', M.franja.build({ left: st.franjaLeft }, t));
     (st.sections || []).forEach(function (s) { var m = M[s.type]; if (m) add(m.tag, m.build(s.d || {}, t)); });
-    if (t.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
+    if (t.footer && !off.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
     var title = K.CLIENT.name + ' · ' + t.name + (has(st.name) ? ' – ' + st.name.trim() : '');
     var html = K.HEAD.replace('%%TITLE%%', function () { return esc(title); }) + ' ' + K.BODY_OPEN + parts.join('\n') + '\n' + K.BODY_CLOSE + '\n';
@@ -385,13 +387,18 @@
   // REVISIÓN AUTOMÁTICA (checklist)
   // ============================================================
   K.check = function (st, html) {
-    var t = K.tournament(st.tournament), out = [];
+    var t = K.tournament(st.tournament), out = [], off0 = st.off || {};
     function E(m) { out.push({ level: 'error', msg: m }); } function W(m) { out.push({ level: 'warn', msg: m }); } function OK(m) { out.push({ level: 'ok', msg: m }); }
     var secs = st.sections || [];
 
     if (!has(st.name)) W('Falta el nombre de la newsletter (título interno y nombre de archivo).');
-    if (!t.footer) W('Footer de imagen de ' + t.name + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
+    if (!t.footer && !off0.footer) W('Footer de imagen de ' + t.name + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
     if (!secs.length) W('La newsletter no tiene módulos todavía.');
+    var off = st.off || {};
+    if (!off.franja && !has(st.franjaLeft)) E('Falta la etiqueta izquierda de la franja identificadora.');
+    if (off.header) W('Header del torneo desactivado manualmente.');
+    if (off.franja) W('Franja identificadora desactivada manualmente.');
+    if (off.footer && t.footer) W('Footer de imagen desactivado manualmente.');
 
     // Campos obligatorios vacíos
     secs.forEach(function (s, i) {
@@ -422,7 +429,7 @@
     if (/(^|[^{])\[(C|E|P)-[A-Z][^\]]*\](?!\})/.test(body) || /\{\[[^\]]*$/m.test(body.replace(/\{\[[^\]]*\]\}/g, ''))) E('Hay un campo de Cvent mal cerrado (debe ser {[...]}).');
     if (!bad.length) OK('Campos de Cvent correctos (' + found.length + ').');
     OK('Footer legal con baja ({[EMAIL OPT OUT]}) incluido.');
-    OK('Header de ' + t.name + ' y paleta del torneo aplicados.');
+    OK((off0.header ? 'Paleta' : 'Header de ' + t.name + ' y paleta') + ' del torneo aplicados.');
 
     // Textos
     var txt = secs.map(function (s) { return Object.keys(s.d || {}).map(function (k) { return s.d[k]; }).join('\n'); }).join('\n');
@@ -442,15 +449,15 @@
   // RECETAS (puntos de partida) — apartado 8 del contexto
   // ============================================================
   K.RECIPES = [
-    { id: 'blank', name: 'En blanco', sections: [['franja']] },
-    { id: 'media', name: 'Media Packages / venta', mediaPackages: true, sections: [['franja'], ['intro'], ['imagen'], ['imagen'], ['compra'], ['lista'], ['contacto']] },
-    { id: 'anuncio', name: 'Anuncio / previa del torneo', sections: [['franja'], ['intro'], ['titulo'], ['datos'], ['tarjetas'], ['cierre'], ['compra', { variant: 'modificar' }]] },
-    { id: 'recordatorio', name: 'Recordatorio / instrucciones', sections: [['franja'], ['intro'], ['info'], ['lista'], ['compra', { variant: 'modificar' }]] },
-    { id: 'productos', name: 'Venta de varios servicios con precio', sections: [['franja'], ['titulo'], ['intro'], ['producto'], ['separador'], ['producto'], ['cierre'], ['compra', { layout: 'bottom' }], ['intro']] },
-    { id: 'transaccional', name: 'Transaccional / confirmación', sections: [['franja'], ['intro'], ['compra'], ['contacto']] },
+    { id: 'blank', name: 'En blanco', sections: [] },
+    { id: 'media', name: 'Media Packages / venta', mediaPackages: true, sections: [['intro'], ['imagen'], ['imagen'], ['compra'], ['lista'], ['contacto']] },
+    { id: 'anuncio', name: 'Anuncio / previa del torneo', sections: [['intro'], ['titulo'], ['datos'], ['tarjetas'], ['cierre'], ['compra', { variant: 'modificar' }]] },
+    { id: 'recordatorio', name: 'Recordatorio / instrucciones', sections: [['intro'], ['info'], ['lista'], ['compra', { variant: 'modificar' }]] },
+    { id: 'productos', name: 'Venta de varios servicios con precio', sections: [['titulo'], ['intro'], ['producto'], ['separador'], ['producto'], ['cierre'], ['compra', { layout: 'bottom' }], ['intro']] },
+    { id: 'transaccional', name: 'Transaccional / confirmación', sections: [['intro'], ['compra'], ['contacto']] },
     { id: 'ref1', name: 'Ejemplo: Media Packages · Surf Cup 2026', tournament: 'surfcup', mediaPackages: true, name2: 'Media Packages', desc: 'media_packages', headerAlt: 'KSA Global Stage',
+      franja: 'Media Packages',
       sections: [
-        ['franja', { left: 'Media Packages' }],
         ['intro', { text: 'Our in-house media team will be on site at the Surf Cup Tournament, capturing the best moments on the field and giving families **both digital and physical memories**.\nExplore our three photography packages below and choose the option that best fits your player.' }],
         ['imagen', { src: 'https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/f28d166daebf47be89484d1c49deaf1f.png', alt: 'Early bird prices available until February 7th' }],
         ['imagen', { src: 'https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/7235e7858670437bbe52ac53561d1730.png', alt: 'Photography packages: Player Card Pack, On the Field Pack and Ultimate Tournament Pack' }],
@@ -460,10 +467,21 @@
       ] }
   ];
 
+  K.normalize = function (st) {
+    st.off = st.off || {}; st.sections = st.sections || [];
+    if (st.franjaLeft == null) st.franjaLeft = '';
+    st.sections = st.sections.filter(function (x) {
+      if (x.type !== 'franja') return true;
+      if (!has(st.franjaLeft)) st.franjaLeft = (x.d || {}).left || '';
+      return false;
+    });
+    return st;
+  };
+
   K.fromRecipe = function (id, keepTournament) {
     var r = K.RECIPES.filter(function (x) { return x.id === id; })[0] || K.RECIPES[0], uid = 0;
     return {
-      tournament: r.tournament || keepTournament || 'surfcup', name: r.name2 || '', desc: r.desc || '', headerAlt: r.headerAlt || '', mediaPackages: !!r.mediaPackages,
+      tournament: r.tournament || keepTournament || 'surfcup', name: r.name2 || '', desc: r.desc || '', headerAlt: r.headerAlt || '', mediaPackages: !!r.mediaPackages, franjaLeft: r.franja || '', off: {},
       sections: r.sections.map(function (s) {
         var d = {}, m = M[s[0]], k;
         for (k in (m.defaults || {})) d[k] = m.defaults[k];
@@ -489,6 +507,8 @@
     L.push('- Negritas: **así**. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
     L.push('- Títulos: escríbelos como texto normal, sin HTML. Si un producto se llama "Título – Subtítulo", pon cada parte en su campo, sin el guion.');
     L.push('- NO incluyas el header, el footer de imagen ni la línea de baja (opt-out): la app los pone sola.');
+    L.push('- Franja identificadora (la línea pequeña bajo el header, con una etiqueta a la izquierda y el torneo a la derecha): no es un módulo. Pon solo su etiqueta izquierda en "franja". El torneo de la derecha lo pone la app.');
+    L.push('- NO copies iconos, emojis ni símbolos decorativos del original (ni como texto ni como imagen). Quítalos y deja el resto del texto igual.');
     L.push('- Si la newsletter es de Media Packages, pon "mediaPackages": true y NO añadas el banner de Media Packages como imagen.');
     L.push('- Imágenes: solo las que estén en el original y con su URL de custom.cvent.com tal cual. Si no hay URL, no pongas el módulo.');
     L.push('- Reparto: saludo y párrafos de apertura → intro. Fecha, hora, lugar → datos. Dos opciones paralelas → tarjetas. Instrucciones o avisos → info. Cada servicio con precio → producto, con un separador entre dos productos seguidos. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra. Texto que no encaje en nada → intro.');
@@ -505,7 +525,7 @@
     });
     L.push('');
     L.push('RESPUESTA: devuelve SOLO el JSON, en un bloque de código, sin explicaciones, con esta forma:');
-    L.push('{"tournament":"surfcup","name":"Nombre de la newsletter","desc":"nombre_de_archivo","mediaPackages":false,"sections":[{"type":"franja","d":{"left":"..."}},{"type":"intro","d":{"greet":"","text":"..."}}]}');
+    L.push('{"tournament":"surfcup","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"Etiqueta izquierda","mediaPackages":false,"sections":[{"type":"intro","d":{"greet":"","text":"..."}}]}');
     L.push('');
     L.push('NEWSLETTER A CONVERTIR:');
     L.push('');
@@ -520,7 +540,7 @@
     if (!raw || !Array.isArray(raw.sections)) throw new Error('El proyecto no tiene módulos.');
     var notes = [], uid = 0, okT = K.CLIENT.tournaments.some(function (t) { return t.id === raw.tournament; });
     if (!okT) notes.push('Torneo no reconocido: se mantiene el que tenías elegido.');
-    var st = { tournament: okT ? raw.tournament : (fallbackTournament || 'surfcup'), name: String(raw.name || ''), desc: String(raw.desc || ''), headerAlt: '', mediaPackages: !!raw.mediaPackages, sections: [] };
+    var st = { tournament: okT ? raw.tournament : (fallbackTournament || 'surfcup'), name: String(raw.name || ''), desc: String(raw.desc || ''), headerAlt: '', mediaPackages: !!raw.mediaPackages, franjaLeft: String(raw.franja || ''), off: {}, sections: [] };
     raw.sections.forEach(function (s, i) {
       var m = s && M[s.type];
       if (!m) { notes.push('Módulo ' + (i + 1) + ' descartado: tipo «' + (s && s.type) + '» desconocido.'); return; }
@@ -535,6 +555,6 @@
       Object.keys(src).forEach(function (k2) { if (!m.fields.some(function (f) { return f.k === k2; }) && has(src[k2])) notes.push('Módulo ' + (i + 1) + ' (' + m.name + '): se ha ignorado el campo «' + k2 + '».'); });
       st.sections.push({ id: 's' + Date.now() + '_' + (uid++), type: s.type, d: d, open: false });
     });
-    return { state: st, notes: notes };
+    return { state: K.normalize(st), notes: notes };
   };
 })(typeof window !== 'undefined' ? window : globalThis);
