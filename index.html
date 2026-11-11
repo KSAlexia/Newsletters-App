@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Kaptiva · Generador de newsletters</title>
+<link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.1</span></div>
+  <div class="actions">
+    <select id="recipe" title="Empezar desde una receta"></select>
+    <button id="open" class="ghost">Abrir proyecto</button>
+    <button id="save" class="ghost">Guardar proyecto</button>
+    <input type="file" id="file" accept=".json" hidden>
+    <button id="dl-txt" class="primary">Descargar .txt (Cvent)</button>
+    <button id="dl-html">Descargar .html</button>
+  </div>
+</header>
+
+<main>
+  <section class="editor">
+    <div class="card settings">
+      <label>Torneo<select id="tournament"></select></label>
+      <label>Nombre de la newsletter<input id="name" type="text" placeholder="Media Packages"></label>
+      <label>Nombre de archivo<input id="desc" type="text" placeholder="media_packages"><small id="filename"></small></label>
+      <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner común bajo el header)</label>
+      <p class="fixed">Fijo y automático: header del torneo, footer de imagen y footer legal con la baja.</p>
+    </div>
+    <div id="sections"></div>
+    <div class="add">
+      <select id="add"></select>
+    </div>
+  </section>
+
+  <section class="output">
+    <div class="tabs">
+      <button data-tab="preview" class="on">Vista previa</button>
+      <button data-tab="review">Revisión <span id="badge"></span></button>
+      <button data-tab="code">Código</button>
+      <span class="spacer"></span>
+      <div class="device" id="device">
+        <button data-w="desktop" class="on">Escritorio</button>
+        <button data-w="mobile">Móvil</button>
+      </div>
+    </div>
+    <div class="pane" id="pane-preview"><iframe id="frame" title="Vista previa"></iframe></div>
+    <div class="pane" id="pane-review" hidden><ul id="checks"></ul></div>
+    <div class="pane" id="pane-code" hidden>
+      <button id="copy">Copiar código</button>
+      <textarea id="code" readonly spellcheck="false"></textarea>
+    </div>
+  </section>
+</main>
+
+<script src="js/head.js"></script>
+<script src="js/brands.js"></script>
+<script src="js/modules.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

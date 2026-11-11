@@ -1,0 +1,158 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title>KSA Global Stage · Surf Cup 2026 – Media Packages</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="format-detection" content="telephone=no" /><style type="text/css">/* CLIENT-SPECIFIC STYLES ------------------- */
+#outlook a {
+  padding: 0; /* Force Outlook to provide a &quot;view in browser&quot; message */
+}
+
+.ReadMsgBody {
+  width: 100%; /* Force Hotmail to display emails at full width */
+}
+.ExternalClass {
+  width:100%; /* Force Hotmail to display emails at full width */
+}
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+  line-height: 100%; /* Force Hotmail to display normal line spacing */
+}
+body, table, td, a { /* Prevent WebKit and Windows mobile changing default text sizes */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+table, td, li { /* Remove spacing between tables in Outlook 2007 and up */
+  mso-table-lspace: 0pt;
+  mso-table-rspace: 0pt;
+  mso-line-height-rule: at-least;
+  border-spacing: 0;
+  mso-margin-bottom-alt: 0;
+  mso-margin-top-alt: 0;
+}
+img { /* Allow smoother rendering of resized image in Internet Explorer */
+  -ms-interpolation-mode: bicubic;
+}
+
+/* RESET STYLES --------------------------- */
+body {
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+  width: 100% !important;
+}
+img {
+  border: 0;
+  height: auto;
+  line-height: 100%;
+  outline: none;
+  text-decoration: none;
+}
+table {
+  border-collapse: collapse !important;
+}
+a {
+  color: #6F4ACC;
+}
+h1, h2, h3, h4, h5, h6, p { /* Override user agent styles for these elements */
+  margin-block-start: 0px;
+  margin-block-end: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+/* Override Gmail Blue Links */
+u + #body a {
+  color: #6F4ACC;
+}
+/* iOS BLUE LINKS */
+.apple-links a {
+  color: #A5A0C4;
+  text-decoration: none;
+}
+
+/* MOBILE STYLES ------------------------ */
+/* Media Queries
+  480px matches @small(20em) in nucleus-core/less/MediaQuery.less
+*/
+@media screen and (max-width: 480px) {
+  .responsive-table,
+  .wrapper,
+  .column,
+  .img-max {
+    width: 100% !important;
+  }
+
+  .mobile-button {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .mobile-pad {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  .h1 {
+    font-size: 28px !important;
+    line-height: 32px !important;
+  }
+  .col2 {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 0 16px 0 !important;
+  }
+  .desk-only {
+    display: none !important;
+  }
+  .mob-only {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .data-col {
+    display: block !important;
+    width: 100% !important;
+    border-left: none !important;
+    padding: 10px 0 !important;
+  }
+}</style><!--[if gte mso 9]>
+                <xml>
+                  <o:OfficeDocumentSettings>
+                    <o:AllowPNG/>
+                    <o:PixelsPerInch>96</o:PixelsPerInch>
+                  </o:OfficeDocumentSettings>
+                </xml>
+              <![endif]--><style type="text/css"> @media screen {
+  @font-face { font-display: swap; font-family: 'Extenda60'; font-style: normal; font-weight: 400; src: url('https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/d233898ea39e424c892e34d04628b501.ttf') format('truetype'); }
+  @font-face { font-display: swap; font-family: 'Extenda40'; font-style: normal; font-weight: 400; src: url('https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/d5bc245c5b1942b682e0bdae5cdb088b.ttf') format('truetype'); }
+  @font-face { font-display: swap; font-family: 'DinProBlack'; font-style: normal; font-weight: 400; src: url('https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/c099737cde124464b993fa156de6e130.otf') format('opentype'); }
+  @font-face { font-display: swap; font-family: 'DinProBold'; font-style: normal; font-weight: 400; src: url('https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/27c4c40d384149a19e63377ba9b3b981.otf') format('opentype'); }
+  @font-face { font-display: swap; font-family: 'DinProLight'; font-style: normal; font-weight: 400; src: url('https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/8ee7cfe4f92440f99df5a47fdee34944.otf') format('opentype'); }
+  @font-face { font-display: swap; font-family: 'DinProMedium'; font-style: normal; font-weight: 400; src: url('https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/28392b958c97456fae011c4b5e4ef28c.otf') format('opentype'); }
+  @font-face { font-display: swap; font-family: 'DinProRegular'; font-style: normal; font-weight: 400; src: url('https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/7cb43dc39f724cef98c04200c9e1bccf.otf') format('opentype'); }
+}</style></head> <body style="margin:0;padding:0" id="body"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed"><tbody><tr><td align="center" bgcolor="#6F4ACC" style="background-color:#6F4ACC"><!--[if gte mso 9]>
+            <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0"
+              width="650" style="width:650px;">
+              <tr>
+                <td align="center" valign="top" width="650" style="width:650px;">
+          <![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:650px" class="wrapper"><tbody>
+<!-- [0] HEADER -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/40eb51f5da2f42db912ba6804522e102.png" alt="KSA Global Stage" title="KSA Global Stage" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [1] BANNER -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/1417e53fed184a539904a7d3d799eca1.png" alt="Media Packages - Surf Cup 2026" title="Media Packages - Surf Cup 2026" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [2] FRANJA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" style="padding:14px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td align="left"><p style="font-family:'DinProMedium', Arial, Helvetica, sans-serif;font-weight:400;font-size:11px;line-height:14px;color:#6F4ACC;letter-spacing:3px;text-transform:uppercase;word-break:break-word;">Media Packages</p></td><td align="right"><p style="font-family:'DinProMedium', Arial, Helvetica, sans-serif;font-weight:400;font-size:11px;line-height:14px;color:#6F4ACC;letter-spacing:3px;text-transform:uppercase;word-break:break-word;">Surf Cup 2026</p></td></tr></tbody></table></td></tr><tr><td height="4" bgcolor="#91FAFB" style="height:4px;line-height:4px;font-size:0;background-color:#91FAFB;">&nbsp;</td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [3] INTRO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:32px 40px 22px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;font-size:16px;line-height:25px;color:#000000;word-break:break-word;">Our in-house media team will be on site at the Surf Cup Tournament, capturing the best moments on the field and giving families <strong style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;color:#6F4ACC;">both digital and physical memories</strong>.</p><p style="font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;font-size:16px;line-height:25px;color:#000000;padding-top:14px;word-break:break-word;">Explore our three photography packages below and choose the option that best fits your player.</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [4] IMAGEN EARLY BIRD -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/f28d166daebf47be89484d1c49deaf1f.png" alt="Early bird prices available until February 7th" title="Early bird prices available until February 7th" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [5] IMAGEN PAQUETES -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/7235e7858670437bbe52ac53561d1730.png" alt="Photography packages: Player Card Pack, On the Field Pack and Ultimate Tournament Pack" title="Photography packages: Player Card Pack, On the Field Pack and Ultimate Tournament Pack" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [6] CAJA COMPRA (CAMPOS CVENT) -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:22px 40px 8px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;border:3px solid #6F4ACC;border-radius:14px;border-collapse:separate !important;"><tbody><tr class="css-vsf5of"><td align="center" style="padding:26px 16px 8px 16px;font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;font-size:20px;line-height:26px;color:#000000;text-align:center;word-break:break-word;"><span style="color: rgb(0,0,0);"><span style="font-weight: bold;">To purchase your package {[E-MODIFY REG LINK]}</span></span></td></tr><tr><td style="padding:14px 40px 6px 40px;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td style="border-top:1px solid #A5A0C4;font-size:0;line-height:0;">&nbsp;</td></tr></tbody></table></td></tr><tr class="css-vsf5of"><td align="center" style="padding:10px 16px 6px 16px;text-align:center;word-break:break-word;"><p style="font-family:'DinProMedium', Arial, Helvetica, sans-serif;font-weight:400;font-size:11px;line-height:14px;color:#A5A0C4;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding-bottom:4px;">Confirmation number</p><p style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;font-size:18px;line-height:24px;color:#6F4ACC;text-align:center;word-break:break-word;">{[C-CONFIRMATION NUM]}</p></td></tr><tr class="css-vsf5of"><td align="center" style="padding:10px 16px 26px 16px;text-align:center;word-break:break-word;"><p style="font-family:'DinProMedium', Arial, Helvetica, sans-serif;font-weight:400;font-size:11px;line-height:14px;color:#A5A0C4;letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding-bottom:4px;">Email used for registration</p><p style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;font-size:18px;line-height:24px;color:#6F4ACC;text-align:center;word-break:break-word;">{[C-EMAIL]}</p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [7] TITULO + LISTA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:30px 40px 10px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:'Extenda60', 'Arial Black', Arial, Helvetica, sans-serif;font-weight:400;letter-spacing:0.3px;font-size:34px;line-height:38px;color:#6F4ACC;text-transform:uppercase;padding-bottom:16px;word-break:break-word;">Delivery Details</p><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td valign="top" width="26" style="font-size:12px;line-height:24px;color:#6F4ACC;padding:0 0 12px 0;">&#9679;</td><td valign="top" style="font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;font-size:15px;line-height:24px;color:#000000;padding:0 0 12px 0;word-break:break-word;"><strong style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;color:#6F4ACC;">Portrait photos</strong> are printed and delivered in person at the end of the event.</td></tr><tr><td valign="top" width="26" style="font-size:12px;line-height:24px;color:#6F4ACC;padding:0 0 12px 0;">&#9679;</td><td valign="top" style="font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;font-size:15px;line-height:24px;color:#000000;padding:0 0 12px 0;word-break:break-word;">The <strong style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;color:#6F4ACC;">15 or 20 action shots</strong> are delivered <strong style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;color:#6F4ACC;">digitally within 15 days</strong> after the event.</td></tr><tr><td valign="top" width="26" style="font-size:12px;line-height:24px;color:#6F4ACC;padding:0 0 12px 0;">&#9679;</td><td valign="top" style="font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;font-size:15px;line-height:24px;color:#000000;padding:0 0 12px 0;word-break:break-word;">Digital images are sent via email to <strong style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;color:#6F4ACC;">two email addresses</strong> on file to ensure successful delivery and are available for high-quality download.</td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [8] CONTACTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="center" style="padding:16px 40px 32px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;border:1px solid #A5A0C4;border-left:4px solid #6F4ACC;"><tbody><tr><td align="center" style="padding:22px 24px;text-align:center;"><p style="font-family:'Extenda60', 'Arial Black', Arial, Helvetica, sans-serif;font-weight:400;letter-spacing:0.3px;font-size:34px;line-height:38px;color:#6F4ACC;text-transform:uppercase;text-align:center;padding-bottom:10px;">Get in Touch</p><p style="font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;font-size:15px;line-height:23px;color:#000000;text-align:center;word-break:break-word;">If you have any questions, please feel free to contact us at <a href="mailto:globalmedia@kaptivasports.com" style="color:#6F4ACC;text-decoration:underline;"><span style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;">globalmedia@kaptivasports.com</span></a></p><p style="font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;font-size:15px;line-height:23px;color:#6F4ACC;text-align:center;padding-top:8px;word-break:break-word;"><span style="color: #6F4ACC;"><span style="font-weight: bold;">For any questions, please contact us at: {[E-CUSTOM:Event Phone Number]}</span></span></p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [9] IMAGEN FOOTER -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/15c6e3e7d343442eaf7f0df323da0259.png?d=650" alt="See you in Barcelona" title="See you in Barcelona" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [10] OPT-OUT -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="center" style="padding:16px 20px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;font-size:10px;line-height:14px;color:#A5A0C4;text-align:center;word-break:break-word;padding:3px 0;"><span style="color: #A5A0C4;">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+</tbody></table><!--[if gte mso 9]>
+                </td>
+              </tr>
+            </table>
+            <![endif]--></td></tr></tbody></table></body></html>
