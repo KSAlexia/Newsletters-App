@@ -472,4 +472,69 @@
       })
     };
   };
+
+  // ============================================================
+  // IMPORTAR CON CHATGPT (sin coste de API)
+  // La app genera las instrucciones; ChatGPT reparte el contenido en módulos
+  // y devuelve un proyecto que la app valida y monta con sus piezas fijas.
+  // ============================================================
+  K.importPrompt = function () {
+    var L = [];
+    L.push('Convierte la newsletter que pego al final (HTML antiguo o guion de texto) en un proyecto JSON para la app de newsletters de Kaptiva (' + K.CLIENT.name + ').');
+    L.push('');
+    L.push('REGLAS');
+    L.push('- TEXTOS LITERALES: copia cada texto exactamente como está. No reescribas, resumas, traduzcas, corrijas ni añadas nada. Si ves una errata, déjala.');
+    L.push('- No inventes titulares, etiquetas, botones, precios, fechas ni enlaces. Si un campo no tiene contenido en el original, déjalo vacío ("").');
+    L.push('- Campos de Cvent como {[C-FIRST NAME]} o {[E-MODIFY REG LINK]}: cópialos carácter a carácter.');
+    L.push('- Negritas: **así**. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
+    L.push('- Títulos: escríbelos como texto normal, sin HTML. Si un producto se llama "Título – Subtítulo", pon cada parte en su campo, sin el guion.');
+    L.push('- NO incluyas el header, el footer de imagen ni la línea de baja (opt-out): la app los pone sola.');
+    L.push('- Si la newsletter es de Media Packages, pon "mediaPackages": true y NO añadas el banner de Media Packages como imagen.');
+    L.push('- Imágenes: solo las que estén en el original y con su URL de custom.cvent.com tal cual. Si no hay URL, no pongas el módulo.');
+    L.push('- Reparto: saludo y párrafos de apertura → intro. Fecha, hora, lugar → datos. Dos opciones paralelas → tarjetas. Instrucciones o avisos → info. Cada servicio con precio → producto, con un separador entre dos productos seguidos. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra. Texto que no encaje en nada → intro.');
+    L.push('- No uses el mismo recurso dos veces seguidas y no dejes fuera ningún texto del original.');
+    L.push('');
+    L.push('TORNEOS ("tournament"): ' + K.CLIENT.tournaments.map(function (t) { return t.id + ' = ' + t.name; }).join(' · '));
+    L.push('');
+    L.push('MÓDULOS DISPONIBLES ("type" y sus campos en "d")');
+    K.MODULE_ORDER.forEach(function (id) {
+      var m = M[id], fs = m.fields.filter(function (f) { return f.k; }).map(function (f) {
+        return f.k + (f.type === 'select' ? ' (uno de: ' + f.opts.map(function (o) { return o[0]; }).join(' | ') + ')' : '') + ' = ' + f.label;
+      });
+      L.push('- ' + id + ' → ' + m.name + (fs.length ? '. Campos: ' + fs.join('; ') : '. Sin campos.'));
+    });
+    L.push('');
+    L.push('RESPUESTA: devuelve SOLO el JSON, en un bloque de código, sin explicaciones, con esta forma:');
+    L.push('{"tournament":"surfcup","name":"Nombre de la newsletter","desc":"nombre_de_archivo","mediaPackages":false,"sections":[{"type":"franja","d":{"left":"..."}},{"type":"intro","d":{"greet":"","text":"..."}}]}');
+    L.push('');
+    L.push('NEWSLETTER A CONVERTIR:');
+    L.push('');
+    return L.join('\n');
+  };
+
+  // Lee la respuesta, descarta lo que la app no conoce y devuelve el proyecto + avisos
+  K.importProject = function (text, fallbackTournament) {
+    var a = text.indexOf('{'), b = text.lastIndexOf('}');
+    if (a < 0 || b <= a) throw new Error('No encuentro el proyecto en el texto pegado.');
+    var raw = JSON.parse(text.slice(a, b + 1).replace(/[\u201C\u201D](?=\s*[:,}\]])|(?<=[{,\[:]\s*)[\u201C\u201D]/g, '"'));
+    if (!raw || !Array.isArray(raw.sections)) throw new Error('El proyecto no tiene módulos.');
+    var notes = [], uid = 0, okT = K.CLIENT.tournaments.some(function (t) { return t.id === raw.tournament; });
+    if (!okT) notes.push('Torneo no reconocido: se mantiene el que tenías elegido.');
+    var st = { tournament: okT ? raw.tournament : (fallbackTournament || 'surfcup'), name: String(raw.name || ''), desc: String(raw.desc || ''), headerAlt: '', mediaPackages: !!raw.mediaPackages, sections: [] };
+    raw.sections.forEach(function (s, i) {
+      var m = s && M[s.type];
+      if (!m) { notes.push('Módulo ' + (i + 1) + ' descartado: tipo «' + (s && s.type) + '» desconocido.'); return; }
+      var d = {}, k, src = s.d || {};
+      for (k in (m.defaults || {})) d[k] = m.defaults[k];
+      m.fields.forEach(function (f) {
+        if (!f.k || src[f.k] == null) return;
+        var v = Array.isArray(src[f.k]) ? src[f.k].join('\n') : String(src[f.k]);
+        if (f.type === 'select' && !f.opts.some(function (o) { return o[0] === v; })) return;
+        d[f.k] = v;
+      });
+      Object.keys(src).forEach(function (k2) { if (!m.fields.some(function (f) { return f.k === k2; }) && has(src[k2])) notes.push('Módulo ' + (i + 1) + ' (' + m.name + '): se ha ignorado el campo «' + k2 + '».'); });
+      st.sections.push({ id: 's' + Date.now() + '_' + (uid++), type: s.type, d: d, open: false });
+    });
+    return { state: st, notes: notes };
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

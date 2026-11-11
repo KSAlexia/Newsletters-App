@@ -142,6 +142,25 @@
       (navigator.clipboard ? navigator.clipboard.writeText(html) : Promise.reject()).catch(function () { document.execCommand('copy'); }).then(function () { b.textContent = 'Copiado ✓'; setTimeout(function () { b.textContent = 'Copiar código'; }, 1500); });
     });
 
+    // Importar con ChatGPT
+    $('#import').addEventListener('click', function () { $('#imp-err').textContent = ''; $('#dlg').showModal(); });
+    $('#imp-cancel').addEventListener('click', function () { $('#dlg').close(); });
+    $('#imp-copy').addEventListener('click', function () {
+      var b = this, t = K.importPrompt();
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function () {
+        var x = el('textarea'); x.value = t; $('#dlg').appendChild(x); x.select(); document.execCommand('copy'); x.remove();
+      }).then(function () { b.textContent = 'Copiadas ✓'; setTimeout(function () { b.textContent = 'Copiar instrucciones'; }, 1500); });
+    });
+    $('#imp-go').addEventListener('click', function () {
+      try {
+        var r = K.importProject($('#imp-text').value, state.tournament);
+        if (state.sections.length > 1 && !confirm('Se sustituirá la newsletter actual. ¿Continuar?')) return;
+        state = r.state; syncSettings(); renderSections(); refresh();
+        $('#imp-text').value = ''; $('#dlg').close();
+        alert('Importados ' + state.sections.length + ' módulos.' + (r.notes.length ? '\n\nAvisos:\n· ' + r.notes.join('\n· ') : '') + '\n\nRevisa los textos frente al original y mira la pestaña Revisión.');
+      } catch (e) { $('#imp-err').textContent = 'No se ha podido importar: ' + (e.message || 'el texto pegado no es válido') + ' Copia la respuesta completa de ChatGPT.'; }
+    });
+
     Array.prototype.forEach.call(document.querySelectorAll('.tabs > button'), function (b) {
       b.addEventListener('click', function () {
         Array.prototype.forEach.call(document.querySelectorAll('.tabs > button'), function (x) { x.classList.toggle('on', x === b); });

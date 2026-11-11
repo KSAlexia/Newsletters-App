@@ -8,9 +8,10 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.1</span></div>
+  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.2</span></div>
   <div class="actions">
     <select id="recipe" title="Empezar desde una receta"></select>
+    <button id="import">Importar</button>
     <button id="open" class="ghost">Abrir proyecto</button>
     <button id="save" class="ghost">Guardar proyecto</button>
     <input type="file" id="file" accept=".json" hidden>
@@ -53,6 +54,19 @@
     </div>
   </section>
 </main>
+
+<dialog id="dlg">
+  <h2>Importar una newsletter</h2>
+  <p class="muted">ChatGPT reparte el contenido en módulos y la app lo monta con el diseño correcto.</p>
+  <ol>
+    <li><button id="imp-copy" class="btn">Copiar instrucciones</button></li>
+    <li>Pégalas en un chat nuevo de ChatGPT y, justo debajo, pega la newsletter antigua (código HTML) o el guion de texto.</li>
+    <li>Copia la respuesta de ChatGPT y pégala aquí:
+      <textarea id="imp-text" rows="8" spellcheck="false" placeholder='{"tournament": … }'></textarea></li>
+  </ol>
+  <p id="imp-err" class="err"></p>
+  <div class="dlg-actions"><button id="imp-cancel" class="btn ghost2">Cancelar</button><button id="imp-go" class="btn">Importar</button></div>
+</dialog>
 
 <script src="js/head.js"></script>
 <script src="js/brands.js"></script>
