@@ -62,7 +62,10 @@ small { color: var(--muted); font-size: 11px; }
 
 .pane { flex: 1; min-height: 0; overflow: auto; padding: 16px; }
 .pane[hidden] { display: none; }
-#pane-preview { display: flex; justify-content: center; background: #dcd8e6; }
+#pane-preview { display: flex; flex-direction: column; align-items: center; gap: 10px; background: #dcd8e6; }
+#pane-preview .code-note { width: 100%; max-width: 760px; }
+#pane-preview[hidden] { display: none; }
+#pane-preview #frame { flex: 1; min-height: 0; }
 #frame { width: 100%; max-width: 760px; height: 100%; border: 0; background: #fff; border-radius: 8px; box-shadow: 0 2px 14px rgba(27,22,48,.15); }
 #frame.mobile { max-width: 390px; }
 #checks { list-style: none; margin: 0 auto; padding: 0; max-width: 720px; display: grid; gap: 8px; }
@@ -227,3 +230,20 @@ button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .img-tools .kit-pick { font-size: 12px; }
 .mod summary.drop-ready { border-radius: 12px; }
 @media (max-width: 650px) { .img-slot, .img-slot.half { grid-column: 1 / -1; grid-template-columns: 1fr; } }
+
+/* Hub: grupos de la pantalla inicial (KSA Global Stage y Clubs). */
+.hub-group { font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: var(--muted); margin: 22px 0 10px; }
+.hub-group:first-child { margin-top: 4px; }
+
+/* Edición manual del código HTML. */
+.code-bar { display: flex; flex-wrap: wrap; gap: 8px; }
+#pane-code .code-bar button { align-self: auto; }
+#pane-code button.secondary { background: #fff; color: var(--brand); }
+#pane-code button[hidden] { display: none; }
+.code-note { margin: 0; padding: 8px 12px; font-size: 12px; color: var(--warn); background: #fff7e8; border-left: 3px solid var(--warn); border-radius: 6px; }
+.code-note[hidden] { display: none; }
+#code:not([readonly]) { border-color: var(--brand); outline: 2px solid var(--brand); outline-offset: -1px; }
+
+/* Avisos de sincronización entre pestañas. */
+#sync-note { margin: 0; padding: 10px 18px; color: var(--brand-dark); background: var(--soft); border-bottom: 1px solid var(--line); }
+#sync-note[hidden] { display: none; }

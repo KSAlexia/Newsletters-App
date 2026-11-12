@@ -169,3 +169,66 @@ ui.nodes['#hub-path'].children.find(n => n.textContent === 'Surf Cup 2026').hand
 assert.equal(JSON.parse(dragStorage[PROJ]).drag.folder, '');
 assert.equal(JSON.parse(dragStorage[PROJ]).drag.updated, 123);
 console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo externo y conservación de contenido/fechas.');
+
+// Clubs: pantalla inicial con grupos, nivel de club con sus secciones y newsletter nueva en la sección.
+{
+  const clubStorage = {}, club = boot(clubStorage);
+  club.clickText('📁 Arsenal');
+  assert.throws(() => club.clickText('📁 Surf Cup 2026'), 'En el nivel de club solo se ven sus secciones');
+  club.clickText('📁 USA CAMPS');
+  club.nodes['#new'].click();
+  const created = Object.values(JSON.parse(clubStorage[PROJ]));
+  assert.equal(created.length, 1); assert.equal(created[0].state.tournament, 'arsenal-usa');
+  const bayern = boot({}); bayern.clickText('📁 Bayern FC');
+  assert.throws(() => bayern.clickText('📁 USA CAMPS'), 'Bayern no tiene USA CAMPS');
+  bayern.clickText('📁 CANADA CAMPS');
+  const rmf = boot({}); rmf.clickText('📁 Fundación Real Madrid'); rmf.clickText('📁 RMF WORLD CHALLENGE');
+  console.log('OK: clubs en la pantalla inicial, secciones por club (Bayern sin USA, RMF con World Challenge) y newsletter nueva en la sección.');
+}
+
+// Código editado a mano: se aplica a vista previa/descargas, se guarda con el proyecto y se puede descartar.
+{
+  const codeStorage = {}, ui2 = boot(codeStorage);
+  ui2.clickText('📁 Surf Cup 2026'); ui2.nodes['#new'].click();
+  const stored = () => Object.values(JSON.parse(codeStorage[PROJ]))[0].state;
+  const generated = ui2.nodes['#code'].value;
+  assert.ok(generated.includes('<html'));
+  ui2.nodes['#code-edit'].click();
+  assert.equal(ui2.nodes['#code'].readOnly, false); assert.equal(ui2.nodes['#code-apply'].hidden, false);
+  const edited = generated.replace('</body>', '<!-- editado a mano --></body>');
+  ui2.nodes['#code'].value = edited; ui2.nodes['#code-apply'].click();
+  assert.equal(stored().customHtml, edited); assert.equal(ui2.nodes['#frame'].srcdoc, edited);
+  assert.equal(ui2.nodes['#code'].readOnly, true); assert.equal(ui2.nodes['#code-reset'].hidden, false);
+  assert.equal(ui2.nodes['#preview-note'].hidden, false);
+  // Cancelar no aplica lo escrito.
+  ui2.nodes['#code-edit'].click(); ui2.nodes['#code'].value = 'otra cosa'; ui2.nodes['#code-cancel'].click();
+  assert.equal(stored().customHtml, edited); assert.equal(ui2.nodes['#code'].value, edited);
+  // Volver al generado elimina la versión manual.
+  ui2.nodes['#code-reset'].click();
+  assert.equal(stored().customHtml, undefined); assert.equal(ui2.nodes['#frame'].srcdoc, generated);
+  console.log('OK: editar código, aplicar, cancelar, guardar con el proyecto y volver al código generado.');
+}
+
+// Varias pestañas: fusión a tres bandas por id.
+{
+  const k = JSON.stringify;
+  const r = H.merge3({ a: 1, b: 2, n: 5 }, { a: '1', b: '1', c: '1', d: '1' }, { a: 9, b: 3, c: 1, e: 7 }, k);
+  assert.deepEqual(r.merged, { a: 9, b: 2, n: 5, e: 7 }, 'gana lo cambiado aquí (b, n), se respeta lo cambiado/creado/borrado fuera (a, e, c) y lo borrado aquí (d)');
+  assert.deepEqual(r.conflicts, ['b']); assert.ok(r.changed.includes('a') && r.changed.includes('e'));
+}
+(async () => {
+  const wait = ms => new Promise(r => setTimeout(r, ms));
+  const shared = { [PROJ]: JSON.stringify({ old: { id: 'old', updated: 123, state: { tournament: 'surfcup', name: 'Original', sections: [], off: {}, franjaLeft: '' } } }) };
+  const A = boot(shared), B = boot(shared); // B arranca con los mismos datos y no ve lo que hace A
+  A.nodes['#new'].click();
+  B.nodes['#new'].click();
+  let saved = JSON.parse(shared[PROJ]);
+  assert.equal(Object.keys(saved).length, 3, 'La segunda pestaña no borra la newsletter creada en la primera');
+  // A cambia el nombre de su newsletter; B guarda después con datos antiguos de esa newsletter.
+  A.nodes['#name'].value = 'Desde A'; A.nodes['#name'].handlers.input.call(A.nodes['#name']); await wait(260);
+  B.nodes['#name'].value = 'Desde B'; B.nodes['#name'].handlers.input.call(B.nodes['#name']); await wait(260);
+  saved = JSON.parse(shared[PROJ]);
+  const names = Object.values(saved).map(p => p.state.name).sort();
+  assert.deepEqual(names, ['Desde A', 'Desde B', 'Original'], 'Cada pestaña conserva sus cambios sin pisar la otra');
+  console.log('OK: varias pestañas sin sobrescribirse (fusión por newsletter, conflictos detectados).');
+})().catch(e => { console.error(e); process.exit(1); });

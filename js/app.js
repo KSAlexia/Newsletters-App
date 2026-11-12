@@ -4,11 +4,49 @@
 (function () {
   var K = window.KSA, $ = function (s) { return document.querySelector(s); };
   var STORE = 'kaptiva-newsletters-v1', PROJ = 'kaptiva-newsletters-projects-v1', state, html = '', checks = [], timer, projects = {}, currentId = null;
-  var HUB = 'kaptiva-newsletters-hub-v1', organization = { folders: {}, sorts: {}, orders: {} }, hubTournament = '', hubFolder = '', savedContent = '', draggedProject = '';
+  var HUB = 'kaptiva-newsletters-hub-v1', organization = { folders: {}, sorts: {}, orders: {} }, hubTournament = '', hubFolder = '', hubClub = '', editingCode = false, savedContent = '', draggedProject = '';
 
   // ---------- Guardado automático en este navegador ----------
   function load() { try { var s = JSON.parse(localStorage.getItem(STORE)); if (s && s.sections) return s; } catch (e) {} return null; }
-  function saveAll() { try { localStorage.setItem(PROJ, JSON.stringify(projects)); localStorage.setItem(HUB, JSON.stringify(organization)); $('#storage-error').hidden = true; return true; } catch (e) { $('#storage-error').hidden = false; return false; } }
+  // Varias pestañas: antes de escribir se fusiona con lo que haya guardado otra pestaña (K.Hub.merge3),
+  // así una pestaña con datos antiguos no borra newsletters, carpetas ni cambios de las demás.
+  var synced = { projects: {}, folders: {}, sorts: {}, orders: {} }, noteTimer;
+  function keyOf(v) { return JSON.stringify(v, function (k, x) { return k === 'open' ? undefined : x; }); }
+  function texts(map) { var o = {}; Object.keys(map || {}).forEach(function (id) { o[id] = keyOf(map[id]); }); return o; }
+  function rememberSynced() { synced = { projects: texts(projects), folders: texts(organization.folders), sorts: texts(organization.sorts), orders: texts(organization.orders) }; }
+  function readStored() {
+    var rawP = localStorage.getItem(PROJ), rawH = localStorage.getItem(HUB), p = {}, h = { folders: {}, sorts: {}, orders: {} };
+    try { p = JSON.parse(rawP) || {}; } catch (e) {}
+    try { var x = JSON.parse(rawH); if (x && x.folders && x.sorts && x.orders) h = x; } catch (e) {}
+    return { rawP: rawP, rawH: rawH, projects: p, hub: h };
+  }
+  function syncNote(text) {
+    var n = $('#sync-note'); n.textContent = text; n.hidden = false;
+    clearTimeout(noteTimer); noteTimer = setTimeout(function () { n.hidden = true; }, 10000);
+  }
+  function saveAll() {
+    try {
+      var stored = readStored(), H = K.Hub;
+      var p = H.merge3(projects, synced.projects, stored.projects, keyOf);
+      var f = H.merge3(organization.folders, synced.folders, stored.hub.folders, keyOf);
+      var s = H.merge3(organization.sorts, synced.sorts, stored.hub.sorts, keyOf);
+      var o = H.merge3(organization.orders, synced.orders, stored.hub.orders, keyOf);
+      var mineCurrent = currentId && projects[currentId];
+      if (mineCurrent && !p.merged[currentId]) { p.merged[currentId] = mineCurrent; syncNote('Esta newsletter se eliminó en otra pestaña. Se conserva porque la tienes abierta.'); }
+      projects = p.merged; organization = { folders: f.merged, sorts: s.merged, orders: o.merged };
+      var pj = JSON.stringify(projects), hj = JSON.stringify(organization);
+      if (pj !== stored.rawP) localStorage.setItem(PROJ, pj);
+      if (hj !== stored.rawH) localStorage.setItem(HUB, hj);
+      rememberSynced(); $('#storage-error').hidden = true;
+      if (currentId && p.conflicts.indexOf(currentId) >= 0) syncNote('Esta newsletter también se modificó en otra pestaña. Se ha guardado la versión de esta pestaña.');
+      else if (currentId && p.changed.indexOf(currentId) >= 0) {
+        // Otra pestaña la cambió y aquí no había cambios: se carga su versión.
+        state = K.normalize(projects[currentId].state); savedContent = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
+        setTimeout(function () { if (!currentId) return; syncSettings(); renderSections(); refresh(); syncNote('Esta newsletter se ha actualizado con los cambios hechos en otra pestaña.'); }, 0);
+      }
+      return true;
+    } catch (e) { $('#storage-error').hidden = false; return false; }
+  }
   function persist() {
     if (!currentId) return;
     var p = projects[currentId], content = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
@@ -18,8 +56,7 @@
     saveAll();
   }
   function loadAll() {
-    try { projects = JSON.parse(localStorage.getItem(PROJ)) || {}; } catch (e) { projects = {}; }
-    try { var hub = JSON.parse(localStorage.getItem(HUB)); if (hub && hub.folders && hub.sorts && hub.orders) organization = hub; } catch (e) {}
+    var stored = readStored(); projects = stored.projects; organization = stored.hub; rememberSynced();
     Object.keys(projects).forEach(function (id) {
       var p = projects[id], f = organization.folders[p.folder];
       if (!f || f.tournament !== K.tournament(p.state.tournament).id) p.folder = '';
@@ -41,8 +78,9 @@
     saveAll(); openProject(id);
   }
   function locationKey() { return K.Hub.location(hubTournament, hubFolder); }
-  function navigate(t, f) {
-    hubTournament = t || ''; hubFolder = f || '';
+  // hubClub solo se usa en el nivel de club (lista de secciones); dentro de una sección el club sale de la propia sección.
+  function navigate(t, f, club) {
+    hubTournament = t || ''; hubFolder = f || ''; hubClub = t ? '' : (club || '');
     $('#hub-search').value = ''; $('#hub-from').value = ''; $('#hub-to').value = '';
     showLobby();
     var crumbs = $('#hub-path').querySelectorAll('button'); if (crumbs.length) crumbs[crumbs.length - 1].focus();
@@ -155,19 +193,34 @@
     $('#hub-feedback').textContent = '';
     var box = $('#folders'); box.innerHTML = '';
     var crumbs = $('#hub-path'); crumbs.innerHTML = '';
-    crumbs.appendChild(el('button', { class: 'crumb', text: 'Todos los torneos', onclick: function () { navigate('', ''); } }));
+    crumbs.appendChild(el('button', { class: 'crumb', text: 'Inicio', onclick: function () { navigate('', ''); } }));
     $('#hub-controls').hidden = !hubTournament; $('#new-folder').hidden = !hubTournament;
     $('#hub-count').textContent = '';
+    function countFor(ids) { var n = Object.keys(projects).filter(function (id) { return ids.indexOf(K.tournament(projects[id].state.tournament).id) >= 0; }).length; return n + (n === 1 ? ' newsletter' : ' newsletters'); }
+    function card(label, color, ids, fn) { return el('button', { class: 'tournament-card', onclick: fn, style: 'border-top-color:' + color }, [el('span', { text: '📁 ' + label }), el('small', { text: countFor(ids) })]); }
+    var club = hubTournament ? K.club(K.tournament(hubTournament).club) : K.club(hubClub);
+    if (club) {
+      crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
+      crumbs.appendChild(el('button', { class: 'crumb', text: club.name, onclick: function () { navigate('', '', club.id); } }));
+    }
     if (!hubTournament) {
-      var grid = el('div', { class: 'grid' });
-      K.CLIENT.tournaments.forEach(function (t) {
-        var count = Object.keys(projects).filter(function (id) { return K.tournament(projects[id].state.tournament).id === t.id; }).length;
-        grid.appendChild(el('button', { class: 'tournament-card', onclick: function () { navigate(t.id, ''); }, style: 'border-top-color:' + t.principal }, [el('span', { text: '📁 ' + t.name }), el('small', { text: count + (count === 1 ? ' newsletter' : ' newsletters') })]));
+      if (club) {
+        var sections = el('div', { class: 'grid' });
+        K.CLIENT.tournaments.filter(function (t) { return t.club === club.id; }).forEach(function (t) { sections.appendChild(card(t.section, t.principal, [t.id], function () { navigate(t.id, ''); })); });
+        box.appendChild(sections); return;
+      }
+      var ksa = el('div', { class: 'grid' }), clubs = el('div', { class: 'grid' });
+      K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { ksa.appendChild(card(t.name, t.principal, [t.id], function () { navigate(t.id, ''); })); });
+      K.CLIENT.clubs.forEach(function (c) {
+        var ids = K.CLIENT.tournaments.filter(function (t) { return t.club === c.id; }).map(function (t) { return t.id; });
+        clubs.appendChild(card(c.name, c.base.principal, ids, function () { navigate('', '', c.id); }));
       });
-      box.appendChild(grid); return;
+      box.appendChild(el('h2', { class: 'hub-group', text: K.CLIENT.name })); box.appendChild(ksa);
+      box.appendChild(el('h2', { class: 'hub-group', text: 'Clubs' })); box.appendChild(clubs);
+      return;
     }
     crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
-    crumbs.appendChild(dropDestination(el('button', { class: 'crumb', text: K.tournament(hubTournament).name, onclick: function () { navigate(hubTournament, ''); } }), ''));
+    crumbs.appendChild(dropDestination(el('button', { class: 'crumb', text: K.tournament(hubTournament).section || K.tournament(hubTournament).name, onclick: function () { navigate(hubTournament, ''); } }), ''));
     var path = [], cursor = hubFolder, seen = {};
     while (cursor && organization.folders[cursor] && !seen[cursor]) { seen[cursor] = true; path.unshift(cursor); cursor = organization.folders[cursor].parent; }
     path.forEach(function (id) {
@@ -243,7 +296,13 @@
 
   // ---------- Ajustes generales ----------
   function fillSettings() {
-    $('#tournament').innerHTML = ''; K.CLIENT.tournaments.forEach(function (t) { $('#tournament').appendChild(el('option', { value: t.id, text: t.name })); });
+    $('#tournament').innerHTML = '';
+    var ksa = el('optgroup', { label: K.CLIENT.name }); $('#tournament').appendChild(ksa);
+    K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { ksa.appendChild(el('option', { value: t.id, text: t.name })); });
+    K.CLIENT.clubs.forEach(function (c) {
+      var g = el('optgroup', { label: c.name }); $('#tournament').appendChild(g);
+      K.CLIENT.tournaments.filter(function (t) { return t.club === c.id; }).forEach(function (t) { g.appendChild(el('option', { value: t.id, text: t.name })); });
+    });
     $('#recipe').innerHTML = ''; $('#recipe').appendChild(el('option', { value: '', text: 'Nueva desde receta…' }));
     K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); });
     $('#add').innerHTML = ''; $('#add').appendChild(el('option', { value: '', text: '＋ Añadir módulo…' }));
@@ -251,7 +310,7 @@
   }
   function syncSettings() {
     if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
-    renderImagePanel();
+    editingCode = false; renderImagePanel();
     $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || '';
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
@@ -400,9 +459,28 @@
 
   // ---------- Resultado ----------
   function update() { clearTimeout(timer); timer = setTimeout(refresh, 200); }
+  // Código editado a mano: state.customHtml sustituye al HTML generado en vista previa, copia y descargas.
+  // state.customBase guarda el HTML generado en el momento de aplicar, para avisar si después cambian módulos o ajustes.
+  function hasCustomCode() { return !!state && typeof state.customHtml === 'string'; }
+  function codeUI(generated) {
+    var custom = hasCustomCode(), stale = custom && generated !== state.customBase, note = '';
+    $('#code').readOnly = !editingCode;
+    $('#copy').hidden = editingCode; $('#code-edit').hidden = editingCode;
+    $('#code-apply').hidden = !editingCode; $('#code-cancel').hidden = !editingCode;
+    $('#code-reset').hidden = editingCode || !custom;
+    $('#code-edit').textContent = custom ? 'Seguir editando' : 'Editar código';
+    var customMsg = custom ? 'Esta newsletter usa código editado a mano: los cambios en los módulos y ajustes no se aplican al email.' + (stale ? ' Has cambiado módulos o ajustes desde la última edición; para incorporarlos, vuelve al código generado.' : '') : '';
+    note = editingCode ? 'Estás editando el código. Pulsa «Aplicar cambios» para usarlo en la vista previa, la copia y las descargas.' : customMsg;
+    $('#code-note').textContent = note; $('#code-note').hidden = !note;
+    $('#preview-note').textContent = customMsg; $('#preview-note').hidden = !customMsg;
+  }
   function refresh() {
-    html = K.build(state); checks = K.check(state, html); persist();
-    $('#frame').srcdoc = html; $('#code').value = html;
+    var generated = K.build(state), custom = hasCustomCode();
+    html = custom ? state.customHtml : generated; checks = K.check(state, html);
+    if (custom) checks.unshift({ level: 'warn', msg: 'Código editado a mano: la revisión de módulos se basa en sus campos y puede no reflejar lo cambiado en el código.' + (generated !== state.customBase ? ' Hay cambios en módulos o ajustes que no están en el código editado.' : '') });
+    persist();
+    $('#frame').srcdoc = html; if (!editingCode) $('#code').value = html;
+    codeUI(generated);
     $('#filename').textContent = K.fileBase(state) + '_COPIAR_Y_PEGAR.txt';
     var ul = $('#checks'); ul.innerHTML = '';
     var order = { error: 0, warn: 1, ok: 2 }, icon = { error: '✕', warn: '!', ok: '✓' };
@@ -428,15 +506,38 @@
     if (K.BrandKitsUI) K.BrandKitsUI.init(function () { K.BrandKitsUI.refreshSelect(state); renderImagePanel(); });
     fillSettings();
     loadAll(); initHub(); showLobby();
-    $('#back').addEventListener('click', function () { var id = currentId; showLobby(); focusHubItem(id); });
+    $('#back').addEventListener('click', function () {
+      if (editingCode && $('#code').value !== html && !confirm('Tienes cambios en el código sin aplicar. ¿Salir sin aplicarlos?')) return;
+      editingCode = false; var id = currentId; showLobby(); focusHubItem(id);
+    });
+    $('#code-edit').addEventListener('click', function () { editingCode = true; codeUI(K.build(state)); $('#code').focus(); });
+    $('#code-cancel').addEventListener('click', function () { editingCode = false; $('#code').value = html; codeUI(K.build(state)); });
+    $('#code-apply').addEventListener('click', function () {
+      var value = $('#code').value, generated = K.build(state);
+      if (!value.trim()) { alert('El código está vacío. Escribe o pega el HTML, o pulsa Cancelar.'); return; }
+      editingCode = false;
+      if (value === generated) { delete state.customHtml; delete state.customBase; }
+      else if (value !== html) { state.customHtml = value; state.customBase = generated; }
+      refresh();
+    });
+    $('#code-reset').addEventListener('click', function () {
+      if (!confirm('Se descartará el código editado a mano y se volverá a generar desde los módulos. ¿Continuar?')) return;
+      delete state.customHtml; delete state.customBase; refresh();
+    });
     $('#new').addEventListener('click', function () {
-      var st = K.fromRecipe('blank', hubTournament || undefined);
-      if (hubTournament) { st.tournament = hubTournament; st.headerAlt = ''; }
+      var target = hubTournament || (hubClub ? K.CLIENT.tournaments.filter(function (t) { return t.club === hubClub; })[0].id : '');
+      var st = K.fromRecipe('blank', target || undefined);
+      if (target) { st.tournament = target; st.headerAlt = ''; }
       createProject(st);
     });
     $('#franja').addEventListener('input', function () { state.franjaLeft = this.value; update(); });
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).addEventListener('change', function () { state.off[k] = !this.checked; update(); }); });
     window.addEventListener('beforeunload', function () { if (currentId) persist(); });
+    // Otra pestaña ha guardado: fusionar y refrescar lo que se ve.
+    window.addEventListener('storage', function (event) {
+      if (event.key !== PROJ && event.key !== HUB) return;
+      saveAll(); if (!currentId) showLobby();
+    });
 
     $('#brand-kit').addEventListener('change', function () {
       if (this.value === '@current' || !K.BrandKits) return;

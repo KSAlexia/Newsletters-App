@@ -66,3 +66,20 @@ for (const [type, d, width] of [['imagen', { src: 'PLACEHOLDER', alt: '', size: 
   assert.ok(!checks.some(x => /custom link de Cvent válido|falta la descripción/.test(x.msg)), 'Sin errores duplicados por el placeholder');
 }
 console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y producto.');
+
+// Clubs: nombre, fuentes, colores y pendientes por sección; KSA sigue igual (prueba de igualdad del principio).
+{
+  const make = id => { const st = { ...K.fromRecipe('blank'), tournament: id, franjaLeft: 'Camp', name: 'Prueba', sections: [{ type: 'contacto', d: {} }] }; return [st, K.build(st)]; };
+  const [ars, arsHtml] = make('arsenal-exp');
+  assert.match(arsHtml, /<title>Arsenal Football Development Clinic – Prueba<\/title>/);
+  assert.ok(arsHtml.includes('e1baea18930047838d4054ffe1d0f262.png') && arsHtml.includes('#B4001E'));
+  assert.ok(!/'(DinPro\w+|Extenda\d+)'/.test(arsHtml) && arsHtml.includes('font-family:Georgia'), 'Arsenal usa Georgia/Helvetica sin @font-face');
+  assert.ok(arsHtml.includes('CONTACTO PENDIENTE') && K.check(ars, arsHtml).some(x => x.level === 'error' && /contacto/.test(x.msg)));
+  assert.equal(K.fileBase(ars), 'arsenal-experiences_prueba');
+  const [, psgHtml] = make('psg-canada');
+  assert.ok(psgHtml.includes('f7af6f3c0aeb49dd880cd60fe6a07804.otf') && psgHtml.includes("format('opentype')") && psgHtml.includes('#004070'));
+  const [wc, wcHtml] = make('rmf-wc'), wcChecks = K.check(wc, wcHtml);
+  assert.ok(wcChecks.some(x => /Header de .*PENDIENTE/.test(x.msg)) && wcChecks.some(x => /provisionales/.test(x.msg)));
+  assert.equal(K.CLIENT.tournaments.filter(t => t.club === 'bayern').map(t => t.section).join(), 'CANADA CAMPS,EXPERIENCES');
+  console.log('OK: clubs con nombre, fuentes, colores, contacto y pendientes por sección.');
+}

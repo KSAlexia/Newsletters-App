@@ -46,6 +46,7 @@
 </section>
 
 <p id="kit-load-error" role="alert" hidden></p>
+<p id="sync-note" role="status" hidden></p>
 <p id="storage-error" role="alert" hidden>No se han podido guardar los últimos cambios en este navegador. No cierres la app; exporta las newsletters que hayas editado para conservar su contenido.</p>
 <main>
   <section class="editor">
@@ -90,11 +91,18 @@
         <button data-w="mobile">Móvil</button>
       </div>
     </div>
-    <div class="pane" id="pane-preview"><iframe id="frame" title="Vista previa"></iframe></div>
+    <div class="pane" id="pane-preview"><p id="preview-note" class="code-note" hidden></p><iframe id="frame" title="Vista previa"></iframe></div>
     <div class="pane" id="pane-review" hidden><ul id="checks"></ul></div>
     <div class="pane" id="pane-code" hidden>
-      <button id="copy">Copiar código</button>
-      <textarea id="code" readonly spellcheck="false"></textarea>
+      <div class="code-bar">
+        <button id="copy" type="button">Copiar código</button>
+        <button id="code-edit" type="button" class="secondary">Editar código</button>
+        <button id="code-apply" type="button" hidden>Aplicar cambios</button>
+        <button id="code-cancel" type="button" class="secondary" hidden>Cancelar</button>
+        <button id="code-reset" type="button" class="secondary" hidden>Volver al código generado</button>
+      </div>
+      <p id="code-note" class="code-note" hidden></p>
+      <textarea id="code" readonly spellcheck="false" aria-label="Código HTML de la newsletter"></textarea>
     </div>
   </section>
 </main>

@@ -25,10 +25,22 @@
   function attr(s) { return esc(s).replace(/"/g, '&quot;'); }
   function has(s) { return !!(s && String(s).trim()); }
   function paras(s) { return String(s || '').split(/\n+/).map(function (x) { return x.trim(); }).filter(Boolean); }
+  // Enlaces dentro del texto: solo https://, http:// (aviso) y mailto: se convierten en enlace.
+  var LINK = /\[([^\]]+)\]\(([^)\s]+)\)/g;
+  function linkLevel(u) {
+    u = String(u || '');
+    if (/^https:\/\/[^\s/?#.]+\.[^\s]+$/i.test(u)) return 'ok';
+    if (/^mailto:[^\s@]+@[^\s@]+\.[^\s@]+$/i.test(u)) return 'ok';
+    if (/^http:\/\/[^\s/?#.]+\.[^\s]+$/i.test(u)) return 'warn';
+    return 'error';
+  }
+  K.linkLevel = linkLevel;
   // **negrita** y [texto](enlace). Nada más se toca.
   function inline(s, strongColor) {
     var h = esc(String(s || '').trim());
-    h = h.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, function (m, t, u) {
+    h = h.replace(LINK, function (m, t, u) {
+      // Un esquema no permitido (javascript:, data:, rutas sin https…) nunca llega a un href; la revisión lo marca.
+      if (!/^(https?:\/\/|mailto:)/i.test(u)) return t;
       return '<a href="' + u.replace(/"/g, '&quot;') + '" target="_blank" style="color:' + P + ';text-decoration:underline;">' + t + '</a>';
     });
     h = h.replace(/\*\*(.+?)\*\*/g, '<strong style="' + F.bold + 'color:' + (strongColor || P) + ';">$1</strong>');
@@ -140,7 +152,7 @@
     fields: [{ k: 'left', label: 'Etiqueta izquierda', type: 'text', req: true, ph: 'Media Packages' }],
     build: function (d, t) {
       var ps = F.med + 'font-size:11px;line-height:14px;color:' + P + ';letter-spacing:3px;text-transform:uppercase;word-break:break-word;';
-      return section(cell('14px 40px', '', TBL + '><tbody><tr><td align="left"><p style="' + ps + '">' + esc((d.left || '').trim()) + '</p></td><td align="right"><p style="' + ps + '">' + esc(t.name) + '</p></td></tr></tbody></table>') +
+      return section(cell('14px 40px', '', TBL + '><tbody><tr><td align="left"><p style="' + ps + '">' + esc((d.left || '').trim()) + '</p></td><td align="right"><p style="' + ps + '">' + esc(t.club ? t.brand : t.name) + '</p></td></tr></tbody></table>') +
         '<tr><td height="4" bgcolor="' + A + '" style="height:4px;line-height:4px;font-size:0;background-color:' + A + ';">&nbsp;</td></tr>');
     }
   };
@@ -220,9 +232,10 @@
   M.contacto = {
     letter: 'F', name: 'Caja de contacto (Get in Touch)', tag: 'CONTACTO',
     fields: [], note: 'Texto fijo con el email de contacto y el teléfono del evento.',
-    build: function () {
-      var mail = K.CLIENT.contactEmail;
-      return section(cell('16px 40px 32px 40px', 'center', TBL + ' style="background-color:#FFFFFF;border:1px solid ' + GREY + ';border-left:4px solid ' + P + ';"><tbody><tr><td align="center" style="padding:22px 24px;text-align:center;"><p style="' + F.ex60 + 'font-size:34px;line-height:38px;color:' + P + ';text-transform:uppercase;text-align:center;padding-bottom:10px;">Get in Touch</p><p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:center;word-break:break-word;">If you have any questions, please feel free to contact us at <a href="mailto:' + mail + '" style="color:' + P + ';text-decoration:underline;"><span style="' + F.bold + '">' + mail + '</span></a></p><p style="' + F.bold + 'font-size:15px;line-height:23px;color:' + P + ';text-align:center;padding-top:8px;word-break:break-word;"><span style="color: ' + P + ';"><span style="font-weight: bold;">For any questions, please contact us at: {[E-CUSTOM:Event Phone Number]}</span></span></p></td></tr></tbody></table>'));
+    build: function (d, t) {
+      var mail = t && t.club ? String(t.contact || '').trim() : K.CLIENT.contactEmail;
+      var link = mail ? '<a href="mailto:' + attr(mail) + '" style="color:' + P + ';text-decoration:underline;"><span style="' + F.bold + '">' + esc(mail) + '</span></a>' : '<span style="' + F.bold + '">CONTACTO PENDIENTE</span>';
+      return section(cell('16px 40px 32px 40px', 'center', TBL + ' style="background-color:#FFFFFF;border:1px solid ' + GREY + ';border-left:4px solid ' + P + ';"><tbody><tr><td align="center" style="padding:22px 24px;text-align:center;"><p style="' + F.ex60 + 'font-size:34px;line-height:38px;color:' + P + ';text-transform:uppercase;text-align:center;padding-bottom:10px;">Get in Touch</p><p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:center;word-break:break-word;">If you have any questions, please feel free to contact us at ' + link + '</p><p style="' + F.bold + 'font-size:15px;line-height:23px;color:' + P + ';text-align:center;padding-top:8px;word-break:break-word;"><span style="color: ' + P + ';"><span style="font-weight: bold;">For any questions, please contact us at: {[E-CUSTOM:Event Phone Number]}</span></span></p></td></tr></tbody></table>'));
     }
   };
 
@@ -374,24 +387,32 @@
     var t = K.BrandKits ? K.BrandKits.effectiveTournament(st) : K.tournament(st.tournament), kit = K.BrandKits ? K.BrandKits.forState(st) : null, parts = [], n = 0;
     function add(tag, html) { parts.push('<!-- [' + (n++) + '] ' + tag + ' -->\n' + html); }
     var off = st.off || {};
-    if (!off.header && t.header) add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : (kit ? (kit.header.name || kit.name) : K.CLIENT.name + ' · ' + t.name)));
-    var banner = kit ? kit.mediaBanner.url : K.CLIENT.mediaBanner;
+    if (!off.header && t.header) add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : (kit ? (kit.header.name || kit.name) : (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name))));
+    var banner = kit ? kit.mediaBanner.url : (t.club ? t.mediaBanner : K.CLIENT.mediaBanner);
     if (st.mediaPackages && banner) add('BANNER', imgFull(banner, 'Media Packages - ' + t.name));
     if (!off.franja) add('FRANJA', M.franja.build({ left: st.franjaLeft }, t));
     (st.sections || []).forEach(function (s) { var m = M[s.type]; if (m) add(m.tag, m.build(s.d || {}, t)); });
     if (t.footer && !off.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
-    var title = K.CLIENT.name + ' · ' + t.name + (has(st.name) ? ' – ' + st.name.trim() : '');
+    var title = (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name) + (has(st.name) ? ' – ' + st.name.trim() : '');
     var html = K.HEAD.replace('%%TITLE%%', function () { return esc(title); }) + ' ' + K.BODY_OPEN + parts.join('\n') + '\n' + K.BODY_CLOSE + '\n';
     // Colores del torneo: una sola pasada
     html = html.replace(/#6F4ACC|#91FAFB/gi, function (m) { return m.toUpperCase() === P ? t.principal : t.acento; });
-    return K.BrandKits ? K.BrandKits.fontHtml(html, kit) : html;
+    // Fuentes: las del kit aplicado o, si no hay kit, las de la sección del club. Sin enlace se elimina su @font-face.
+    var fontSet = kit || (t.fonts ? { fonts: t.fonts } : null);
+    if (K.BrandKits && fontSet) html = K.BrandKits.fontHtml(html, fontSet);
+    // Fuentes de sistema por uso (p. ej. Georgia) cuando ese uso no tiene enlace.
+    if (t.families) Object.keys(t.families).forEach(function (role) {
+      if (fontSet && fontSet.fonts[role]) return;
+      html = html.replace(new RegExp("font-family:\\s*'" + role + "'[^;\"}]*", 'g'), function () { return 'font-family:' + t.families[role]; });
+    });
+    return html;
   };
 
   K.fileBase = function (st) {
     var t = K.tournament(st.tournament);
     var d = String(st.desc || st.name || 'newsletter').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/&/g, ' ').replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'newsletter';
-    return K.CLIENT.filePrefix + '-' + t.slug + '_' + d;
+    return (t.filePrefix || K.CLIENT.filePrefix) + '-' + t.slug + '_' + d;
   };
 
   // ============================================================
@@ -405,6 +426,10 @@
     if (kit && !t.header && !off0.header) W('El kit no tiene custom link de header; el email sale sin esa imagen.');
     if (kit && st.mediaPackages && !kit.mediaBanner.url) W('El kit no tiene custom link para el banner de Media Packages.');
 
+    if (!kit && !t.header && !off0.header) W('Header de ' + t.name + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del header.');
+    if (t.provisional && !kit) W('Colores de ' + t.name + ' provisionales: faltan sus datos de diseño.');
+    if (!kit && t.club && st.mediaPackages && !t.mediaBanner) W(t.clubName + ' no tiene banner de Media Packages: no se añade.');
+    if (t.club && !has(t.contact) && secs.some(function (x) { return x.type === 'contacto'; })) E('Caja de contacto: falta el email o custom field de contacto de ' + t.clubName + '. Sale «CONTACTO PENDIENTE».');
     if (!has(st.name)) W('Falta el nombre de la newsletter (título interno y nombre de archivo).');
     if (!t.footer && !off0.footer) W('Footer de imagen de ' + (kit ? kit.name : t.name) + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
     if (!secs.length) W('La newsletter no tiene módulos todavía.');
@@ -432,6 +457,18 @@
         }
       });
       var d = s.d || {};
+      // Enlaces escritos en el texto: [texto](enlace)
+      m.fields.forEach(function (f) {
+        if (f.type !== 'text' && f.type !== 'area') return;
+        var raw = String(d[f.k] || ''), where = 'Módulo ' + (i + 1) + ' (' + m.name + '), «' + f.label + '»: ';
+        raw.replace(LINK, function (all, t, u) {
+          var level = linkLevel(u);
+          if (level === 'error') E(where + 'el enlace «' + u + '» no es válido. Usa https://… o mailto:…');
+          else if (level === 'warn') W(where + 'el enlace «' + u + '» usa http:// (sin cifrar). Mejor https://.');
+          return '';
+        });
+        if (/\[[^\]\n]+\]\s*\(/.test(raw.replace(LINK, ''))) W(where + 'hay un enlace mal escrito; no se convertirá en enlace. Formato: [texto](https://…), sin espacios en el enlace.');
+      });
       if (s.type === 'compra' && d.variant === 'custom' && String(d.line || '').indexOf('{[E-MODIFY REG LINK]}') < 0) E('Módulo ' + (i + 1) + ': la frase de la caja debe incluir {[E-MODIFY REG LINK]}.');
       if (s.type === 'tarjetas') ['a', 'b'].forEach(function (x) { if (has(d[x + '_btn']) !== has(d[x + '_url'])) E('Módulo ' + (i + 1) + ' (Tarjetas): un botón necesita texto y enlace.'); });
       if (s.type === 'titulo' && has(d.btn) !== has(d.url)) E('Módulo ' + (i + 1) + ' (Título): el botón necesita texto y enlace.');
@@ -456,7 +493,7 @@
     if (/surf cup spain/i.test(txt)) E('Aparece «Surf Cup Spain»: debe ser «Surf Cup» o «Surf Cup Tournament».');
     if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(txt)) W('Hay emojis en el texto: no se usan en este estilo.');
     K.CLIENT.tournaments.forEach(function (o) {
-      if (o.id !== t.id && new RegExp(o.short.replace(/ /g, '\\s+'), 'i').test(txt) && !(t.id === 'usacup' && o.id === 'surfcup' && false))
+      if (o.short && o.id !== t.id && new RegExp(o.short.replace(/ /g, '\\s+'), 'i').test(txt) && !(t.id === 'usacup' && o.id === 'surfcup' && false))
         W('El texto menciona «' + o.short + '» pero el torneo elegido es ' + t.name + '.');
     });
     if (st.mediaPackages && (!kit || kit.mediaBanner.url)) OK('Banner de Media Packages bajo el header.');

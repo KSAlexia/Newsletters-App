@@ -41,6 +41,28 @@ App interna para montar newsletters de Cvent con piezas fijas. Sin IA y sin cost
 ## Continuar el desarrollo con Codex o Claude
 Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los cambios implementados, las decisiones de producto, las pruebas y los pendientes. `AGENTS.md` y `CLAUDE.md` remiten a ese documento compartido.
 
+## Enlaces y varias pestañas
+
+- Enlaces en el texto: `[texto](https://…)` o `[texto](mailto:…)`. La revisión marca como error cualquier otro enlace (sin https, `www.…` sin esquema, `javascript:`…), avisa de `http://` y de enlaces mal escritos (`[texto] (enlace)` o con espacios). Un enlace no permitido sale como texto, nunca como enlace.
+- Puedes tener la app abierta en varias pestañas: al guardar, cada pestaña fusiona sus cambios con los de las demás por newsletter y carpeta, sin borrar lo que hagan otras. Si otra pestaña cambia la newsletter que tienes abierta (y tú no la estabas cambiando), se recarga con un aviso. Si las dos la cambian, se guarda la de la pestaña donde editas y se avisa.
+
+## Editar el código a mano
+
+- En la pestaña **Código**, **Editar código** desbloquea el HTML. **Aplicar cambios** lo usa en la vista previa, en «Copiar código» y en las descargas; **Cancelar** descarta lo escrito.
+- El código editado se guarda con la newsletter (también en el JSON del proyecto). Mientras exista, los cambios en módulos y ajustes **no** se aplican al email: la vista previa y la revisión lo avisan, también si has cambiado módulos después de editar.
+- **Volver al código generado** descarta la edición manual y regenera el HTML desde los módulos.
+
+## Clubs
+
+- La pantalla inicial tiene dos grupos: **KSA Global Stage** (los torneos) y **Clubs**. Al entrar en un club aparecen sus secciones, que funcionan como un torneo (carpetas y newsletters propias):
+  - Fundación Real Madrid: USA CAMPS, CANADA CAMPS, EXPERIENCES, RMF WORLD CHALLENGE
+  - Paris Saint-Germain Academy: USA CAMPS, CANADA CAMPS, EXPERIENCES
+  - Arsenal: USA CAMPS, CANADA CAMPS, EXPERIENCES
+  - Bayern FC: CANADA CAMPS, EXPERIENCES
+- Los datos están en `js/brands.js` (`K.CLIENT.clubs`). Cada sección hereda el diseño de su club (`base`) y puede cambiar header, footer, colores, fuentes, nombre del título o contacto. Un valor `null` o vacío queda PENDIENTE y la revisión lo avisa.
+- El nombre del club sustituye a «KSA Global Stage» en el título del email, el alt del header y la etiqueta derecha de la franja. Los clubs no tienen banner de Media Packages.
+- Contacto: `contact` acepta un email o un custom field de Cvent; si es un custom field, añádelo también a `K.CVENT_FIELDS`. Mientras esté vacío, la caja «Get in Touch» muestra «CONTACTO PENDIENTE» y la revisión da error.
+
 ## Brand kits
 
 - Pulsa **Brand kits** en el hub o **Gestionar brand kits** dentro del editor. Crea un kit independiente o usa uno de los torneos como punto de partida; los kits originales no se sobrescriben.

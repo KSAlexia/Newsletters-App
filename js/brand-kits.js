@@ -47,10 +47,11 @@
   B.defaults = function (id) {
     var t = K.tournament(id), fonts = {};
     B.roles.forEach(function (r) {
+      if (t.fonts) { fonts[r[0]] = t.fonts[r[0]] || ''; return; }
       var face = (K.HEAD.match(/@font-face\s*\{[^}]*\}/g) || []).filter(function (x) { return x.indexOf("font-family: '" + r[0] + "'") >= 0; })[0] || '';
       var url = face.match(/src: url\('([^']+)'\)/); fonts[r[0]] = url ? url[1] : '';
     });
-    return { id: '', name: t.name, tournament: t.id, colors: { principal: t.principal, acento: t.acento, secundario: t.secundario || '' }, header: { name: K.CLIENT.name + ' · ' + t.name, url: t.header || '' }, footer: { name: t.footerAlt || '', url: t.footer || '' }, mediaBanner: { name: 'Media Packages', url: K.CLIENT.mediaBanner }, fonts: fonts, assets: [] };
+    return { id: '', name: t.name, tournament: t.id, colors: { principal: t.principal, acento: t.acento, secundario: t.secundario || '' }, header: { name: t.club ? t.brand : K.CLIENT.name + ' · ' + t.name, url: t.header || '' }, footer: { name: t.footerAlt || '', url: t.footer || '' }, mediaBanner: { name: 'Media Packages', url: t.club ? (t.mediaBanner || '') : K.CLIENT.mediaBanner }, fonts: fonts, assets: [] };
   };
   B.empty = function () { var k = B.defaults(); k.name = 'Nuevo brand kit'; k.tournament = ''; ['header', 'footer', 'mediaBanner'].forEach(function (x) { k[x] = { name: '', url: '' }; }); B.roles.forEach(function (r) { k.fonts[r[0]] = ''; }); return k; };
   B.load = function (storage) {
