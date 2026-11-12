@@ -41,9 +41,12 @@ small { color: var(--muted); font-size: 11px; }
 .mod summary { display: flex; align-items: center; gap: 8px; padding: 10px 12px; cursor: pointer; list-style: none; }
 .mod summary::-webkit-details-marker { display: none; }
 .letter { flex: none; width: 24px; height: 24px; border-radius: 6px; background: var(--brand); color: #fff; font-weight: 700; font-size: 12px; display: grid; place-items: center; }
-.mname { font-weight: 600; white-space: nowrap; }
+.mname { font-weight: 600; white-space: nowrap; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
 .snip { flex: 1; min-width: 0; color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.tools { display: flex; gap: 2px; }
+.tools { display: flex; gap: 2px; flex: none; margin-left: auto; }
+.mod summary { min-width: 0; }
+/* Con nombre largo, el resumen (snip) cede primero; luego el nombre se corta con «…» (el nombre entero sale al pasar el ratón). */
+.mod summary .snip { flex: 1 1 0; }
 .tool { border: 0; background: none; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; color: var(--muted); }
 .tool:hover:not(:disabled) { background: var(--soft); color: var(--brand); }
 .tool:disabled { opacity: .3; cursor: default; }

@@ -718,3 +718,10 @@ Pruebas: nuevas equivalencias en `test/pieces.test.js` (suave, suave con título
 - **At a glance y Dos fechas límite siguen en la paleta**: «Tarjetas» no los reproduce byte a byte (otra rejilla y otra tipografía de dato), así que, según la regla acordada, no se retiran.
 - Prueba: `node test/datos-timeline.test.js`. Comprobado en el navegador: 4 datos en fila en escritorio y apilados en móvil, sin desbordar.
 - **Sigue pendiente**: fase 6 (botón «Convertir» de bloques antiguos, opcional).
+
+## Corrección: tarjetas del panel que desbordaban y frase propia en la Caja de compra (2026-11-12)
+
+- **Desbordamiento**: con nombres largos (p. ej. «Caja de compra / registro (campos Cvent)») los botones ↑ ↓ ojo ⧉ ✕ se salían de la tarjeta. Ahora los botones no encogen y van siempre a la derecha; cede primero el resumen y después el nombre, que se corta con «…» (el nombre entero sale al pasar el ratón). Comprobado en el navegador: ningún elemento sale de su tarjeta.
+- **Caja de compra · Frase principal**: siguen las dos frases fijas y la tercera opción pasa a ser «Otra (escribe tu frase)», con texto libre. Puede llevar {[E-MODIFY REG LINK]}, un enlace propio [texto](https://…) o **negrita**. Ya no se exige el campo de Cvent: la revisión da error si la frase está vacía y aviso si no tiene ningún enlace.
+- HTML: las dos frases fijas y las frases propias ya guardadas (texto llano con el campo de Cvent) salen igual que antes (76 casos comparados en los 19 torneos); el formato solo se aplica a la frase propia.
+- Prueba: `node test/compra.test.js`.

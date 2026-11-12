@@ -390,8 +390,8 @@
   M.compra = {
     letter: 'E', name: 'Caja de compra / registro (campos Cvent)', tag: 'CAJA COMPRA (CAMPOS CVENT)',
     fields: [
-      { k: 'variant', label: 'Frase principal', type: 'select', opts: [['compra', 'To purchase your package (Click here)'], ['modificar', 'If you want to modify your registration (Click here)'], ['custom', 'Otra frase…']] },
-      { k: 'line', label: 'Otra frase (debe incluir {[E-MODIFY REG LINK]})', type: 'text', showIf: function (d) { return d.variant === 'custom'; } },
+      { k: 'variant', label: 'Frase principal', type: 'select', opts: [['compra', 'To purchase your package (Click here)'], ['modificar', 'If you want to modify your registration (Click here)'], ['custom', 'Otra (escribe tu frase)']] },
+      { k: 'line', label: 'Tu frase', type: 'text', ph: 'To book your hotel [click here](https://…)', hint: 'Para el enlace de Cvent de la inscripción escribe {[E-MODIFY REG LINK]}; para otro enlace, [texto](https://…). Admite **negrita**.', showIf: function (d) { return d.variant === 'custom'; } },
       { k: 'layout', label: 'Orden', type: 'select', opts: [['top', 'Frase arriba, datos debajo'], ['bottom', 'Datos arriba, frase debajo']] },
       { k: 'info', label: 'Línea sobre los datos (opcional)', type: 'text', ph: 'Your registration access information:', showIf: function (d) { return d.layout === 'bottom'; } }
     ],
@@ -401,7 +401,7 @@
       var lab = F.med + 'font-size:11px;line-height:14px;color:' + GREY + ';letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding-bottom:4px;';
       var val = F.bold + 'font-size:18px;line-height:24px;color:' + C.title + ';text-align:center;word-break:break-word;';
       function dato(pad, l, v) { return '<tr class="css-vsf5of"><td align="center" style="padding:' + pad + ';text-align:center;word-break:break-word;"><p style="' + lab + '">' + l + '</p><p style="' + val + '">' + v + '</p></td></tr>'; }
-      function cta(pad) { return '<tr class="css-vsf5of"><td align="center" style="padding:' + pad + ';' + F.bold + 'font-size:20px;line-height:26px;color:#000000;text-align:center;word-break:break-word;"><span style="color: rgb(0,0,0);"><span style="font-weight: bold;">' + esc(line) + '</span></span></td></tr>'; }
+      function cta(pad) { return '<tr class="css-vsf5of"><td align="center" style="padding:' + pad + ';' + F.bold + 'font-size:20px;line-height:26px;color:#000000;text-align:center;word-break:break-word;"><span style="color: rgb(0,0,0);"><span style="font-weight: bold;">' + (d.variant === 'custom' ? inline(line, '#000000') : esc(line)) + '</span></span></td></tr>'; }
       var rule = '<tr><td style="padding:14px 40px 6px 40px;">' + TBL + '><tbody><tr><td style="border-top:1px solid ' + C.line + ';font-size:0;line-height:0;">&nbsp;</td></tr></tbody></table></td></tr>';
       var rows;
       if (d.layout === 'bottom') {
@@ -1070,7 +1070,11 @@
         });
         if (/\[[^\]\n]+\]\s*\(/.test(raw.replace(LINK, ''))) W(where + 'hay un enlace mal escrito; no se convertirá en enlace. Formato: [texto](https://…), sin espacios en el enlace.');
       });
-      if (s.type === 'compra' && d.variant === 'custom' && String(d.line || '').indexOf('{[E-MODIFY REG LINK]}') < 0) E('Módulo ' + (i + 1) + ': la frase de la caja debe incluir {[E-MODIFY REG LINK]}.');
+      // Frase propia: puede llevar el campo de Cvent o un enlace [texto](…); sin ninguno, la caja no lleva a ningún sitio.
+      if (s.type === 'compra' && d.variant === 'custom') {
+        if (!has(d.line)) E('Módulo ' + (i + 1) + ' (Caja de compra): falta tu frase.');
+        else if (!/\{\[E-[A-Z -]+LINK\]\}/.test(d.line) && !/\[[^\]]+\]\([^)\s]+\)/.test(d.line)) W('Módulo ' + (i + 1) + ' (Caja de compra): tu frase no tiene enlace. Añade {[E-MODIFY REG LINK]} o [texto](https://…).');
+      }
       function btnCheck(where, b, u) {
         if (has(b) && !has(u)) E('Módulo ' + (i + 1) + ' (' + where + '): el botón «' + String(b).trim() + '» no tiene enlace. Añádelo antes de enviar.');
         if (!has(b) && has(u)) E('Módulo ' + (i + 1) + ' (' + where + '): hay un enlace de botón pero falta el texto del botón.');

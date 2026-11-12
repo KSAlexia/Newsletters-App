@@ -1266,7 +1266,7 @@
       det.addEventListener('toggle', function () { s.open = det.open; persist(); });
       function tool(txt, title, fn, dis) { var b = el('button', { class: 'tool', title: title, text: txt, onclick: function (e) { e.preventDefault(); e.stopPropagation(); fn(); } }); if (dis) b.disabled = true; return b; }
       var summary = det.appendChild(el('summary', {}, [
-        blockThumb(s.type, 'mod-thumb'), el('span', { class: 'mname', text: m.name }), snip,
+        blockThumb(s.type, 'mod-thumb'), el('span', { class: 'mname', text: m.name, title: m.name }), snip,
         el('span', { class: 'tools' }, [
           tool('↑', 'Subir', function () { move(i, -1); }, i === 0),
           tool('↓', 'Bajar', function () { move(i, 1); }, i === state.sections.length - 1),
