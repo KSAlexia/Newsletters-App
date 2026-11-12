@@ -41,6 +41,15 @@ App interna para montar newsletters de Cvent con piezas fijas. Sin IA y sin cost
 ## Continuar el desarrollo con Codex o Claude
 Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los cambios implementados, las decisiones de producto, las pruebas y los pendientes. `AGENTS.md` y `CLAUDE.md` remiten a ese documento compartido.
 
+## Nueva newsletter desde un guion
+
+1. En el hub, pulsa **＋ Desde un guion** (se propone el torneo o sección en el que estás).
+2. Escribe o pega el guion, por bloques: `BANNER 1: Título: …`, `BANNER 2: Texto: …`, `BANNER 3: Foto: …`, `BANNER 4: Botón: … – https://…`.
+3. **Copiar instrucciones y guion** y pégalo en un chat nuevo de ChatGPT. Pega su respuesta en el último campo y pulsa **Crear newsletter**.
+- Los textos se copian tal cual. Las fotos sin custom link salen como **placeholder** y lo que el guion solo describe («texto sobre los horarios») se marca **PENDIENTE:**; la revisión avisa de ambos.
+- Se crea en la carpeta donde estabas, con el torneo o sección elegido aunque ChatGPT diga otro. Al terminar, la app lista las líneas del guion que no encuentra tal cual en la newsletter.
+- **Importar** (dentro de una newsletter) sigue sirviendo para convertir una newsletter antigua y sustituye el contenido de la abierta.
+
 ## Ver otras newsletters desde el editor
 
 - **Ir a otra newsletter…** (barra superior, o Ctrl/⌘ + K) abre un buscador por nombre, torneo, club o carpeta. Aparecen primero las de la misma carpeta, luego las del mismo torneo o sección y después el resto; Enter abre la primera. La newsletter actual se guarda antes de cambiar.

@@ -477,6 +477,12 @@
       if (i && secs[i - 1].type === s.type && (s.type === 'datos' || s.type === 'info')) W('Módulos ' + i + ' y ' + (i + 1) + ': el mismo recurso dos veces seguidas.');
     });
 
+    // Contenido marcado como pendiente al crear desde un guion
+    secs.forEach(function (s, i) {
+      var m = M[s.type]; if (!m) return;
+      m.fields.forEach(function (f) { if (/^\s*PENDIENTE:/i.test(String((s.d || {})[f.k] || ''))) W('Módulo ' + (i + 1) + ' (' + m.name + '), «' + f.label + '»: contenido PENDIENTE de redactar.'); });
+    });
+
     // Campos Cvent
     var found = html.match(/\{\[[^\]]*\]\}/g) || [], bad = [];
     found.forEach(function (f) { if (K.CVENT_FIELDS.indexOf(f) < 0 && bad.indexOf(f) < 0) bad.push(f); });
@@ -553,6 +559,59 @@
   // La app genera las instrucciones; ChatGPT reparte el contenido en módulos
   // y devuelve un proyecto que la app valida y monta con sus piezas fijas.
   // ============================================================
+  function moduleList(L) {
+    L.push('MÓDULOS DISPONIBLES ("type" y sus campos en "d")');
+    K.MODULE_ORDER.forEach(function (id) {
+      var m = M[id], fs = m.fields.filter(function (f) { return f.k; }).map(function (f) {
+        return f.k + (f.type === 'select' ? ' (uno de: ' + f.opts.map(function (o) { return o[0]; }).join(' | ') + ')' : '') + ' = ' + f.label;
+      });
+      L.push('- ' + id + ' → ' + m.name + (fs.length ? '. Campos: ' + fs.join('; ') : '. Sin campos.'));
+    });
+  }
+
+  // Newsletter NUEVA a partir de un guion (BANNER 1: texto… / BANNER 2: foto… / BANNER 3: botón…).
+  K.scriptPrompt = function (tournamentId, script) {
+    var t = K.tournament(tournamentId), L = [];
+    L.push('Convierte el GUION que pego al final en un proyecto JSON para una newsletter NUEVA de la app de newsletters de Kaptiva. Torneo o sección: ' + t.name + '.');
+    L.push('');
+    L.push('CÓMO LEER EL GUION');
+    L.push('- El guion va por bloques (BANNER 1, BANNER 2…, o secciones con título). Respeta su orden: cada bloque se convierte en uno o varios módulos, en el mismo orden.');
+    L.push('- Las etiquetas del guion («BANNER 1:», «Título:», «Texto:», «Botón:», «Foto:»…) indican dónde va cada cosa; no las copies como texto.');
+    L.push('');
+    L.push('REGLAS');
+    L.push('- TEXTOS LITERALES: copia cada texto exactamente como está en el guion. No reescribas, resumas, traduzcas, corrijas ni añadas nada. Si ves una errata, déjala.');
+    L.push('- Si un bloque DESCRIBE un contenido en vez de darlo escrito (p. ej. «texto sobre los horarios» o «aquí va el precio»), no lo redactes: pon en ese campo «PENDIENTE: » seguido de la descripción tal cual.');
+    L.push('- No inventes titulares, etiquetas, botones, precios, fechas ni enlaces. Si un campo no tiene contenido en el guion, déjalo vacío ("").');
+    L.push('- Campos de Cvent como {[C-FIRST NAME]} o {[E-MODIFY REG LINK]}: cópialos carácter a carácter.');
+    L.push('- Negritas: **así**. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
+    L.push('- Fotos o imágenes: si el guion da una URL de custom.cvent.com, úsala tal cual. Si solo dice «foto», «imagen» o la describe, usa el módulo imagen con "src":"PLACEHOLDER" y pon en "alt" la descripción del guion (o "" si no hay).');
+    L.push('- Botones: el texto del botón en su campo y el enlace solo si el guion lo da; si no, deja el enlace vacío. Botón suelto bajo un título → titulo (btn, url). Dos opciones con botón → tarjetas. Botón de registro o modificar inscripción con {[E-MODIFY REG LINK]} → compra.');
+    L.push('- NO incluyas header, footer de imagen ni línea de baja (opt-out): la app los pone sola. Si el guion indica la etiqueta de la franja identificadora, ponla en "franja"; si no, "".');
+    L.push('- Reparto: saludo y párrafos → intro. Fecha, hora, lugar → datos. Dos opciones paralelas → tarjetas. Instrucciones o avisos → info. Lista de puntos → lista. Servicio con precio → producto (separador entre dos productos seguidos). Cierre o despedida → cierre. Texto que no encaje → intro.');
+    L.push('- No dejes fuera ningún texto del guion.');
+    L.push('');
+    moduleList(L);
+    L.push('');
+    L.push('RESPUESTA: devuelve SOLO el JSON, en un bloque de código, sin explicaciones, con esta forma:');
+    L.push('{"tournament":"' + t.id + '","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"","mediaPackages":false,"sections":[{"type":"intro","d":{"greet":"","text":"..."}}]}');
+    L.push('');
+    L.push('GUION:');
+    L.push('');
+    if (has(script)) L.push(String(script).trim());
+    return L.join('\n');
+  };
+
+  // Líneas del guion cuyo texto no aparece en la newsletter creada (para revisarlas a mano).
+  K.scriptCoverage = function (script, st) {
+    function clean(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim().toLowerCase(); }
+    var all = clean([st.name, st.franjaLeft].concat((st.sections || []).map(function (s) { return Object.keys(s.d || {}).map(function (k) { return s.d[k]; }).join('\n'); })).join('\n'));
+    return String(script || '').split(/\n+/).map(function (line) {
+      line = line.replace(/^\s*[-•*]\s*/, '').trim();
+      for (var n = 0; n < 3 && /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .()]{1,30}:\s+/.test(line); n++) line = line.replace(/^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ0-9 .()]{1,30}:\s+/, '');
+      return line.trim();
+    }).filter(function (line) { return line.length >= 4 && all.indexOf(clean(line)) < 0; });
+  };
+
   K.importPrompt = function () {
     var L = [];
     L.push('Convierte la newsletter que pego al final (HTML antiguo o guion de texto) en un proyecto JSON para la app de newsletters de Kaptiva (' + K.CLIENT.name + ').');
@@ -573,13 +632,7 @@
     L.push('');
     L.push('TORNEOS ("tournament"): ' + K.CLIENT.tournaments.map(function (t) { return t.id + ' = ' + t.name; }).join(' · '));
     L.push('');
-    L.push('MÓDULOS DISPONIBLES ("type" y sus campos en "d")');
-    K.MODULE_ORDER.forEach(function (id) {
-      var m = M[id], fs = m.fields.filter(function (f) { return f.k; }).map(function (f) {
-        return f.k + (f.type === 'select' ? ' (uno de: ' + f.opts.map(function (o) { return o[0]; }).join(' | ') + ')' : '') + ' = ' + f.label;
-      });
-      L.push('- ' + id + ' → ' + m.name + (fs.length ? '. Campos: ' + fs.join('; ') : '. Sin campos.'));
-    });
+    moduleList(L);
     L.push('');
     L.push('RESPUESTA: devuelve SOLO el JSON, en un bloque de código, sin explicaciones, con esta forma:');
     L.push('{"tournament":"surfcup","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"Etiqueta izquierda","mediaPackages":false,"sections":[{"type":"intro","d":{"greet":"","text":"..."}}]}');

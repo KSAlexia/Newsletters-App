@@ -253,3 +253,19 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.deepEqual(names, ['Desde A', 'Desde B', 'Original'], 'Cada pestaña conserva sus cambios sin pisar la otra');
   console.log('OK: varias pestañas sin sobrescribirse (fusión por newsletter, conflictos detectados).');
 })().catch(e => { console.error(e); process.exit(1); });
+
+// Crear desde guion en el hub: la newsletter nace en la sección elegida y avisa de textos que faltan.
+{
+  const st = {}, ui4 = boot(st);
+  ui4.clickText('📁 Arsenal'); ui4.clickText('📁 EXPERIENCES');
+  ui4.nodes['#from-script'].click();
+  assert.equal(ui4.nodes['#script-dlg'].open, true); assert.equal(ui4.nodes['#script-tournament'].value, 'arsenal-exp');
+  ui4.nodes['#script-text'].value = 'BANNER 1: Título: Clinic London\nBANNER 2: Texto: Texto que ChatGPT olvidó';
+  ui4.nodes['#script-answer'].value = '```json\n{"tournament":"surfcup","name":"Clinic","sections":[{"type":"titulo","d":{"title":"Clinic London"}}]}\n```';
+  ui4.nodes['#script-go'].click();
+  const created = Object.values(JSON.parse(st[PROJ]));
+  assert.equal(created.length, 1); assert.equal(created[0].state.tournament, 'arsenal-exp', 'Manda el torneo elegido');
+  const msg = ui4.alerts.pop();
+  assert.ok(/Texto que ChatGPT olvidó/.test(msg) && /se usa el elegido/.test(msg));
+  console.log('OK: nueva newsletter desde guion en la sección del hub, con aviso de textos que faltan.');
+}

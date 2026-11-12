@@ -295,14 +295,17 @@
   }
 
   // ---------- Ajustes generales ----------
-  function fillSettings() {
-    $('#tournament').innerHTML = '';
-    var ksa = el('optgroup', { label: K.CLIENT.name }); $('#tournament').appendChild(ksa);
+  function fillTournaments(select) {
+    select.innerHTML = '';
+    var ksa = el('optgroup', { label: K.CLIENT.name }); select.appendChild(ksa);
     K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { ksa.appendChild(el('option', { value: t.id, text: t.name })); });
     K.CLIENT.clubs.forEach(function (c) {
-      var g = el('optgroup', { label: c.name }); $('#tournament').appendChild(g);
+      var g = el('optgroup', { label: c.name }); select.appendChild(g);
       K.CLIENT.tournaments.filter(function (t) { return t.club === c.id; }).forEach(function (t) { g.appendChild(el('option', { value: t.id, text: t.name })); });
     });
+  }
+  function fillSettings() {
+    fillTournaments($('#tournament')); fillTournaments($('#script-tournament'));
     $('#recipe').innerHTML = ''; $('#recipe').appendChild(el('option', { value: '', text: 'Nueva desde receta…' }));
     K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); });
     $('#add').innerHTML = ''; $('#add').appendChild(el('option', { value: '', text: '＋ Añadir módulo…' }));
@@ -596,8 +599,35 @@
       if (!confirm('Se descartará el código editado a mano y se volverá a generar desde los módulos. ¿Continuar?')) return;
       delete state.customHtml; delete state.customBase; refresh();
     });
+    function hubTarget() { return hubTournament || (hubClub ? K.CLIENT.tournaments.filter(function (t) { return t.club === hubClub; })[0].id : ''); }
+    // Nueva newsletter desde un guion: instrucciones + guion para ChatGPT y creación con su respuesta.
+    $('#from-script').addEventListener('click', function () {
+      $('#script-tournament').value = hubTarget() || K.CLIENT.tournaments[0].id; $('#script-err').textContent = '';
+      $('#script-dlg').showModal(); $('#script-text').focus();
+    });
+    $('#script-cancel').addEventListener('click', function () { $('#script-dlg').close(); });
+    $('#script-copy').addEventListener('click', function () {
+      var b = this, t = K.scriptPrompt($('#script-tournament').value, $('#script-text').value);
+      (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function () {
+        var x = el('textarea'); x.value = t; $('#script-dlg').appendChild(x); x.select(); document.execCommand('copy'); x.remove();
+      }).then(function () { b.textContent = 'Copiado ✓'; setTimeout(function () { b.textContent = 'Copiar instrucciones y guion'; }, 1500); });
+    });
+    $('#script-go').addEventListener('click', function () {
+      var tid = $('#script-tournament').value, script = $('#script-text').value, r;
+      try { r = K.importProject($('#script-answer').value, tid); }
+      catch (e) { $('#script-err').textContent = 'No se ha podido crear: ' + (e.message || 'el texto pegado no es válido') + ' Copia la respuesta completa de ChatGPT.'; return; }
+      if (r.state.tournament !== tid) r.notes.push('ChatGPT indicó «' + K.tournament(r.state.tournament).name + '»; se usa el elegido: ' + K.tournament(tid).name + '.');
+      r.state.tournament = tid;
+      var missing = script.trim() ? K.scriptCoverage(script, r.state) : [];
+      $('#script-dlg').close(); $('#script-text').value = ''; $('#script-answer').value = '';
+      createProject(r.state);
+      alert('Newsletter creada con ' + r.state.sections.length + ' módulos.' +
+        (r.notes.length ? '\n\nAvisos:\n· ' + r.notes.join('\n· ') : '') +
+        (missing.length ? '\n\nTextos del guion que no encuentro tal cual (revísalos):\n· ' + missing.join('\n· ') : (script.trim() ? '\n\nTodos los textos del guion aparecen en la newsletter.' : '')) +
+        '\n\nRevisa los textos y mira la pestaña Revisión (placeholders y contenido PENDIENTE).');
+    });
     $('#new').addEventListener('click', function () {
-      var target = hubTournament || (hubClub ? K.CLIENT.tournaments.filter(function (t) { return t.club === hubClub; })[0].id : '');
+      var target = hubTarget();
       var st = K.fromRecipe('blank', target || undefined);
       if (target) { st.tournament = target; st.headerAlt = ''; }
       createProject(st);

@@ -83,3 +83,17 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   assert.equal(K.CLIENT.tournaments.filter(t => t.club === 'bayern').map(t => t.section).join(), 'CANADA CAMPS,EXPERIENCES');
   console.log('OK: clubs con nombre, fuentes, colores, contacto y pendientes por sección.');
 }
+
+// Nueva newsletter desde un guion: instrucciones con torneo y guion, comprobación de textos y avisos.
+{
+  const script = 'BANNER 1: Título: Summer Camp 2027\nBANNER 2: Texto: Join us in **London** this summer.\nBANNER 3: Foto: jugadores celebrando\nBANNER 4: Botón: Book now\nHora: 10:00';
+  const prompt = K.scriptPrompt('arsenal-exp', script);
+  assert.ok(prompt.includes('Arsenal · EXPERIENCES') && prompt.includes('"tournament":"arsenal-exp"') && prompt.endsWith(script));
+  assert.ok(prompt.includes('PLACEHOLDER') && prompt.includes('PENDIENTE: '));
+  const answer = { tournament: 'arsenal-exp', name: 'Summer', sections: [{ type: 'titulo', d: { title: 'Summer Camp 2027', btn: 'Book now' } }, { type: 'intro', d: { text: 'Join us in **London** this summer.' } }, { type: 'imagen', d: { src: 'PLACEHOLDER', alt: 'jugadores celebrando' } }, { type: 'info', d: { text: 'PENDIENTE: horarios' } }] };
+  const r = K.importProject(JSON.stringify(answer), 'arsenal-exp');
+  assert.deepEqual(K.scriptCoverage(script, r.state), ['10:00'], 'Solo falta la línea que no está en la newsletter');
+  const out = K.build(r.state), checks = K.check(r.state, out);
+  assert.ok(checks.some(x => /PENDIENTE de redactar/.test(x.msg)) && checks.some(x => /placeholder/.test(x.msg)));
+  console.log('OK: guion → instrucciones, comprobación de textos, placeholders y contenido pendiente.');
+}

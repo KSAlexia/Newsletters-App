@@ -26,6 +26,7 @@
     <button id="brand-kits-open" class="btn ghost2">Brand kits</button>
     <button id="new-folder" class="btn ghost2" hidden>＋ Nueva carpeta</button>
     <button id="new" type="button" class="btn">＋ Nueva newsletter</button>
+    <button id="from-script" type="button" class="btn ghost2">＋ Desde un guion</button>
     <button id="open" class="btn ghost2">Abrir archivo de proyecto</button>
   </div>
   <p class="muted lobby-note">Organiza tus newsletters en carpetas dentro de cada torneo. Arrastra una newsletter sobre una carpeta o sobre la ruta para moverla; también puedes usar «Mover». Se guardan en este navegador. Para pasárselo a otra persona, usa «Exportar proyecto» dentro del proyecto.</p>
@@ -131,6 +132,22 @@
   </ol>
   <p id="imp-err" class="err"></p>
   <div class="dlg-actions"><button id="imp-cancel" class="btn ghost2">Cancelar</button><button id="imp-go" class="btn">Importar</button></div>
+</dialog>
+
+<dialog id="script-dlg" aria-labelledby="script-title">
+  <h2 id="script-title">Nueva newsletter desde un guion</h2>
+  <p class="muted">ChatGPT reparte el guion en módulos y la app lo monta con el diseño del torneo o club. Los textos se copian tal cual; las fotos sin custom link salen como placeholder.</p>
+  <ol class="script-steps">
+    <li><label>Torneo o sección<select id="script-tournament"></select></label></li>
+    <li><label>Escribe o pega el guion
+      <textarea id="script-text" rows="7" spellcheck="false" placeholder="BANNER 1: Título: …&#10;BANNER 2: Texto: …&#10;BANNER 3: Foto: jugadores celebrando&#10;BANNER 4: Botón: Reserva ya – https://…"></textarea>
+      <small>Si lo dejas vacío, pégalo tú en ChatGPT justo debajo de las instrucciones.</small></label></li>
+    <li><button id="script-copy" type="button" class="btn">Copiar instrucciones y guion</button> y pégalo en un chat nuevo de ChatGPT.</li>
+    <li><label>Copia la respuesta de ChatGPT y pégala aquí
+      <textarea id="script-answer" rows="6" spellcheck="false" placeholder='{"tournament": … }'></textarea></label></li>
+  </ol>
+  <p id="script-err" class="err"></p>
+  <div class="dlg-actions"><button id="script-cancel" type="button" class="btn ghost2">Cancelar</button><button id="script-go" type="button" class="btn">Crear newsletter</button></div>
 </dialog>
 
 <dialog id="folder-dialog" aria-labelledby="folder-title">
