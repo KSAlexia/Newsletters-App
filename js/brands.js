@@ -9,7 +9,7 @@
 
   K.CLIENT = {
     id: 'ksags',
-    name: 'KSA Global Stage',
+    name: 'Kaptiva Global Stage',
     filePrefix: 'ksags',
     imageBase: 'https://custom.cvent.com/',
     contactEmail: 'globalmedia@kaptivasports.com',
@@ -51,6 +51,19 @@
     return { Extenda60: ultra, Extenda40: ultra, DinProBlack: ultra, DinProBold: boldItalic, DinProMedium: regular, DinProLight: regular, DinProRegular: regular };
   })();
   var SERIF = "Georgia, 'Times New Roman', Times, serif", SANS = 'Helvetica, Arial, sans-serif';
+  // Bayern: Cond Extra Bold para titulares y cifras, Bold para negrita, Regular para el resto (asignación propuesta).
+  var BAYERN_FONTS = (function () {
+    var F = 'https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/', regular = F + '61fcb5a326e24f048a37611e055efe23.otf', bold = F + '70e748e21b7f42568b717d1c87840f36.otf', cond = F + 'a55077d0af444071a9c0e2c8455ac498.otf';
+    return { Extenda60: cond, Extenda40: cond, DinProBlack: cond, DinProBold: bold, DinProMedium: regular, DinProLight: regular, DinProRegular: regular };
+  })();
+  // Kaptiva Sports Academy: familia DinPro propia (cada peso a su uso) y Flatory Serif Condensed para titulares
+  // (ExtraBold en los principales, Condensed en los secundarios; asignación propuesta).
+  var ACADEMY_FONTS = (function () {
+    var F = 'https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/';
+    return { Extenda60: F + '4f15fb5051684e46873120016ed52f5a.ttf', Extenda40: F + '58e02325010142979d530067c131782c.ttf',
+      DinProBlack: F + 'c099737cde124464b993fa156de6e130.otf', DinProBold: F + '27c4c40d384149a19e63377ba9b3b981.otf',
+      DinProMedium: F + '28392b958c97456fae011c4b5e4ef28c.otf', DinProRegular: F + '7cb43dc39f724cef98c04200c9e1bccf.otf', DinProLight: F + '8ee7cfe4f92440f99df5a47fdee34944.otf' };
+  })();
   K.CLIENT.clubs = [
     { id: 'rmf', name: 'Fundación Real Madrid', filePrefix: 'rmf',
       base: { brand: 'Real Madrid Foundation', principal: '#1A1D4F', acento: '#BF873C', secundario: null, header: PIX + '0680e31902b84ed88b7a08dcaa246d83.png', contact: '' },
@@ -71,12 +84,22 @@
         { id: 'arsenal-usa', section: 'USA CAMPS' }, { id: 'arsenal-canada', section: 'CANADA CAMPS' },
         { id: 'arsenal-exp', section: 'EXPERIENCES', brand: 'Arsenal Football Development Clinic', footer: PIX + 'e1baea18930047838d4054ffe1d0f262.png' }
       ] },
-    // Sin datos todavía: colores neutros provisionales, header/footer pendientes.
     { id: 'bayern', name: 'Bayern FC', filePrefix: 'bayern',
-      base: { brand: 'Bayern FC', principal: '#6F4ACC', acento: '#91FAFB', secundario: null, header: null, footer: null, footerAlt: '', contact: '', provisional: true },
+      base: { brand: 'FC Bayern Soccer Camp', principal: '#ED0037', acento: '#286CFC', secundario: null, header: PIX + '020025ab69804500ac546ae96b2ffdf4.png', footer: PIX + 'e1222579c3d6493381c01e340d4b6ef1.jpg', footerAlt: 'See you in Munich', fonts: BAYERN_FONTS, contact: 'experience@fcbayernsoccercamps.com' },
       sections: [{ id: 'bayern-canada', section: 'CANADA CAMPS' }, { id: 'bayern-exp', section: 'EXPERIENCES' }] }
   ];
+  // Kaptiva Sports Academy: va en su propio grupo del hub y sus secciones se listan directamente (flat).
+  K.CLIENT.clubs.push({ id: 'academy', name: 'Kaptiva Sports Academy', filePrefix: 'ksacademy', group: 'academy', flat: true,
+    base: { brand: 'Kaptiva Sports Academy', principal: '#790B81', acento: '#AF6CB3', secundario: null, header: PIX + '6cc70ed029dd494b80735f821e8158a2.png', footer: PIX + '0e125d09d568466780e1bd113486df30.png', footerAlt: 'Kaptiva Sports Academy', fonts: ACADEMY_FONTS, contact: 'admissions@kaptivasports.com' },
+    sections: [{ id: 'academy-short', section: 'SHORT SESSIONS' }, { id: 'academy-residential', section: 'RESIDENTIAL CAMPS' }] });
+  // Grupos del hub (pantalla inicial y menú lateral). Solo cambia la organización, no el contenido de los emails.
+  K.CLIENT.groups = [
+    { id: 'stage', name: 'Kaptiva Global Stage' },
+    { id: 'clubs', name: 'Clubs' },
+    { id: 'academy', name: 'Kaptiva Sports Academy' }
+  ];
   K.CLIENT.clubs.forEach(function (c) {
+    c.group = c.group || 'clubs';
     c.sections.forEach(function (sec) {
       var t = { club: c.id, clubName: c.name, filePrefix: c.filePrefix, mediaBanner: null }, k;
       for (k in c.base) t[k] = c.base[k];

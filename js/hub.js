@@ -35,6 +35,8 @@
       if (mode === 'az') return alpha;
       if (mode === 'za') return -alpha;
       if (mode === 'oldest') return a.updated - b.updated || alpha;
+      // Abiertas recientemente: lo nunca abierto (y las carpetas) va al final, por modificación.
+      if (mode === 'opened') return (b.opened || 0) - (a.opened || 0) || b.updated - a.updated || alpha;
       if (mode === 'manual') {
         var ai = order.indexOf(a.id), bi = order.indexOf(b.id);
         return (ai < 0 ? Infinity : ai) - (bi < 0 ? Infinity : bi) || alpha;
@@ -42,9 +44,12 @@
       return b.updated - a.updated || alpha;
     });
   };
-  H.matches = function (item, query, from, to) {
+  // field: 'updated' (modificación, por defecto) u 'opened' (última apertura). Sin fecha no pasa un filtro de fechas.
+  H.matches = function (item, query, from, to, field) {
     var text = function (s) { return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); };
-    var d = new Date(item.updated), date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    var stamp = item[field || 'updated'];
+    if (!stamp) return text(item.name).indexOf(text(query.trim())) >= 0 && !from && !to;
+    var d = new Date(stamp), date = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
     return text(item.name).indexOf(text(query.trim())) >= 0 && (!from || date >= from) && (!to || date <= to);
   };
 })(typeof window !== 'undefined' ? window : globalThis);

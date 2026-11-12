@@ -68,9 +68,12 @@
   // ---------- Hub: torneos, carpetas y newsletters ----------
   function newId() { return 'p' + Date.now() + Math.floor(Math.random() * 1000000); }
   function openProject(id) {
+    // «opened» se guarda en el registro, no en el contenido: no cambia la fecha de modificación.
+    projects[id].opened = Date.now(); saveAll();
     currentId = id; state = K.normalize(projects[id].state);
     savedContent = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
-    document.body.classList.remove('in-lobby'); syncSettings(); renderSections(); refresh(); $('#name').focus();
+    document.body.classList.remove('in-lobby'); syncSettings(); renderSections(); refresh();
+    var here = editorLocation(); openPath(here.t, here.f); renderTree(); $('#name').focus();
   }
   function createProject(st) {
     var id = newId(), tournament = K.tournament(st.tournament).id;
@@ -80,8 +83,11 @@
   function locationKey() { return K.Hub.location(hubTournament, hubFolder); }
   // hubClub solo se usa en el nivel de club (lista de secciones); dentro de una sección el club sale de la propia sección.
   function navigate(t, f, club) {
+    // Desde el editor el menú lleva al hub: se respeta el aviso de código sin aplicar.
+    if (currentId) { if (!canLeaveCode()) return; editingCode = false; }
     hubTournament = t || ''; hubFolder = f || ''; hubClub = t ? '' : (club || '');
-    $('#hub-search').value = ''; $('#hub-from').value = ''; $('#hub-to').value = ''; $('#hub-scope').value = 'here';
+    openPath(hubTournament, hubFolder, hubClub);
+    $('#hub-search').value = ''; $('#hub-from').value = ''; $('#hub-to').value = ''; $('#hub-scope').value = 'here'; $('#hub-kind').value = 'all'; $('#hub-date-field').value = 'updated';
     showLobby();
     var crumbs = $('#hub-path').querySelectorAll('button'); if (crumbs.length) crumbs[crumbs.length - 1].focus();
   }
@@ -182,7 +188,7 @@
     });
     Object.keys(projects).forEach(function (id) {
       var p = projects[id];
-      if (K.tournament(p.state.tournament).id === hubTournament && (p.folder || '') === hubFolder) items.push({ kind: 'project', id: id, name: p.state.name || 'Sin nombre', updated: p.updated });
+      if (K.tournament(p.state.tournament).id === hubTournament && (p.folder || '') === hubFolder) items.push({ kind: 'project', id: id, name: p.state.name || 'Sin nombre', updated: p.updated, opened: p.opened || 0 });
     });
     return items;
   }
@@ -209,13 +215,36 @@
   }
   function allItems() {
     var items = Object.keys(organization.folders).map(function (id) { var f = organization.folders[id]; return { kind: 'folder', id: id, name: f.name, updated: f.updated }; });
-    return items.concat(Object.keys(projects).map(function (id) { return { kind: 'project', id: id, name: projects[id].state.name || 'Sin nombre', updated: projects[id].updated }; }));
+    return items.concat(Object.keys(projects).map(function (id) { return { kind: 'project', id: id, name: projects[id].state.name || 'Sin nombre', updated: projects[id].updated, opened: projects[id].opened || 0 }; }));
   }
-  var treeOpen = {};
+  // Preferencias de vista de esta persona (grupos ocultos en el inicio y plegados en el menú). Solo en este navegador.
+  var VIEW = 'kaptiva-newsletters-hub-view-v1', view = (function () { try { var v = JSON.parse(localStorage.getItem(VIEW)); if (v && v.hide) return v; } catch (e) {} return { hide: {} }; })();
+  function toggleView(key) { view.hide[key] = !view.hide[key]; try { localStorage.setItem(VIEW, JSON.stringify(view)); } catch (e) {} showLobby(); }
+  function groupOf(t) { return t.club ? K.club(t.club).group : 'stage'; }
+  function groupName(id) { return K.CLIENT.groups.filter(function (g) { return g.id === id; })[0].name; }
+  function clubsIn(group) { return K.CLIENT.clubs.filter(function (c) { return c.group === group; }); }
+  function sectionsOf(clubId) { return K.CLIENT.tournaments.filter(function (t) { return t.club === clubId; }); }
+  function countFor(ids) { return Object.keys(projects).filter(function (id) { return ids.indexOf(K.tournament(projects[id].state.tournament).id) >= 0; }).length; }
+  function idsOf(list) { return list.map(function (t) { return t.id; }); }
+  // Menú en árbol: cada club, sección y carpeta con hijos tiene su propio ▸/▾ y se pueden desplegar varios a la vez.
+  // Lo desplegado se recuerda en este navegador (view.open). Al entrar en una ubicación se despliega su camino.
+  function isOpen(key) { return !!(view.open && view.open[key]); }
+  function setOpen(key, value) { view.open = view.open || {}; if (value) view.open[key] = true; else delete view.open[key]; try { localStorage.setItem(VIEW, JSON.stringify(view)); } catch (e) {} }
+  function openPath(t, f, club) {
+    if (club) setOpen('c:' + club, true);
+    if (!t) return;
+    var tt = K.tournament(t); if (tt.club) setOpen('c:' + tt.club, true);
+    setOpen('t:' + t, true);
+    var seen = {}; while (f && organization.folders[f] && !seen[f]) { seen[f] = true; setOpen('f:' + f, true); f = organization.folders[f].parent; }
+  }
+  // En el editor, el menú marca la ubicación de la newsletter abierta (con su torneo actual, aunque aún no se haya guardado).
+  function editorLocation() {
+    var t = K.tournament(state.tournament).id, f = projects[currentId] && projects[currentId].folder;
+    return { t: t, f: f && organization.folders[f] && organization.folders[f].tournament === t ? f : '' };
+  }
   function renderTree() {
     var tree = $('#hub-tree'); tree.innerHTML = '';
-    var activeClub = hubTournament ? K.tournament(hubTournament).club : hubClub;
-    function count(ids) { return Object.keys(projects).filter(function (id) { return ids.indexOf(K.tournament(projects[id].state.tournament).id) >= 0; }).length; }
+    var here = currentId ? editorLocation() : { t: hubTournament, f: hubFolder, club: hubClub };
     function item(label, n, color, current, fn, title) {
       var b = el('button', { type: 'button', class: 'tree-item' + (current ? ' current' : ''), title: title || label, onclick: fn }, [
         color ? el('span', { class: 'tree-dot', style: 'background:' + color, 'aria-hidden': 'true' }) : null,
@@ -224,50 +253,67 @@
       if (current) b.setAttribute('aria-current', 'page');
       return b;
     }
-    function folders(tid, parent, depth) {
-      var ids = Object.keys(organization.folders).filter(function (id) { var f = organization.folders[id]; return f.tournament === tid && (f.parent || '') === parent; })
-        .sort(function (a, b) { return organization.folders[a].name.localeCompare(organization.folders[b].name, 'es', { numeric: true }); });
-      if (!ids.length) return null;
-      var list = el('ul', { class: 'tree-list' });
-      ids.forEach(function (id) {
-        var li = el('li', { style: '--depth:' + depth }, [dropDestination(item('📁 ' + organization.folders[id].name, countIn(id), '', hubFolder === id, function () { navigate(tid, id); }), id)]);
-        // Solo se despliegan las subcarpetas del camino abierto para no alargar el panel.
-        if (hubFolder && inFolder(hubFolder, id)) li.appendChild(folders(tid, id, depth + 1));
-        list.appendChild(li);
-      });
-      return list;
-    }
-    function tournamentNode(t, label, depth) {
-      var current = hubTournament === t.id, node = item(label, count([t.id]), t.principal, current && !hubFolder, function () { navigate(t.id, ''); }, tournamentLabel(t.id));
-      var li = el('li', { style: '--depth:' + depth }, [current ? dropDestination(node, '') : node]);
-      if (current) li.appendChild(folders(t.id, '', depth + 1));
+    // Fila del árbol: flecha (si tiene hijos) + entrada. children() solo se construye si está desplegada.
+    function branch(key, name, entry, hasKids, children, depth) {
+      var open = hasKids && isOpen(key), li = el('li', { style: '--depth:' + depth });
+      var toggle = hasKids
+        ? el('button', { type: 'button', class: 'tree-toggle', 'data-tree-toggle': key, 'aria-expanded': String(open), 'aria-label': (open ? 'Plegar ' : 'Desplegar ') + name, text: open ? '▾' : '▸', onclick: function () {
+            setOpen(key, !open); renderTree(); var again = document.querySelector('[data-tree-toggle="' + key + '"]'); if (again) again.focus();
+          } })
+        : el('span', { class: 'tree-toggle', 'aria-hidden': 'true' });
+      li.appendChild(el('div', { class: 'tree-row' }, [toggle, entry]));
+      if (open) { var sub = el('ul', { class: 'tree-list' }); children().forEach(function (c) { sub.appendChild(c); }); li.appendChild(sub); }
       return li;
     }
-    var home = el('ul', { class: 'tree-list' }, [el('li', {}, [item('Inicio', null, '', !hubTournament && !hubClub, function () { navigate('', ''); })])]);
-    tree.appendChild(home);
-    tree.appendChild(el('p', { class: 'tree-group', text: K.CLIENT.name }));
-    var ksa = el('ul', { class: 'tree-list' });
-    K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { ksa.appendChild(tournamentNode(t, t.name, 0)); });
-    tree.appendChild(ksa);
-    tree.appendChild(el('p', { class: 'tree-group', text: 'Clubs' }));
-    var clubs = el('ul', { class: 'tree-list' });
-    K.CLIENT.clubs.forEach(function (c) {
-      var sections = K.CLIENT.tournaments.filter(function (t) { return t.club === c.id; }), open = activeClub === c.id || !!treeOpen[c.id];
-      var toggle = el('button', { type: 'button', class: 'tree-toggle', 'aria-expanded': String(open), 'aria-label': (open ? 'Plegar ' : 'Desplegar ') + c.name, text: open ? '▾' : '▸', onclick: function () { treeOpen[c.id] = !open; renderTree(); var again = document.querySelector('[data-tree-toggle="' + c.id + '"]'); if (again) again.focus(); }, 'data-tree-toggle': c.id });
-      var row = el('div', { class: 'tree-row' }, [toggle, item(c.name, count(sections.map(function (t) { return t.id; })), c.base.principal, !hubTournament && hubClub === c.id, function () { treeOpen[c.id] = true; navigate('', '', c.id); })]);
-      var li = el('li', {}, [row]);
-      if (open) { var sub = el('ul', { class: 'tree-list' }); sections.forEach(function (t) { sub.appendChild(tournamentNode(t, t.section, 1)); }); li.appendChild(sub); }
-      clubs.appendChild(li);
+    function subfolders(tid, parent) {
+      return Object.keys(organization.folders).filter(function (id) { var f = organization.folders[id]; return f.tournament === tid && (f.parent || '') === parent; })
+        .sort(function (a, b) { return organization.folders[a].name.localeCompare(organization.folders[b].name, 'es', { numeric: true }); });
+    }
+    function folderNode(tid, id, depth) {
+      var f = organization.folders[id], kids = subfolders(tid, id);
+      var entry = dropDestination(item('📁 ' + f.name, countIn(id), '', here.t === tid && here.f === id, function () { navigate(tid, id); }), id);
+      return branch('f:' + id, f.name, entry, kids.length > 0, function () { return kids.map(function (k) { return folderNode(tid, k, depth + 1); }); }, depth);
+    }
+    function tournamentNode(t, label, depth) {
+      var kids = subfolders(t.id, '');
+      var entry = item(label, countFor([t.id]), t.principal, here.t === t.id && !here.f, function () { navigate(t.id, ''); }, tournamentLabel(t.id));
+      if (!currentId && hubTournament === t.id) dropDestination(entry, '');
+      return branch('t:' + t.id, label, entry, kids.length > 0, function () { return kids.map(function (k) { return folderNode(t.id, k, depth + 1); }); }, depth);
+    }
+    function clubNode(c) {
+      var sections = sectionsOf(c.id);
+      var entry = item(c.name, countFor(idsOf(sections)), c.base.principal, !here.t && here.club === c.id, function () { navigate('', '', c.id); });
+      return branch('c:' + c.id, c.name, entry, sections.length > 0, function () { return sections.map(function (t) { return tournamentNode(t, t.section, 1); }); }, 0);
+    }
+    tree.appendChild(el('ul', { class: 'tree-list' }, [el('li', {}, [item('🏠 Inicio', null, '', !here.t && !here.club, function () { navigate('', ''); })])]));
+    K.CLIENT.groups.forEach(function (g) {
+      // Un grupo plegado sigue abierto si contiene la ubicación actual.
+      var active = here.t ? groupOf(K.tournament(here.t)) === g.id : !!here.club && K.club(here.club).group === g.id;
+      var folded = !!view.hide[g.id] && !active, list = el('ul', { class: 'tree-list' });
+      tree.appendChild(el('button', { type: 'button', class: 'tree-group', 'aria-expanded': String(!folded), title: (folded ? 'Mostrar ' : 'Ocultar ') + g.name, onclick: function () { toggleView(g.id); } }, [
+        el('span', { text: folded ? '▸' : '▾', 'aria-hidden': 'true' }), el('span', { text: g.name })
+      ]));
+      if (folded) return;
+      if (g.id === 'stage') K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { list.appendChild(tournamentNode(t, t.name, 0)); });
+      clubsIn(g.id).forEach(function (c) {
+        if (c.flat) sectionsOf(c.id).forEach(function (t) { list.appendChild(tournamentNode(t, t.section, 0)); });
+        else list.appendChild(clubNode(c));
+      });
+      tree.appendChild(list);
     });
-    tree.appendChild(clubs);
   }
+  // Búsqueda en todo: respeta el orden, el tipo y las fechas elegidas (sin orden manual).
   function showResults(box, query) {
-    var found = K.Hub.sort(allItems().filter(function (item) { return K.Hub.matches(item, query, '', ''); }), 'newest');
-    $('#hub-controls').hidden = true;
+    var key = '*', mode = organization.sorts[key] || 'newest', kind = $('#hub-kind').value || 'all', field = $('#hub-date-field').value || 'updated', from = $('#hub-from').value, to = $('#hub-to').value;
+    if (mode === 'manual') mode = 'newest';
+    $('#hub-sort').value = mode;
+    if (from && to && from > to) { box.appendChild(el('p', { class: 'empty', text: 'La fecha inicial debe ser anterior o igual a la final.' })); return; }
+    var found = K.Hub.sort(allItems().filter(function (item) { return (kind === 'all' || item.kind === kind) && K.Hub.matches(item, query, from, to, field); }), mode);
     $('#hub-count').textContent = found.length + (found.length === 1 ? ' resultado' : ' resultados') + ' en todas las newsletters';
-    if (!found.length) { box.appendChild(el('p', { class: 'empty', text: 'No hay newsletters ni carpetas con ese nombre.' })); return; }
+    if (!found.length) { box.appendChild(el('p', { class: 'empty', text: 'No hay newsletters ni carpetas con ese nombre y filtros.' })); return; }
     var grid = el('div', { class: 'grid' }); found.forEach(function (item) { grid.appendChild(quickCard(item)); }); box.appendChild(grid);
   }
+  function isGlobal() { return !!($('#hub-search').value.trim() && (!hubTournament || $('#hub-scope').value === 'all')); }
   function showLobby() {
     clearTimeout(timer); if (currentId) persist(); currentId = null;
     document.body.classList.add('in-lobby');
@@ -277,14 +323,16 @@
     var box = $('#folders'); box.innerHTML = '';
     var crumbs = $('#hub-path'); crumbs.innerHTML = '';
     crumbs.appendChild(el('button', { class: 'crumb', text: 'Inicio', onclick: function () { navigate('', ''); } }));
-    $('#hub-controls').hidden = !hubTournament; $('#new-folder').hidden = !hubTournament;
+    $('#hub-controls').hidden = !hubTournament && !isGlobal(); $('#new-folder').hidden = !hubTournament;
+    Array.prototype.forEach.call($('#hub-sort').querySelectorAll('option'), function (o) { if (o.value === 'manual') o.hidden = isGlobal(); });
+    $('#hub-show').innerHTML = ''; $('#hub-show').hidden = true;
     $('#hub-count').textContent = '';
     // Fuera de una sección (inicio o club) la búsqueda recorre todo; dentro se puede elegir.
     $('#hub-scope').hidden = !hubTournament;
     $('#hub-search').placeholder = hubTournament && $('#hub-scope').value !== 'all' ? 'Buscar en esta carpeta…' : 'Buscar en todas las newsletters y carpetas…';
-    var globalQuery = $('#hub-search').value.trim() && (!hubTournament || $('#hub-scope').value === 'all') ? $('#hub-search').value : '';
-    function countFor(ids) { var n = Object.keys(projects).filter(function (id) { return ids.indexOf(K.tournament(projects[id].state.tournament).id) >= 0; }).length; return n + (n === 1 ? ' newsletter' : ' newsletters'); }
-    function card(label, color, ids, fn) { return el('button', { class: 'tournament-card', onclick: fn, style: 'border-top-color:' + color }, [el('span', { text: '📁 ' + label }), el('small', { text: countFor(ids) })]); }
+    var globalQuery = isGlobal() ? $('#hub-search').value : '';
+    // Tarjeta de torneo, club o sección: misma franja de color que las tarjetas de newsletter (principal + acento).
+    function card(label, t, ids, fn) { return el('button', { class: 'tournament-card', onclick: fn }, [el('span', { class: 'swatch', style: 'background:' + t.principal + ';border-bottom:3px solid ' + t.acento, 'aria-hidden': 'true' }), el('span', { class: 'tc-name', text: label }), el('small', { text: plural(countFor(ids)) })]); }
     var club = hubTournament ? K.club(K.tournament(hubTournament).club) : K.club(hubClub);
     if (club) {
       crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
@@ -294,22 +342,33 @@
       if (globalQuery) { showResults(box, globalQuery); return; }
       if (club) {
         var sections = el('div', { class: 'grid' });
-        K.CLIENT.tournaments.filter(function (t) { return t.club === club.id; }).forEach(function (t) { sections.appendChild(card(t.section, t.principal, [t.id], function () { navigate(t.id, ''); })); });
+        K.CLIENT.tournaments.filter(function (t) { return t.club === club.id; }).forEach(function (t) { sections.appendChild(card(t.section, t, [t.id], function () { navigate(t.id, ''); })); });
         box.appendChild(sections); return;
       }
-      var recent = K.Hub.sort(allItems().filter(function (item) { return item.kind === 'project'; }), 'newest').slice(0, 6);
-      if (recent.length) {
-        var recentGrid = el('div', { class: 'grid' }); recent.forEach(function (item) { recentGrid.appendChild(quickCard(item)); });
-        box.appendChild(el('h2', { class: 'hub-group', text: 'Editadas recientemente' })); box.appendChild(recentGrid);
-      }
-      var ksa = el('div', { class: 'grid' }), clubs = el('div', { class: 'grid' });
-      K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { ksa.appendChild(card(t.name, t.principal, [t.id], function () { navigate(t.id, ''); })); });
-      K.CLIENT.clubs.forEach(function (c) {
-        var ids = K.CLIENT.tournaments.filter(function (t) { return t.club === c.id; }).map(function (t) { return t.id; });
-        clubs.appendChild(card(c.name, c.base.principal, ids, function () { navigate('', '', c.id); }));
+      // Inicio: interruptores para mostrar u ocultar cada bloque (se recuerdan en este navegador).
+      var show = $('#hub-show'); show.hidden = false;
+      show.appendChild(el('span', { class: 'show-label', text: 'Mostrar:' }));
+      [{ id: 'recent', name: 'Recientes' }].concat(K.CLIENT.groups).forEach(function (g) {
+        show.appendChild(el('button', { type: 'button', class: 'chip', 'aria-pressed': String(!view.hide[g.id]), onclick: function () { toggleView(g.id); } }, [el('span', { text: (view.hide[g.id] ? '○ ' : '✓ ') + g.name })]));
       });
-      box.appendChild(el('h2', { class: 'hub-group', text: K.CLIENT.name })); box.appendChild(ksa);
-      box.appendChild(el('h2', { class: 'hub-group', text: 'Clubs' })); box.appendChild(clubs);
+      var recent = allItems().filter(function (item) { return item.kind === 'project'; });
+      recent.sort(function (a, b) { return Math.max(b.opened, b.updated) - Math.max(a.opened, a.updated); });
+      recent = recent.slice(0, 6);
+      if (recent.length && !view.hide.recent) {
+        var recentGrid = el('div', { class: 'grid' }); recent.forEach(function (item) { recentGrid.appendChild(quickCard(item)); });
+        box.appendChild(el('h2', { class: 'hub-group', text: 'Recientes (abiertas o editadas)' })); box.appendChild(recentGrid);
+      }
+      K.CLIENT.groups.forEach(function (g) {
+        if (view.hide[g.id]) return;
+        var grid = el('div', { class: 'grid' });
+        if (g.id === 'stage') K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { grid.appendChild(card(t.name, t, [t.id], function () { navigate(t.id, ''); })); });
+        clubsIn(g.id).forEach(function (c) {
+          if (c.flat) sectionsOf(c.id).forEach(function (t) { grid.appendChild(card(t.section, t, [t.id], function () { navigate(t.id, ''); })); });
+          else grid.appendChild(card(c.name, c.base, idsOf(sectionsOf(c.id)), function () { navigate('', '', c.id); }));
+        });
+        box.appendChild(el('h2', { class: 'hub-group', text: g.name })); box.appendChild(grid);
+      });
+      if (!box.children.length) box.appendChild(el('p', { class: 'empty', text: 'Has ocultado todos los bloques. Actívalos en «Mostrar» o usa el menú y el buscador.' }));
       return;
     }
     crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
@@ -325,7 +384,8 @@
     var all = K.Hub.sort(currentItems(), mode, organization.orders[key]);
     var query = $('#hub-search').value, from = $('#hub-from').value, to = $('#hub-to').value;
     if (from && to && from > to) { box.appendChild(el('p', { class: 'empty', text: 'La fecha inicial debe ser anterior o igual a la final.' })); return; }
-    var visible = all.filter(function (item) { return K.Hub.matches(item, query, from, to); });
+    var kind = $('#hub-kind').value || 'all', field = $('#hub-date-field').value || 'updated';
+    var visible = all.filter(function (item) { return (kind === 'all' || item.kind === kind) && K.Hub.matches(item, query, from, to, field); });
     $('#hub-count').textContent = visible.length + ' de ' + all.length + ' elementos en esta carpeta';
     if (!visible.length) { box.appendChild(el('p', { class: 'empty', text: all.length ? 'No hay resultados con estos filtros.' : 'Esta carpeta está vacía. Crea una subcarpeta o una newsletter.' })); return; }
     var grid = el('div', { class: 'grid' });
@@ -353,13 +413,13 @@
             var ids = all.map(function (x) { return x.id; }), next = index + dir;
             ids[index] = ids[next]; ids[next] = item.id; organization.orders[key] = ids; saveAll(); showLobby(); focusHubItem(item.id, (dir < 0 ? 'Subir ' : 'Bajar ') + item.name);
           } });
-          b.disabled = !!(query || from || to) || index + dir < 0 || index + dir >= all.length; actions.appendChild(b);
+          b.disabled = !!(query || from || to || kind !== 'all') || index + dir < 0 || index + dir >= all.length; actions.appendChild(b);
         });
       }
       var card = el('div', { class: 'proj hub-card', 'data-hub-id': item.id }, [
         el('span', { class: 'swatch', style: 'background:' + (isFolder ? '#e4e0ee' : t.principal) + ';border-bottom:4px solid ' + t.acento }),
         el('button', { class: 'item-open', title: item.name, text: (isFolder ? '📁 ' : '') + item.name, onclick: function () { if (isFolder) navigate(hubTournament, item.id); else openProject(item.id); } }),
-        el('small', { text: isFolder ? 'Carpeta · ' + plural(countIn(item.id)) : (p.state.sections || []).length + ' módulos' }),
+        el('small', { text: isFolder ? 'Carpeta · ' + plural(countIn(item.id)) : (p.state.sections || []).length + ' módulos' + (p.opened ? ' · abierta ' + new Date(p.opened).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) : '') }),
         el('small', { text: 'Modificado: ' + new Date(item.updated).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) }), actions
       ]);
       if (isFolder) dropDestination(card, item.id); else dragNewsletter(card, item.id);
@@ -372,11 +432,25 @@
     $('#folder-cancel').addEventListener('click', function () { $('#folder-dialog').close(); });
     $('#folder-name').addEventListener('input', function () { this.setCustomValidity(''); });
     $('#hub-sort').addEventListener('change', function () {
+      if (isGlobal()) { organization.sorts['*'] = this.value; saveAll(); showLobby(); return; }
       var key = locationKey();
       if (this.value === 'manual' && !organization.orders[key]) organization.orders[key] = K.Hub.sort(currentItems(), organization.sorts[key] || 'newest', organization.orders[key]).map(function (x) { return x.id; });
       organization.sorts[key] = this.value; saveAll(); showLobby();
     });
     ['hub-search', 'hub-from', 'hub-to'].forEach(function (id) { $('#' + id).addEventListener('input', showLobby); });
+    ['hub-kind', 'hub-date-field'].forEach(function (id) { $('#' + id).addEventListener('change', showLobby); });
+    // Menú plegable a una columna estrecha (hub y editor). Se recuerda en este navegador.
+    function applyCollapse() {
+      var c = !!view.collapsed, b = $('#tree-collapse');
+      $('#workspace').classList.toggle('tree-collapsed', c);
+      b.textContent = c ? '»' : '«'; b.setAttribute('aria-expanded', String(!c));
+      b.setAttribute('title', c ? 'Mostrar el menú de ubicaciones' : 'Ocultar el menú (deja una columna estrecha)');
+      b.setAttribute('aria-label', c ? 'Mostrar el menú de ubicaciones' : 'Ocultar el menú de ubicaciones');
+    }
+    $('#tree-collapse').addEventListener('click', function () {
+      view.collapsed = !view.collapsed; try { localStorage.setItem(VIEW, JSON.stringify(view)); } catch (e) {} applyCollapse();
+    });
+    applyCollapse();
     $('#hub-scope').addEventListener('change', function () { showLobby(); $('#hub-search').focus(); });
     // En pantallas estrechas el panel de ubicaciones empieza plegado; en escritorio siempre está abierto.
     if (window.matchMedia) {
@@ -397,7 +471,7 @@
   // ---------- Ajustes generales ----------
   function fillTournaments(select) {
     select.innerHTML = '';
-    var ksa = el('optgroup', { label: K.CLIENT.name }); select.appendChild(ksa);
+    var ksa = el('optgroup', { label: K.CLIENT.groups[0].name }); select.appendChild(ksa);
     K.CLIENT.tournaments.filter(function (t) { return !t.club; }).forEach(function (t) { ksa.appendChild(el('option', { value: t.id, text: t.name })); });
     K.CLIENT.clubs.forEach(function (c) {
       var g = el('optgroup', { label: c.name }); select.appendChild(g);
@@ -1215,7 +1289,7 @@
       if (kit) state.brandKit = K.BrandKits.snapshot(kit); else delete state.brandKit;
       update(); K.BrandKitsUI.refreshSelect(state); renderImagePanel();
     });
-    $('#tournament').addEventListener('change', function () { state.tournament = this.value; update(); renderImagePanel(); });
+    $('#tournament').addEventListener('change', function () { state.tournament = this.value; update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); });
     $('#name').addEventListener('input', function () { state.name = this.value; update(); });
     $('#desc').addEventListener('input', function () { state.desc = this.value; update(); });
     $('#mp').addEventListener('change', function () { state.mediaPackages = this.checked; update(); });

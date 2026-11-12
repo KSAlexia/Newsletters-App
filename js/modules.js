@@ -538,7 +538,7 @@
     { id: 'recordatorio', name: 'Recordatorio / instrucciones', sections: [['intro'], ['info'], ['lista'], ['compra', { variant: 'modificar' }]] },
     { id: 'productos', name: 'Venta de varios servicios con precio', sections: [['titulo'], ['intro'], ['producto'], ['separador'], ['producto'], ['cierre'], ['compra', { layout: 'bottom' }], ['intro']] },
     { id: 'transaccional', name: 'Transaccional / confirmación', sections: [['intro'], ['compra'], ['contacto']] },
-    { id: 'ref1', name: 'Ejemplo: Media Packages · Surf Cup 2026', tournament: 'surfcup', mediaPackages: true, name2: 'Media Packages', desc: 'media_packages', headerAlt: 'KSA Global Stage',
+    { id: 'ref1', name: 'Ejemplo: Media Packages · Surf Cup 2026', tournament: 'surfcup', mediaPackages: true, name2: 'Media Packages', desc: 'media_packages', headerAlt: 'Kaptiva Global Stage',
       franja: 'Media Packages',
       sections: [
         ['intro', { text: 'Our in-house media team will be on site at the Surf Cup Tournament, capturing the best moments on the field and giving families **both digital and physical memories**.\nExplore our three photography packages below and choose the option that best fits your player.' }],

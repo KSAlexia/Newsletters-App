@@ -4,7 +4,7 @@ App interna para montar newsletters de Cvent con piezas fijas. Sin IA y sin cost
 
 ## Cómo usarla
 1. Abre `index.html` con doble clic (Chrome o Edge). No hay que instalar nada.
-2. En la pantalla de Proyectos, pulsa «Nueva newsletter» para abrir una en blanco. Se guarda solo dentro del torneo y la carpeta que tengas abierta.
+2. En la pantalla de Newsletters, pulsa «Nueva newsletter» para abrir una en blanco. Se guarda solo dentro del torneo y la carpeta que tengas abierta.
 3. Rellena los módulos. La vista previa se actualiza sola.
 4. Mira la pestaña **Revisión** y descarga el `.txt` para pegarlo en Cvent.
 
@@ -82,13 +82,13 @@ Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los c
 
 ## Clubs
 
-- La pantalla inicial tiene dos grupos: **KSA Global Stage** (los torneos) y **Clubs**. Al entrar en un club aparecen sus secciones, que funcionan como un torneo (carpetas y newsletters propias):
+- La pantalla inicial tiene tres grupos: **Kaptiva Global Stage** (los torneos), **Clubs** y **Kaptiva Sports Academy** (sus secciones aparecen directamente). Al entrar en un club aparecen sus secciones, que funcionan como un torneo (carpetas y newsletters propias):
   - Fundación Real Madrid: USA CAMPS, CANADA CAMPS, EXPERIENCES, RMF WORLD CHALLENGE
   - Paris Saint-Germain Academy: USA CAMPS, CANADA CAMPS, EXPERIENCES
   - Arsenal: USA CAMPS, CANADA CAMPS, EXPERIENCES
   - Bayern FC: CANADA CAMPS, EXPERIENCES
 - Los datos están en `js/brands.js` (`K.CLIENT.clubs`). Cada sección hereda el diseño de su club (`base`) y puede cambiar header, footer, colores, fuentes, nombre del título o contacto. Un valor `null` o vacío queda PENDIENTE y la revisión lo avisa.
-- El nombre del club sustituye a «KSA Global Stage» en el título del email, el alt del header y la etiqueta derecha de la franja. Los clubs no tienen banner de Media Packages.
+- El nombre del club sustituye a «Kaptiva Global Stage» en el título del email, el alt del header y la etiqueta derecha de la franja. Los clubs no tienen banner de Media Packages.
 - Contacto: `contact` acepta un email o un custom field de Cvent; si es un custom field, añádelo también a `K.CVENT_FIELDS`. Mientras esté vacío, la caja «Get in Touch» muestra «CONTACTO PENDIENTE» y la revisión da error.
 
 ## Brand kits

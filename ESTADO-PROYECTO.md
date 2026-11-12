@@ -449,3 +449,72 @@ Pedido por el usuario: optimizar el menú principal para que sea más intuitivo 
 - `css/app.css`: panel fijo (sticky) de 260 px; por debajo de 800 px pasa arriba como desplegable «Ubicaciones», plegado al cargar (`matchMedia`).
 
 Pruebas: `test/hub.test.js` añade recientes con ubicación, panel con clubs y carpetas de la sección abierta, búsqueda global desde Inicio (encuentra Surf Cup y Arsenal) y cambio de alcance dentro de una sección. Pasan todas las suites; `test/test.js` mantiene la diferencia BASE conocida. En el navegador integrado sobre `http://127.0.0.1:8771` con datos sintéticos (origen distinto al `file://` del usuario): Inicio con panel y recientes a 1300 px, desplegar Arsenal y abrir USA CAMPS desde el panel (ruta y carpeta mostradas), búsqueda «early» en todas (6 resultados con ubicación) y 375 px sin desbordamiento horizontal con el panel plegado. No probado: arrastrar sobre el panel en navegador real (solo lógica compartida con las tarjetas), Firefox/Safari.
+
+## Hub a pantalla completa, grupos, filtros por apertura y Kaptiva Sports Academy (2026-11-12)
+
+Pedido por el usuario: hub a pantalla completa con el panel de ubicaciones como menú lateral fijo; ordenar/filtrar newsletters y carpetas por orden, fecha de apertura, etc.; poder ocultar Recientes, Kaptiva Global Stage o Clubs; añadir Kaptiva Sports Academy como clasificación aparte (con Short Sessions, Residential Camps…) y renombrar «KSA Global Stage» a «Kaptiva Global Stage».
+
+- Layout (`index.html`, `css/app.css`): `#lobby` es una rejilla de dos columnas a todo el ancho: menú `#hub-tree-box` (280 px, borde derecho, scroll propio) y `.hub-main` con barra, buscador, ruta, controles y contenido (scroll propio). Se quitó el ancho máximo centrado de 1100 px. Por debajo de 800 px el menú pasa arriba como desplegable «Menú de ubicaciones».
+- Grupos (`brands.js`): `K.CLIENT.groups` = Kaptiva Global Stage (`stage`), Clubs (`clubs`), Kaptiva Sports Academy (`academy`). Cada club tiene `group` (por defecto `clubs`). Academy es una entrada más de `K.CLIENT.clubs` con `group: 'academy'` y `flat: true` (sus secciones se listan directamente en el menú y en el inicio, sin nivel de club). Secciones creadas: `academy-short` (SHORT SESSIONS) y `academy-residential` (RESIDENTIAL CAMPS). Sin diseño recibido: header/footer y contacto pendientes, paleta KSA marcada como provisional (la revisión avisa). El usuario dijo «etc.»: faltan por confirmar el resto de secciones.
+- Renombrado: solo en la interfaz (grupo del menú, inicio, `optgroup` del selector del editor y la barra superior, ahora «Kaptiva · v0.3»). `K.CLIENT.name` sigue siendo «KSA Global Stage» porque aparece en el título y el alt del header de los emails y en el prompt de importación; cambiarlo alteraría los emails y la comparación con la BASE. Pendiente de decisión del usuario.
+- Mostrar/ocultar: en el inicio, `#hub-show` con interruptores (Recientes y cada grupo). Ocultar un grupo lo quita del inicio y lo pliega en el menú; las cabeceras de grupo del menú también pliegan/despliegan. Un grupo plegado se muestra si contiene la ubicación abierta. Preferencia por navegador en `kaptiva-newsletters-hub-view-v1` (`{hide: {recent, stage, clubs, academy}}`), con try/catch.
+- Apertura: `openProject` guarda `opened` en el registro de la newsletter (no en `state`), así que no cambia la fecha de modificación. Recientes del inicio ordenadas por la más reciente entre apertura y modificación. Las tarjetas muestran «abierta …».
+- Orden y filtros (`#hub-controls`): nuevo orden «Apertura: más recientes» (`K.Hub.sort` modo `opened`; lo nunca abierto y las carpetas van al final), «Mostrar» (newsletters y carpetas / solo newsletters / solo carpetas) y «Fecha de» (modificación / apertura) para el rango Desde–Hasta (`K.Hub.matches(..., field)`; sin fecha de apertura no pasa un filtro de fechas). Los controles también se aplican a la búsqueda en todas las newsletters (orden guardado en `organization.sorts['*']`; sin orden manual). Las flechas manuales se desactivan con el filtro de tipo.
+
+Pruebas: `test/hub.test.js` añade grupos del inicio (incluidas las secciones de Academy, sin «KSA Global Stage»), ocultar Clubs y Recientes con persistencia tras recargar, apertura sin cambiar la modificación, orden por apertura, filtro por tipo y rango por fecha de apertura. Pasan todas las suites; `test/test.js` mantiene la diferencia BASE conocida (emails sin cambios). En el navegador integrado sobre `http://127.0.0.1:8771` con datos sintéticos: menú fijo a la izquierda a ancho completo, interruptores de Clubs y Recientes (Clubs plegado también en el menú), orden por apertura en Surf Cup y 375 px sin desbordamiento con el menú plegado.
+
+### Renombrado también en los emails (2026-11-12)
+
+El usuario confirmó cambiar «KSA Global Stage» por «Kaptiva Global Stage» también en los emails. `K.CLIENT.name` = «Kaptiva Global Stage»: afecta al `<title>` y al alt/title del header de los torneos (`modules.js`), al nombre por defecto del header de los brand kits y al prompt de importación. La receta de ejemplo `ref1` usa ese alt. Los clubs y Academy no cambian (usan su `brand`). No cambian `filePrefix` (`ksags`) ni los nombres de archivo. `test/test.js` sustituye el nombre antiguo en la BASE antes de comparar (la BASE es un email real enviado con el nombre anterior); la única diferencia sigue siendo `?d=650`. README actualizado. No probado en Cvent/clientes de correo.
+
+## Menú lateral en árbol con desplegables anidados (2026-11-12)
+
+Pedido por el usuario: al entrar en un evento el menú se recogía y solo mostraba ese camino; quería jerarquías como desplegables dentro de desplegables, pudiendo entrar en carpetas dentro de carpetas desde el menú.
+
+- `app.js` (`renderTree`): cada club, sección/torneo y carpeta con hijos tiene su propia flecha ▸/▾ (`branch()`), independiente de la ubicación abierta. Se pueden tener varias ramas abiertas a la vez y las carpetas se despliegan a cualquier profundidad, en cualquier torneo o sección. Pulsar el nombre entra en esa ubicación; la flecha solo despliega o pliega.
+- Lo desplegado se guarda por navegador en `view.open` (claves `c:<club>`, `t:<sección>`, `f:<carpeta>`) dentro de `kaptiva-newsletters-hub-view-v1`. Entrar en una ubicación (menú, ruta, tarjeta o resultado de búsqueda) despliega su camino (`openPath`) y no pliega lo demás. Se elimina el despliegue automático limitado al camino actual (`treeOpen`).
+- Las cabeceras de grupo siguen funcionando como antes (mostrar/ocultar grupo, compartido con los interruptores del inicio). Arrastrar newsletters al menú sigue limitado a la sección abierta (mismas reglas).
+- CSS: sangría fija por nivel (16 px con línea guía) en lugar de la acumulada por `--depth`; flechas más grandes.
+
+Pruebas: `test/hub.test.js` añade árbol plegado al inicio, carpetas de tres niveles, sin flecha cuando no hay subcarpetas, ramas de Surf Cup y Arsenal abiertas a la vez, conservación al entrar en una sección y tras recargar, y despliegue del camino al abrir un resultado de búsqueda (el DOM simulado ignora el reenfoque de la flecha). Pasan todas las suites. En el navegador integrado (`http://127.0.0.1:8771`, datos sintéticos): Surf Cup › Ventas › Noviembre › Semana 1 y PSG › USA CAMPS › Borradores abiertos a la vez, recordados tras recargar, y entrar en Semana 1 desde el menú mantiene abierta la rama de PSG.
+
+## Menú de ubicaciones también en el editor, plegable a columna estrecha (2026-11-12)
+
+Pedido por el usuario: ver el menú también dentro de una newsletter y poder ocultarlo dejando una columna pequeña, o volver a mostrarlo.
+
+- `index.html`: `#workspace` (rejilla) envuelve el menú `#hub-tree-box` y `.workspace-body`, que contiene el hub (`#lobby`), los avisos y el editor (`main`). El menú ya no está dentro de `#lobby`: es común a ambas vistas. Cabecera del menú `.tree-head` con «Ubicaciones» y el botón `#tree-collapse` («/»).
+- Plegado: `view.collapsed` en `kaptiva-newsletters-hub-view-v1`; clase `tree-collapsed` → columna de 46 px con solo el botón ». Igual en hub y editor. En pantallas de 800 px o menos el menú sigue arriba como desplegable y no se muestra el botón de plegar.
+- En el editor el menú marca la ubicación de la newsletter abierta (`editorLocation()`, con el torneo del selector aunque aún no se haya guardado) y despliega su camino; se vuelve a pintar al cambiar el torneo. Pulsar una ubicación sale al hub en esa carpeta: `navigate()` respeta el aviso de código sin aplicar y `showLobby()` guarda la newsletter. En el editor no se arrastra al menú.
+
+Pruebas: `test/hub.test.js` añade ubicación marcada en el editor (carpeta de segundo nivel), plegar/desplegar con persistencia tras recargar y salir al hub por el menú guardando el nombre editado. Pasan todas las suites. En el navegador integrado (`http://127.0.0.1:8771`, datos sintéticos): editor a 1440 px con el menú y la carpeta Noviembre marcada, plegado a columna estrecha con la vista previa ensanchada, desplegado y salto a PSG › USA CAMPS › Borradores desde el editor; 375 px sin desbordamiento.
+
+### Ajuste visual del menú (2026-11-12)
+
+A petición del usuario, el marcador de la ubicación actual (barra izquierda de 3 px) ya no se pega al punto de color: la entrada seleccionada es una píldora con fondo suave y borde fino, las entradas tienen más margen interior (10 px) y separación (10 px) y el punto de color lleva un pequeño halo blanco. Solo CSS; revisado en el navegador integrado.
+
+## Interfaz unificada (2026-11-12)
+
+Pedido por el usuario: unificar la interfaz para que todo sea más coherente.
+
+- `css/app.css`: tokens comunes en `:root` (`--r-sm` 6 px, `--r` 8 px, `--r-lg` 12 px, `--shadow-hover`, `--ring`) y un bloque final «SISTEMA VISUAL UNIFICADO» que impone un único estilo por pieza:
+  - Botones: principal (relleno morado, hover más oscuro), secundario (borde, hover suave) y pequeño (acciones de tarjeta y selección de imagen); misma altura mínima (36 px / 28 px), radio y estado desactivado. Incluye los botones de la pestaña Código y de la comparación, que tenían estilos propios.
+  - Campos (texto, búsqueda, fecha, selectores, áreas): misma altura, borde, radio y anillo de foco (`--ring`) en hub, editor y diálogos. La barra oscura superior conserva su estilo.
+  - Títulos de sección en versalitas iguales: grupos del inicio y del menú, grupos del buscador «Ir a otra newsletter», subtítulos de campos y barra lateral de kits.
+  - Avisos dentro de la página (`.fixed`, `.hub-feedback`, `.code-note`): misma forma; el color indica el tipo.
+  - Tarjetas: radio grande para contenedores, medio para elementos de lista, misma sombra al pasar. Franja de color común de 12 px (principal + acento) en newsletters, carpetas y ahora también torneos, clubs y secciones.
+  - Contadores en píldora iguales (menú y revisión).
+- `app.js`: las tarjetas de torneo/club/sección del inicio dejan de usar 📁 (se reserva para carpetas, como en el menú) y llevan la franja de color de su marca.
+- Terminología: el título del hub y el botón de volver pasan de «Proyectos» a «Newsletters» (README actualizado). Se mantienen «Exportar proyecto» y «Abrir archivo de proyecto» porque se refieren al archivo `.json`.
+- `test/hub.test.js`: los clics en tarjetas de torneo/club/sección usan el nombre sin 📁. Pasan todas las suites.
+
+Revisado en el navegador integrado (`http://127.0.0.1:8771`, datos sintéticos) a 1440 px: inicio, sección con filtros, editor, pestaña Código y diálogo de brand kits; 375 px sin desbordamiento. No es un rediseño completo del editor ni de los diálogos: solo homogeneiza las piezas comunes.
+
+## Diseño de Bayern y Kaptiva Sports Academy (2026-11-12)
+
+Datos recibidos del usuario y cargados en `js/brands.js` (sustituyen los provisionales; ya no hay avisos de colores provisionales, header pendiente ni contacto pendiente):
+
+- **Bayern FC** (CANADA CAMPS y EXPERIENCES): nombre en el email «FC Bayern Soccer Camp»; header `pix/020025ab69804500ac546ae96b2ffdf4.png`; footer `pix/e1222579c3d6493381c01e340d4b6ef1.jpg` con alt «See you in Munich»; principal `#ED0037`, acento `#286CFC`, sin secundario; contacto `experience@fcbayernsoccercamps.com`. Fuentes `BAYERN_FONTS` (asignación propuesta, no confirmada): Cond Extra Bold → titulares principales/secundarios y cifras; Bold → negrita; Regular → medio, ligero y párrafo.
+- **Kaptiva Sports Academy** (SHORT SESSIONS y RESIDENTIAL CAMPS): nombre «Kaptiva Sports Academy»; header `pix/6cc70ed029dd494b80735f821e8158a2.png`; footer `pix/0e125d09d568466780e1bd113486df30.png` con alt «Kaptiva Sports Academy» (la imagen muestra «See you in Spain»; se usa el alt indicado por el usuario); principal `#790B81`, acento `#AF6CB3`, sin secundario; contacto `admissions@kaptivasports.com`. Fuentes `ACADEMY_FONTS`: DinPro Black/Bold/Medium/Regular/Light a su uso homónimo; Flatory Serif ExtraBold Condensed → titulares principales y Flatory Serif Condensed → secundarios (asignación propuesta). Los `.ttf` se declaran como `truetype`.
+- La plantilla incluía «SECCIÓN con diseño distinto: CANADA CAMPS» con los campos vacíos en ambos casos: no se ha creado ningún override. Academy no tiene sección CANADA CAMPS.
+
+Pruebas: `test/brand-kits.test.js` añade, para las cuatro secciones, título, colores sin restos de la paleta KSA, header/footer/alt, contacto, fuentes, formato truetype y ausencia de avisos de diseño pendiente. Pasan todas las suites. Vista previa en el navegador integrado (datos sintéticos, 1440 px): Bayern › CANADA CAMPS y Academy › SHORT SESSIONS con su header, franja, título, caja de contacto y footer; revisión sin errores en ambas. No probado en Cvent ni en clientes de correo.

@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.3</span><button id="back" class="ed">← Proyectos</button><button id="switch" class="ed" title="Ir a otra newsletter (Ctrl/⌘ + K)">Ir a otra newsletter…</button></div>
+  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">Kaptiva · v0.3</span><button id="back" class="ed">← Newsletters</button><button id="switch" class="ed" title="Ir a otra newsletter (Ctrl/⌘ + K)">Ir a otra newsletter…</button></div>
   <div class="actions ed">
     <select id="recipe" title="Empezar desde una receta"></select>
     <button id="import">Importar</button>
@@ -19,9 +19,20 @@
   </div>
 </header>
 
+<div id="workspace" class="workspace">
+<details id="hub-tree-box" open>
+  <summary>Menú de ubicaciones</summary>
+  <div class="tree-head">
+    <span class="tree-title">Ubicaciones</span>
+    <button id="tree-collapse" type="button" class="tree-collapse" aria-expanded="true" title="Ocultar el menú (deja una columna estrecha)">«</button>
+  </div>
+  <nav id="hub-tree" aria-label="Todas las ubicaciones"></nav>
+</details>
+<div class="workspace-body">
 <section id="lobby">
+  <div class="hub-main">
   <div class="lobby-bar">
-    <h1>Proyectos</h1>
+    <h1>Newsletters</h1>
     <span class="spacer"></span>
     <button id="brand-kits-open" class="btn ghost2">Brand kits</button>
     <button id="new-folder" class="btn ghost2" hidden>＋ Nueva carpeta</button>
@@ -29,13 +40,7 @@
     <button id="from-script" type="button" class="btn ghost2">＋ Desde un guion</button>
     <button id="open" class="btn ghost2">Abrir archivo de proyecto</button>
   </div>
-  <p class="muted lobby-note">Se guardan en este navegador. Arrastra una newsletter sobre una carpeta (aquí o en el panel de ubicaciones) para moverla. Para pasársela a otra persona, usa «Exportar proyecto» dentro de ella.</p>
-  <div class="hub-layout">
-  <details id="hub-tree-box" open>
-    <summary>Ubicaciones</summary>
-    <nav id="hub-tree" aria-label="Todas las ubicaciones"></nav>
-  </details>
-  <div class="hub-main">
+  <p class="muted lobby-note">Se guardan en este navegador. Arrastra una newsletter sobre una carpeta (aquí o en el menú) para moverla. Para pasársela a otra persona, usa «Exportar proyecto» dentro de ella.</p>
   <div class="hub-find">
     <label for="hub-search" class="sr-only">Buscar newsletters</label>
     <input id="hub-search" type="search" placeholder="Buscar newsletter o carpeta por nombre…">
@@ -44,19 +49,26 @@
     </select>
   </div>
   <nav id="hub-path" aria-label="Ubicación actual"></nav>
+  <div id="hub-show" role="group" aria-label="Mostrar en el inicio"></div>
   <div id="hub-controls" hidden>
     <label>Ordenar<select id="hub-sort">
       <option value="newest">Modificación: más recientes</option><option value="oldest">Modificación: más antiguas</option>
+      <option value="opened">Apertura: más recientes</option>
       <option value="az">Nombre: A–Z</option><option value="za">Nombre: Z–A</option><option value="manual">Orden manual (↑ ↓)</option>
     </select></label>
-    <label>Modificado desde<input id="hub-from" type="date"></label>
+    <label>Mostrar<select id="hub-kind">
+      <option value="all">Newsletters y carpetas</option><option value="project">Solo newsletters</option><option value="folder">Solo carpetas</option>
+    </select></label>
+    <label>Fecha de<select id="hub-date-field">
+      <option value="updated">Modificación</option><option value="opened">Apertura</option>
+    </select></label>
+    <label>Desde<input id="hub-from" type="date"></label>
     <label>Hasta<input id="hub-to" type="date"></label>
     <button id="hub-clear" class="btn ghost2">Limpiar filtros</button>
   </div>
   <p id="hub-count" class="muted" aria-live="polite"></p>
   <p id="hub-feedback" class="hub-feedback" role="status"></p>
   <div id="folders"></div>
-  </div>
   </div>
 </section>
 
@@ -139,6 +151,8 @@
     </div>
   </section>
 </main>
+</div>
+</div>
 
 <dialog id="dlg">
   <h2>Importar una newsletter</h2>

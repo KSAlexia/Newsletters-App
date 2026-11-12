@@ -132,3 +132,25 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   assert.match(checks, /tarjeta 2\): el botón «Reserva» no tiene enlace/); assert.match(checks, /Título\): el botón «Ver más» no tiene enlace/);
   console.log('OK: botón sin enlace visible y marcado en la revisión.');
 }
+
+// Datos de diseño de Bayern y Kaptiva Sports Academy recibidos el 12/11/2026.
+{
+  const cases = {
+    'bayern-canada': { title: 'FC Bayern Soccer Camp', colors: ['#ED0037', '#286CFC'], header: '020025ab69804500ac546ae96b2ffdf4.png', footer: 'e1222579c3d6493381c01e340d4b6ef1.jpg', alt: 'See you in Munich', mail: 'experience@fcbayernsoccercamps.com', font: 'a55077d0af444071a9c0e2c8455ac498.otf' },
+    'bayern-exp': { title: 'FC Bayern Soccer Camp', colors: ['#ED0037', '#286CFC'], header: '020025ab69804500ac546ae96b2ffdf4.png', footer: 'e1222579c3d6493381c01e340d4b6ef1.jpg', alt: 'See you in Munich', mail: 'experience@fcbayernsoccercamps.com', font: '61fcb5a326e24f048a37611e055efe23.otf' },
+    'academy-short': { title: 'Kaptiva Sports Academy', colors: ['#790B81', '#AF6CB3'], header: '6cc70ed029dd494b80735f821e8158a2.png', footer: '0e125d09d568466780e1bd113486df30.png', alt: 'Kaptiva Sports Academy', mail: 'admissions@kaptivasports.com', font: '4f15fb5051684e46873120016ed52f5a.ttf' },
+    'academy-residential': { title: 'Kaptiva Sports Academy', colors: ['#790B81', '#AF6CB3'], header: '6cc70ed029dd494b80735f821e8158a2.png', footer: '0e125d09d568466780e1bd113486df30.png', alt: 'Kaptiva Sports Academy', mail: 'admissions@kaptivasports.com', font: '8ee7cfe4f92440f99df5a47fdee34944.otf' }
+  };
+  for (const [id, c] of Object.entries(cases)) {
+    const st = K.fromRecipe('media', id), out = K.build(st), msgs = K.check(st, out).map(x => x.msg).join('\n');
+    assert.ok(out.includes('<title>' + c.title), id + ': título');
+    c.colors.forEach(col => assert.ok(out.includes(col), id + ': color ' + col));
+    assert.equal((out.match(/#6F4ACC|#91FAFB/gi) || []).length, 0, id + ': sin restos de la paleta KSA');
+    assert.ok(out.includes(c.header) && out.includes(c.footer) && out.includes('alt="' + c.alt + '"'), id + ': header y footer');
+    assert.ok(out.includes(c.mail), id + ': contacto');
+    assert.ok(out.includes(c.font), id + ': fuentes');
+    assert.doesNotMatch(msgs, /provisional|PENDIENTE|pendiente|CONTACTO PENDIENTE/, id + ': sin avisos de diseño pendiente');
+  }
+  assert.match(K.build(K.fromRecipe('media', 'academy-short')), /4f15fb5051684e46873120016ed52f5a\.ttf'\) format\('truetype'\)/, 'Flatory .ttf como truetype');
+  console.log('OK: Bayern y Kaptiva Sports Academy con header, footer, colores, fuentes y contacto.');
+}
