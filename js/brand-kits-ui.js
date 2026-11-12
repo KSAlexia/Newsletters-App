@@ -123,9 +123,10 @@
     if (st && st.brandKit) { o = node('option', st.brandKit.name + ' · copia aplicada'); o.value = '@current'; select.appendChild(o); }
     B.custom().forEach(function (k) { var x = node('option', k.name); x.value = k.id; select.appendChild(x); }); select.value = st && st.brandKit ? '@current' : '';
   };
-  // Imágenes disponibles para una newsletter: primero las del kit aplicado (o el del torneo) y después las de la biblioteca.
+  // Imágenes disponibles para una newsletter: primero las del kit aplicado (o el del torneo) y después las de los kits independientes.
+  // Los kits editados de otras marcas no se ofrecen: su header/footer no pertenece a esta newsletter.
   U.images = function (st) {
-    var current = B.forState(st) || B.defaults(st.tournament), sources = [current].concat(B.all()), seen = {}, out = [];
+    var current = B.forState(st) || B.defaults(st.tournament), sources = [current].concat(B.custom()), seen = {}, out = [];
     sources.forEach(function (kit) {
       [kit.header, kit.footer, kit.mediaBanner].concat(kit.assets).forEach(function (a) {
         if (!a || (!a.url && !a.reference)) return;
