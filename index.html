@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.3</span><button id="back" class="ed">← Proyectos</button></div>
+  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">KSA Global Stage · v0.3</span><button id="back" class="ed">← Proyectos</button><button id="switch" class="ed" title="Ir a otra newsletter (Ctrl/⌘ + K)">Ir a otra newsletter…</button></div>
   <div class="actions ed">
     <select id="recipe" title="Empezar desde una receta"></select>
     <button id="import">Importar</button>
@@ -86,12 +86,25 @@
       <button data-tab="review">Revisión <span id="badge"></span></button>
       <button data-tab="code">Código</button>
       <span class="spacer"></span>
+      <select id="compare" aria-label="Comparar con otra newsletter"></select>
       <div class="device" id="device">
         <button data-w="desktop" class="on">Escritorio</button>
         <button data-w="mobile">Móvil</button>
       </div>
     </div>
-    <div class="pane" id="pane-preview"><p id="preview-note" class="code-note" hidden></p><iframe id="frame" title="Vista previa"></iframe></div>
+    <div class="pane" id="pane-preview">
+      <p id="preview-note" class="code-note" hidden></p>
+      <div class="preview-row">
+        <div class="preview-col" id="current-col">
+          <div class="compare-head" id="current-head" hidden><strong>Esta newsletter</strong></div>
+          <iframe id="frame" title="Vista previa"></iframe>
+        </div>
+        <div class="preview-col" id="compare-col" hidden>
+          <div class="compare-head"><span class="compare-title"><strong id="compare-name"></strong><small id="compare-where"></small></span><button id="compare-open" type="button">Abrir para editar</button><button id="compare-close" type="button" aria-label="Cerrar comparación">✕</button></div>
+          <iframe id="compare-frame" title="Newsletter para comparar"></iframe>
+        </div>
+      </div>
+    </div>
     <div class="pane" id="pane-review" hidden><ul id="checks"></ul></div>
     <div class="pane" id="pane-code" hidden>
       <div class="code-bar">
@@ -146,6 +159,13 @@
       <div id="kit-fields" class="kit-fields"></div>
       <div class="kit-savebar"><p id="kit-status" role="status" class="kit-status"></p><div class="dlg-actions"><button id="kit-discard" type="button" class="btn ghost2">Descartar cambios</button><button type="submit" class="btn">Guardar kit</button></div></div>
     </form>
+  </div>
+</dialog>
+<dialog id="switch-dialog" aria-labelledby="switch-title">
+  <div class="kits-heading"><h2 id="switch-title">Ir a otra newsletter</h2><button id="switch-close" type="button" class="btn ghost2">Cerrar</button></div>
+  <div class="switch-body">
+    <input id="switch-search" type="search" placeholder="Buscar por nombre, torneo, club o carpeta…" aria-label="Buscar newsletter">
+    <div id="switch-list"></div>
   </div>
 </dialog>
 <dialog id="kit-images-dialog" aria-labelledby="kit-images-title">

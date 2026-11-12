@@ -216,6 +216,27 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.deepEqual(r.merged, { a: 9, b: 2, n: 5, e: 7 }, 'gana lo cambiado aquí (b, n), se respeta lo cambiado/creado/borrado fuera (a, e, c) y lo borrado aquí (d)');
   assert.deepEqual(r.conflicts, ['b']); assert.ok(r.changed.includes('a') && r.changed.includes('e'));
 }
+// Saltar a otra newsletter y comparar al lado sin volver al hub.
+{
+  const st = {}, ui3 = boot(st), walk = n => [n, ...n.children.flatMap(walk)];
+  ui3.clickText('📁 Surf Cup 2026');
+  ui3.nodes['#new'].click(); ui3.nodes['#name'].value = 'Primera'; ui3.nodes['#name'].handlers.input.call(ui3.nodes['#name']);
+  ui3.nodes['#back'].click(); ui3.nodes['#new'].click(); ui3.nodes['#name'].value = 'Segunda'; ui3.nodes['#name'].handlers.input.call(ui3.nodes['#name']);
+  ui3.nodes['#switch'].click();
+  assert.equal(ui3.nodes['#switch-dialog'].open, true);
+  const item = walk(ui3.nodes['#switch-list']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent === 'Primera'));
+  assert.ok(item, 'La otra newsletter aparece en el buscador'); item.click();
+  assert.equal(ui3.nodes['#name'].value, 'Primera'); assert.equal(ui3.nodes['#switch-dialog'].open, false);
+  const saved = JSON.parse(st[PROJ]), other = Object.keys(saved).find(id => saved[id].state.name === 'Segunda');
+  assert.ok(other, 'Cambiar de newsletter guarda la anterior');
+  ui3.change('#compare', other);
+  assert.equal(ui3.nodes['#compare-col'].hidden, false); assert.equal(ui3.nodes['#compare-name'].textContent, 'Segunda');
+  assert.ok(ui3.nodes['#compare-frame'].srcdoc.includes('<html'));
+  ui3.nodes['#compare-open'].click();
+  assert.equal(ui3.nodes['#name'].value, 'Segunda'); assert.equal(ui3.nodes['#compare-name'].textContent, 'Primera', 'Abrir intercambia: la anterior queda para comparar');
+  ui3.nodes['#compare-close'].click(); assert.equal(ui3.nodes['#compare-col'].hidden, true);
+  console.log('OK: saltar a otra newsletter desde el editor y comparar al lado (abrir intercambia, cerrar).');
+}
 (async () => {
   const wait = ms => new Promise(r => setTimeout(r, ms));
   const shared = { [PROJ]: JSON.stringify({ old: { id: 'old', updated: 123, state: { tournament: 'surfcup', name: 'Original', sections: [], off: {}, franjaLeft: '' } } }) };

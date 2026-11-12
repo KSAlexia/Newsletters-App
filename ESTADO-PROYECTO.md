@@ -358,3 +358,13 @@ Pedido por el usuario como prioridad del apartado de deuda técnica: validar enl
 - Incidencia durante el trabajo: GitHub Desktop guardó en un stash (`stash@{0}`, «!!GitHub_Desktop<brand-kits-e-imagenes>») los cambios sin commit de clubs y edición de código al cambiar de rama. Se recuperaron con `git stash apply` (el stash se conserva) y se volvió a aplicar la validación de enlaces encima.
 
 Pruebas: `test/hub.test.js` añade `merge3` (cambios propios, ajenos, altas, bajas y conflicto) y dos pestañas simuladas sobre el mismo almacenamiento (crear en ambas sin perder ninguna, renombrar en ambas y conservar los dos cambios). Pasan todas las suites. En el navegador integrado con dos pestañas sobre `http://127.0.0.1:8769`: el hub de la segunda pestaña se actualiza al crear en la primera; con la misma newsletter abierta en ambas, renombrar en una recarga la otra con aviso. No probado: comportamiento de eventos `storage` con la app abierta desde `file://`, ni conflicto simultáneo real escribiendo a la vez en las dos.
+
+## Ver otras newsletters desde el editor (2026-11-12)
+
+Pedido por el usuario: ver otras newsletters estando dentro de una, para comparar. Eligió las dos opciones propuestas: saltar rápido y comparar al lado.
+
+- `index.html`: botón `#switch` en la barra superior y diálogo `#switch-dialog` (búsqueda + lista agrupada); selector `#compare` en la barra de pestañas; la vista previa pasa a `.preview-row` con `#current-col` y `#compare-col` (cabecera con nombre/ubicación, «Abrir para editar» y ✕).
+- `app.js`: `otherProjects()` agrupa por misma carpeta, mismo torneo/sección y resto, ordenadas por fecha. `goTo(id, keepCompare)` comprueba código sin aplicar, guarda la actual y abre la otra; con «Abrir para editar» la anterior queda en comparación. Atajo Ctrl/⌘+K. La comparada se genera con `K.build` sobre una copia (o su `customHtml`); no se edita ni se guarda. `fitFrames()` usa CSS `zoom` en escritorio para encajar los 650 px del email en cada columna sin activar el diseño móvil; en Móvil no se escala. El selector y la comparación se refrescan al abrir proyecto y al sincronizar con otra pestaña. `compareId` no se guarda.
+- `.tabs` admite dos líneas para que el selector y Escritorio/Móvil quepan en pantallas estrechas.
+
+Pruebas: `test/hub.test.js` añade buscador (aparece la otra, abrirla, guardar la anterior) y comparación (abrir, intercambio, cerrar); pasan todas las suites. En el navegador integrado (`http://127.0.0.1:8770`): comparación Surf Cup vs Arsenal con zoom en escritorio, grupos del selector, Ctrl/⌘+K con búsqueda «arse» y Enter abriendo la Arsenal. `zoom` depende de Chrome/Edge (navegadores objetivo); no probado en Firefox/Safari.

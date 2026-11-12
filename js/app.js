@@ -310,10 +310,82 @@
   }
   function syncSettings() {
     if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
-    editingCode = false; renderImagePanel();
+    editingCode = false; renderImagePanel(); renderCompareSelect(); renderCompare();
     $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || '';
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
+  }
+
+  // ---------- Otras newsletters: saltar entre ellas y comparar al lado ----------
+  var compareId = '', comparing = false, previewMobile = false, GROUPS = ['Misma carpeta', 'Mismo torneo o sección', 'Otras newsletters'];
+  function norm(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
+  function projectLabel(id) {
+    var p = projects[id], t = K.tournament(p.state.tournament), f = p.folder && organization.folders[p.folder] ? folderPath(p.folder) : '';
+    return { name: p.state.name || 'Sin nombre', where: t.name + (f ? ' › ' + f : '') };
+  }
+  function otherProjects() {
+    if (!currentId || !projects[currentId]) return [];
+    var cur = projects[currentId], tid = K.tournament(cur.state.tournament).id;
+    return Object.keys(projects).filter(function (id) { return id !== currentId; }).map(function (id) {
+      var p = projects[id], same = K.tournament(p.state.tournament).id === tid;
+      return { id: id, group: same && (p.folder || '') === (cur.folder || '') ? 0 : (same ? 1 : 2), updated: p.updated || 0 };
+    }).sort(function (a, b) { return a.group - b.group || b.updated - a.updated; });
+  }
+  function canLeaveCode() { return !(editingCode && $('#code').value !== html) || confirm('Tienes cambios en el código sin aplicar. ¿Salir sin aplicarlos?'); }
+  function goTo(id, keepCompare) {
+    if (!projects[id] || !canLeaveCode()) return false;
+    if ($('#switch-dialog').open) $('#switch-dialog').close();
+    var previous = currentId; persist(); editingCode = false;
+    compareId = keepCompare ? previous : (compareId === id ? '' : compareId);
+    openProject(id); return true;
+  }
+  function renderSwitch() {
+    var q = norm($('#switch-search').value.trim()), list = $('#switch-list'), last = -1, count = 0; list.innerHTML = '';
+    otherProjects().forEach(function (item) {
+      var l = projectLabel(item.id);
+      if (q && norm(l.name + ' ' + l.where).indexOf(q) < 0) return;
+      if (item.group !== last) { list.appendChild(el('h3', { class: 'switch-group', text: GROUPS[item.group] })); last = item.group; }
+      list.appendChild(el('button', { type: 'button', class: 'switch-item', 'data-id': item.id, onclick: function () { goTo(item.id); } }, [
+        el('strong', { text: l.name }), el('small', { text: l.where + ' · ' + new Date(item.updated).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) })
+      ]));
+      count++;
+    });
+    if (!count) list.appendChild(el('p', { class: 'empty', text: q ? 'Ninguna newsletter coincide con la búsqueda.' : 'No hay otras newsletters todavía.' }));
+  }
+  function openSwitch() { if (!currentId) return; $('#switch-search').value = ''; renderSwitch(); $('#switch-dialog').showModal(); $('#switch-search').focus(); }
+  function renderCompareSelect() {
+    var sel = $('#compare'), groups = {}; sel.innerHTML = '';
+    sel.appendChild(el('option', { value: '', text: 'Comparar con…' }));
+    otherProjects().forEach(function (item) {
+      var g = groups[item.group] || (groups[item.group] = sel.appendChild(el('optgroup', { label: GROUPS[item.group] }))), l = projectLabel(item.id);
+      g.appendChild(el('option', { value: item.id, text: l.name + ' · ' + l.where }));
+    });
+    if (compareId && (!projects[compareId] || compareId === currentId)) compareId = '';
+    sel.value = compareId;
+  }
+  function renderCompare() {
+    comparing = !!(compareId && projects[compareId] && compareId !== currentId);
+    if (!comparing) compareId = '';
+    $('#compare-col').hidden = !comparing; $('#current-head').hidden = !comparing;
+    $('#pane-preview').classList.toggle('comparing', comparing);
+    if (comparing) {
+      var l = projectLabel(compareId), st = K.normalize(JSON.parse(JSON.stringify(projects[compareId].state)));
+      $('#compare-name').textContent = l.name; $('#compare-where').textContent = l.where;
+      $('#compare-frame').srcdoc = typeof st.customHtml === 'string' ? st.customHtml : K.build(st);
+    } else $('#compare-frame').srcdoc = '';
+    fitFrames();
+  }
+  // Al comparar en escritorio, cada email (650 px) se reduce para caber en su columna sin pasar al diseño móvil.
+  function fitFrames() {
+    ['#frame', '#compare-frame'].forEach(function (sel) {
+      var f = $(sel); if (!f.style) return;
+      f.style.zoom = ''; f.style.width = ''; f.style.height = ''; f.style.flex = '';
+      if (!comparing || previewMobile || !f.getBoundingClientRect) return;
+      var col = f.parentNode, w = col.clientWidth, z = Math.min(1, w / 700);
+      if (!w || z >= 1) return;
+      var avail = col.getBoundingClientRect().bottom - f.getBoundingClientRect().top;
+      f.style.flex = 'none'; f.style.zoom = z; f.style.width = (w / z) + 'px'; f.style.height = (avail / z) + 'px';
+    });
   }
 
   // ---------- Imágenes: panel del brand kit, arrastrar, intercambiar y placeholders ----------
@@ -507,7 +579,7 @@
     fillSettings();
     loadAll(); initHub(); showLobby();
     $('#back').addEventListener('click', function () {
-      if (editingCode && $('#code').value !== html && !confirm('Tienes cambios en el código sin aplicar. ¿Salir sin aplicarlos?')) return;
+      if (!canLeaveCode()) return;
       editingCode = false; var id = currentId; showLobby(); focusHubItem(id);
     });
     $('#code-edit').addEventListener('click', function () { editingCode = true; codeUI(K.build(state)); $('#code').focus(); });
@@ -536,8 +608,22 @@
     // Otra pestaña ha guardado: fusionar y refrescar lo que se ve.
     window.addEventListener('storage', function (event) {
       if (event.key !== PROJ && event.key !== HUB) return;
-      saveAll(); if (!currentId) showLobby();
+      saveAll(); if (!currentId) showLobby(); else { renderCompareSelect(); renderCompare(); }
     });
+    $('#switch').addEventListener('click', openSwitch);
+    $('#switch-close').addEventListener('click', function () { $('#switch-dialog').close(); });
+    $('#switch-search').addEventListener('input', renderSwitch);
+    $('#switch-search').addEventListener('keydown', function (event) {
+      if (event.key !== 'Enter') return; event.preventDefault();
+      var first = $('#switch-list').querySelector('.switch-item'); if (first) goTo(first.getAttribute('data-id'));
+    });
+    window.addEventListener('keydown', function (event) {
+      if ((event.metaKey || event.ctrlKey) && (event.key === 'k' || event.key === 'K') && currentId) { event.preventDefault(); openSwitch(); }
+    });
+    $('#compare').addEventListener('change', function () { compareId = this.value; renderCompare(); });
+    $('#compare-close').addEventListener('click', function () { compareId = ''; $('#compare').value = ''; renderCompare(); });
+    $('#compare-open').addEventListener('click', function () { goTo(compareId, true); });
+    window.addEventListener('resize', fitFrames);
 
     $('#brand-kit').addEventListener('change', function () {
       if (this.value === '@current' || !K.BrandKits) return;
@@ -603,12 +689,15 @@
         Array.prototype.forEach.call(document.querySelectorAll('.tabs > button'), function (x) { x.classList.toggle('on', x === b); });
         ['preview', 'review', 'code'].forEach(function (t) { $('#pane-' + t).hidden = t !== b.dataset.tab; });
         $('#device').style.visibility = b.dataset.tab === 'preview' ? 'visible' : 'hidden';
+        $('#compare').style.visibility = b.dataset.tab === 'preview' ? 'visible' : 'hidden';
+        if (b.dataset.tab === 'preview') fitFrames();
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('#device button'), function (b) {
       b.addEventListener('click', function () {
         Array.prototype.forEach.call(document.querySelectorAll('#device button'), function (x) { x.classList.toggle('on', x === b); });
-        $('#frame').classList.toggle('mobile', b.dataset.w === 'mobile');
+        previewMobile = b.dataset.w === 'mobile';
+        $('#frame').classList.toggle('mobile', previewMobile); $('#compare-frame').classList.toggle('mobile', previewMobile); fitFrames();
       });
     });
   }

@@ -41,6 +41,11 @@ App interna para montar newsletters de Cvent con piezas fijas. Sin IA y sin cost
 ## Continuar el desarrollo con Codex o Claude
 Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los cambios implementados, las decisiones de producto, las pruebas y los pendientes. `AGENTS.md` y `CLAUDE.md` remiten a ese documento compartido.
 
+## Ver otras newsletters desde el editor
+
+- **Ir a otra newsletter…** (barra superior, o Ctrl/⌘ + K) abre un buscador por nombre, torneo, club o carpeta. Aparecen primero las de la misma carpeta, luego las del mismo torneo o sección y después el resto; Enter abre la primera. La newsletter actual se guarda antes de cambiar.
+- **Comparar con…** (junto a Escritorio/Móvil en la vista previa) muestra otra newsletter al lado de la tuya, sin salir de la que editas. En escritorio ambas se reducen para caber. **Abrir para editar** cambia a la comparada y deja la anterior al lado; ✕ cierra la comparación.
+
 ## Enlaces y varias pestañas
 
 - Enlaces en el texto: `[texto](https://…)` o `[texto](mailto:…)`. La revisión marca como error cualquier otro enlace (sin https, `www.…` sin esquema, `javascript:`…), avisa de `http://` y de enlaces mal escritos (`[texto] (enlace)` o con espacios). Un enlace no permitido sale como texto, nunca como enlace.
