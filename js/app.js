@@ -561,6 +561,8 @@
     '.ksa-line{position:absolute;z-index:9;height:4px;margin-top:-2px;background:#6F4ACC;border-radius:2px;pointer-events:none;box-shadow:0 0 0 2px #fff}' +
     '.ksa-drop{border:3px solid #91FAFB;background:rgba(145,250,251,.12)}' +
     '[contenteditable=true]{outline:2px solid #6F4ACC !important;outline-offset:3px;cursor:text;background:rgba(145,250,251,.18)}' +
+    '.ksa-fmt{position:absolute;z-index:12;display:flex;gap:2px;background:#fff;border:1px solid #d9d3ea;border-radius:8px;padding:3px;box-shadow:0 6px 18px rgba(27,22,48,.25);font:13px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif}' +
+    '.ksa-fmt button{border:0;background:none;color:#1b1630;cursor:pointer;padding:5px 9px;border-radius:5px;font:inherit;white-space:nowrap}.ksa-fmt button:hover{background:#F7F4FC;color:#6F4ACC}' +
     '.ksa-tip{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:11;background:#1b1630;color:#fff;font:12px -apple-system,"Segoe UI",sans-serif;padding:6px 10px;border-radius:7px;pointer-events:none}';
   function setPreview(markup) {
     var f = $('#frame');
@@ -582,7 +584,7 @@
     if (node && scroll) node.getBoundingClientRect && doc.defaultView.scrollTo({ top: Math.max(0, node.getBoundingClientRect().top + doc.defaultView.scrollY - 40), behavior: 'smooth' });
   }
   function hideDropLine() { if (previewDoc && previewDoc.body) { var l = previewDoc.querySelector('.ksa-line'); if (l) l.style.display = 'none'; Array.prototype.forEach.call(previewDoc.querySelectorAll('.ksa-drop'), function (n) { n.remove(); }); } }
-  function cleanLine(s) { return String(s || '').replace(/\*\*/g, '').replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1').replace(/\s+/g, ' ').trim(); }
+  function cleanLine(s) { return String(s || '').replace(/\*/g, '').replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1').replace(/\s+/g, ' ').trim(); }
   function nodeText(n) { return String(n.textContent || '').replace(/\s+/g, ' ').trim(); }
   // Busca el campo de texto (y la línea) que muestra el elemento pulsado.
   function findEditable(target, sec, s) {
@@ -610,34 +612,94 @@
       if (c.nodeType !== 1) return;
       var tag = c.tagName.toLowerCase(), inner = toMarkdown(c);
       if ((tag === 'strong' || tag === 'b') && inner.trim()) out += '**' + inner + '**';
+      else if ((tag === 'em' || tag === 'i') && inner.trim()) out += '*' + inner + '*';
       else if (tag === 'a' && c.getAttribute('href')) out += '[' + inner + '](' + c.getAttribute('href') + ')';
       else if (tag === 'br') out += ' ';
       else out += inner;
     });
     return out;
   }
+  // Edición en línea con barra de formato (negrita, cursiva, enlace, quitar formato).
+  // Solo los campos de párrafo (area) admiten formato en el email; los de una línea son texto plano.
   function startEdit(doc, found, s) {
-    var node = found.el, original = node.innerHTML, cancelled = false, hit = found.hit;
+    var node = found.el, original = node.innerHTML, cancelled = false, busy = false, hit = found.hit;
+    var field = K.MODULES[s.type].fields.filter(function (f) { return f.k === hit.k; })[0], rich = !!field && field.type === 'area';
     inlineEditing = true; node.setAttribute('contenteditable', 'true'); node.focus();
+    Array.prototype.forEach.call(doc.querySelectorAll('.ksa-bar, .ksa-hover'), function (n) { n.style.display = 'none'; });
     // Texto pendiente: se selecciona entero para escribir encima.
     if (/^\s*PENDIENTE:/i.test(String(s.d[hit.k] || '').split('\n')[hit.j] || '')) {
-      var range = doc.createRange(), sel = doc.defaultView.getSelection(); range.selectNodeContents(node); sel.removeAllRanges(); sel.addRange(range);
+      var range = doc.createRange(), sel0 = doc.defaultView.getSelection(); range.selectNodeContents(node); sel0.removeAllRanges(); sel0.addRange(range);
     }
-    var tip = doc.createElement('div'); tip.className = 'ksa-tip'; tip.textContent = 'Enter guarda · Esc cancela'; doc.body.appendChild(tip);
+    var tip = doc.createElement('div'); tip.className = 'ksa-tip'; doc.body.appendChild(tip);
+    tip.textContent = rich ? 'Selecciona texto para darle formato · Enter guarda · Esc cancela' : 'Este texto no admite formato · Enter guarda · Esc cancela';
+    var fmt = doc.createElement('div'); fmt.className = 'ksa-fmt';
+    function selRange() { var sel = doc.defaultView.getSelection(); if (!sel.rangeCount) return null; var r = sel.getRangeAt(0); return node.contains(r.commonAncestorContainer) ? r : null; }
+    function ancestor(n, tags) { for (; n && n !== node; n = n.parentNode) if (n.nodeType === 1 && tags.indexOf(n.tagName) >= 0) return n; return null; }
+    function unwrap(el) { while (el.firstChild) el.parentNode.insertBefore(el.firstChild, el); el.remove(); }
+    function selectNode(el) { var r = doc.createRange(), sel = doc.defaultView.getSelection(); r.selectNodeContents(el); sel.removeAllRanges(); sel.addRange(r); }
+    function toggle(tags, make) {
+      var r = selRange(); if (!r) return;
+      var anc = ancestor(r.commonAncestorContainer, tags);
+      if (anc) { unwrap(anc); return; }
+      if (r.collapsed) return;
+      var w = doc.createElement(make); w.appendChild(r.extractContents()); r.insertNode(w); selectNode(w);
+    }
+    function link() {
+      var r = selRange(); if (!r) return;
+      var anc = ancestor(r.commonAncestorContainer, ['A']);
+      if (!anc && r.collapsed) { alert('Selecciona primero el texto que quieres enlazar.'); return; }
+      busy = true; var saved = r.cloneRange();
+      var url = prompt(anc ? 'Enlace (déjalo vacío para quitarlo):' : 'Enlace (https://… o mailto:…):', anc ? anc.getAttribute('href') : 'https://');
+      node.focus(); var sel = doc.defaultView.getSelection(); sel.removeAllRanges(); sel.addRange(saved); busy = false;
+      if (url === null) return;
+      url = url.trim();
+      if (!url || url === 'https://') { if (anc) unwrap(anc); return; }
+      if (K.linkLevel(url) === 'error') { alert('El enlace no es válido. Usa https://… o mailto:…'); return; }
+      if (anc) { anc.setAttribute('href', url); return; }
+      var a = doc.createElement('a'); a.setAttribute('href', url); a.appendChild(saved.extractContents()); saved.insertNode(a); selectNode(a);
+    }
+    function clear() { node.textContent = node.textContent; }
+    function fbtn(label, title, fn, style) {
+      var b = doc.createElement('button'); b.type = 'button'; b.innerHTML = label; b.title = title; if (style) b.setAttribute('style', style);
+      b.addEventListener('mousedown', function (e) { e.preventDefault(); }); // no quitar el foco ni la selección
+      b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); fn(); });
+      fmt.appendChild(b);
+    }
+    if (rich) {
+      fbtn('<b>B</b>', 'Negrita (Ctrl/⌘ + B)', function () { toggle(['STRONG', 'B'], 'strong'); });
+      fbtn('<i>I</i>', 'Cursiva (Ctrl/⌘ + I)', function () { toggle(['EM', 'I'], 'em'); });
+      fbtn('🔗 Enlace', 'Enlazar la selección (Ctrl/⌘ + K)', link);
+      fbtn('Quitar formato', 'Quitar negritas, cursivas y enlaces de este texto', clear);
+      doc.body.appendChild(fmt);
+      var rect = node.getBoundingClientRect(), w = doc.defaultView;
+      fmt.style.top = Math.max(2, rect.top + w.scrollY - fmt.offsetHeight - 8) + 'px';
+      fmt.style.left = Math.max(4, Math.min(rect.left + w.scrollX, w.scrollX + w.innerWidth - fmt.offsetWidth - 6)) + 'px';
+    }
     function key(event) {
-      if (event.key === 'Enter') { event.preventDefault(); node.blur(); }
-      if (event.key === 'Escape') { event.preventDefault(); cancelled = true; node.innerHTML = original; node.blur(); }
+      var mod = event.metaKey || event.ctrlKey, k = String(event.key || '').toLowerCase();
+      if (event.key === 'Enter') { event.preventDefault(); done(); return; }
+      if (event.key === 'Escape') { event.preventDefault(); cancelled = true; node.innerHTML = original; done(); return; }
+      if (mod && (k === 'b' || k === 'i' || k === 'k')) {
+        event.preventDefault();
+        if (!rich) return;
+        if (k === 'b') toggle(['STRONG', 'B'], 'strong'); else if (k === 'i') toggle(['EM', 'I'], 'em'); else link();
+      }
     }
-    node.addEventListener('keydown', key);
-    node.addEventListener('blur', function done() {
-      node.removeEventListener('blur', done); node.removeEventListener('keydown', key);
-      node.removeAttribute('contenteditable'); tip.remove(); inlineEditing = false;
+    // Pegar siempre como texto sin formato (evita estilos de Word o de otros emails).
+    function paste(event) { event.preventDefault(); doc.execCommand('insertText', false, (event.clipboardData ? event.clipboardData.getData('text/plain') : '').replace(/\s+/g, ' ')); }
+    node.addEventListener('keydown', key); node.addEventListener('paste', paste);
+    var finished = false;
+    node.addEventListener('blur', done);
+    function done() {
+      if (busy || finished) return; finished = true;
+      node.removeEventListener('blur', done); node.removeEventListener('keydown', key); node.removeEventListener('paste', paste);
+      node.removeAttribute('contenteditable'); tip.remove(); fmt.remove(); inlineEditing = false;
       if (cancelled) { refresh(); return; }
-      var md = toMarkdown(node).replace(/\s+/g, ' ').trim(), lines = String(s.d[hit.k] || '').split('\n');
+      var md = (rich ? toMarkdown(node) : node.textContent).replace(/\s+/g, ' ').trim(), lines = String(s.d[hit.k] || '').split('\n');
       if (md === lines[hit.j].trim()) { refresh(); return; }
       lines[hit.j] = md; s.d[hit.k] = lines.join('\n');
       renderSections(); refresh();
-    });
+    }
   }
   function enhancePreview(doc) {
     previewDoc = doc; if (!doc || !doc.body) return;

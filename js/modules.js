@@ -35,7 +35,7 @@
     return 'error';
   }
   K.linkLevel = linkLevel;
-  // **negrita** y [texto](enlace). Nada más se toca.
+  // **negrita**, *cursiva* y [texto](enlace). Nada más se toca.
   function inline(s, strongColor) {
     var h = esc(String(s || '').trim());
     h = h.replace(LINK, function (m, t, u) {
@@ -44,6 +44,8 @@
       return '<a href="' + u.replace(/"/g, '&quot;') + '" target="_blank" style="color:' + P + ';text-decoration:underline;">' + t + '</a>';
     });
     h = h.replace(/\*\*(.+?)\*\*/g, '<strong style="' + F.bold + 'color:' + (strongColor || P) + ';">$1</strong>');
+    // *cursiva* (un solo asterisco, después de las negritas)
+    h = h.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em style="font-style:italic;">$2</em>');
     return h;
   }
   // Extenda no tiene números: si el título lleva cifras, pasa a DinPro Black (algo más pequeño).
@@ -145,7 +147,7 @@
   // req: true → si está vacío, la revisión avisa
   // ============================================================
   var M = K.MODULES = {};
-  var TIP = 'Un párrafo por línea. **negrita** · [texto](enlace)';
+  var TIP = 'Un párrafo por línea. **negrita** · *cursiva* · [texto](enlace)';
 
   M.franja = {
     letter: 'B', name: 'Franja identificadora', tag: 'FRANJA',
@@ -591,7 +593,7 @@
     L.push('- Si un bloque DESCRIBE un contenido en vez de darlo escrito (p. ej. «texto sobre los horarios» o «aquí va el precio»), no lo redactes: pon en ese campo «PENDIENTE: » seguido de la descripción tal cual.');
     L.push('- No inventes titulares, etiquetas, botones, precios, fechas ni enlaces. Si un campo no tiene contenido en el guion, déjalo vacío ("").');
     L.push('- Campos de Cvent como {[C-FIRST NAME]} o {[E-MODIFY REG LINK]}: cópialos carácter a carácter.');
-    L.push('- Negritas: **así**. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
+    L.push('- Negritas: **así**. Cursiva: *así*. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
     L.push('- Fotos o imágenes: si el guion da una URL de custom.cvent.com, úsala tal cual. Si solo dice «foto», «imagen» o la describe, usa el módulo imagen con "src":"PLACEHOLDER" y pon en "alt" la descripción del guion (o "" si no hay).');
     L.push('- Botones: el texto del botón en su campo y el enlace solo si el guion lo da; si no, deja el enlace vacío. Botón suelto bajo un título → titulo (btn, url). Dos opciones con botón → tarjetas. Botón de registro o modificar inscripción con {[E-MODIFY REG LINK]} → compra.');
     L.push('- NO incluyas header, footer de imagen ni línea de baja (opt-out): la app los pone sola. Si el guion indica la etiqueta de la franja identificadora, ponla en "franja"; si no, "".');
@@ -611,7 +613,7 @@
 
   // Líneas del guion cuyo texto no aparece en la newsletter creada (para revisarlas a mano).
   K.scriptCoverage = function (script, st) {
-    function clean(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\*\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim().toLowerCase(); }
+    function clean(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\*/g, '').replace(/\[([^\]]+)\]\([^)]*\)/g, '$1').replace(/\s+/g, ' ').trim().toLowerCase(); }
     var all = clean([st.name, st.franjaLeft].concat((st.sections || []).map(function (s) { return Object.keys(s.d || {}).map(function (k) { return s.d[k]; }).join('\n'); })).join('\n'));
     return String(script || '').split(/\n+/).map(function (line) {
       line = line.replace(/^\s*[-•*]\s*/, '').trim();
@@ -628,7 +630,7 @@
     L.push('- TEXTOS LITERALES: copia cada texto exactamente como está. No reescribas, resumas, traduzcas, corrijas ni añadas nada. Si ves una errata, déjala.');
     L.push('- No inventes titulares, etiquetas, botones, precios, fechas ni enlaces. Si un campo no tiene contenido en el original, déjalo vacío ("").');
     L.push('- Campos de Cvent como {[C-FIRST NAME]} o {[E-MODIFY REG LINK]}: cópialos carácter a carácter.');
-    L.push('- Negritas: **así**. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
+    L.push('- Negritas: **así**. Cursiva: *así*. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
     L.push('- Títulos: escríbelos como texto normal, sin HTML. Si un producto se llama "Título – Subtítulo", pon cada parte en su campo, sin el guion.');
     L.push('- NO incluyas el header, el footer de imagen ni la línea de baja (opt-out): la app los pone sola.');
     L.push('- Franja identificadora (la línea pequeña bajo el header, con una etiqueta a la izquierda y el torneo a la derecha): no es un módulo. Pon solo su etiqueta izquierda en "franja". El torneo de la derecha lo pone la app.');

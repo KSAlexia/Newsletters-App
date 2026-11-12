@@ -107,3 +107,10 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   assert.ok(K.build(empty, { preview: true }).includes('data-ksa-empty') && !K.build(empty).includes('data-ksa-empty'));
   console.log('OK: vista previa con bloques marcados y zona vacía, sin afectar al HTML exportado.');
 }
+
+// Cursiva: *texto* → <em>, sin tocar asteriscos sueltos ni las negritas.
+{
+  const h = K.build({ ...K.fromRecipe('blank'), franjaLeft: 'x', sections: [{ type: 'intro', d: { text: 'Hola **neg** y *cur* 2*3' } }] });
+  assert.ok(h.includes('<em style="font-style:italic;">cur</em>') && h.includes('neg</strong>') && h.includes(' 2*3'));
+  console.log('OK: cursiva en el email.');
+}
