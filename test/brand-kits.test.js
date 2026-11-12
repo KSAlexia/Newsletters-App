@@ -268,3 +268,20 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   B.remove('brand-rmf-wc', st2); B.load(st2);
   console.log('OK: kit de cada marca editable, persistente y aplicado a sus newsletters (y restaurable).');
 }
+
+// Editar nunca crea kits: solo crear, duplicar o importar añaden uno nuevo.
+{
+  const mem = {}, st3 = { getItem: k => mem[k] || null, setItem: (k, v) => { mem[k] = v; } };
+  B.load(st3);
+  const brand = B.brandDraft('surfcup'); brand.footer.name = 'Editado 1'; B.save(brand, st3);
+  const again = B.brandDraft('surfcup'); again.footer.name = 'Editado 2'; B.save(again, st3);
+  assert.equal(B.custom().length, 0, 'Editar una marca dos veces no crea kits independientes');
+  assert.equal(B.brandDraft('surfcup').footer.name, 'Editado 2');
+  const created = B.save(Object.assign(B.empty(), { name: 'Mío' }), st3); assert.equal(B.custom().length, 1);
+  const edit = B.find(created.id); edit.footer.name = 'Cambio'; B.save(edit, st3);
+  assert.equal(B.custom().length, 1, 'Editar un kit independiente lo actualiza, no lo duplica');
+  assert.equal(B.find(created.id).footer.name, 'Cambio');
+  B.remove(created.id, st3); assert.equal(B.custom().length, 0, 'Eliminar kit independiente');
+  B.remove('brand-surfcup', st3);
+  console.log('OK: editar un kit (de marca o independiente) nunca crea otro; eliminar kit independiente.');
+}

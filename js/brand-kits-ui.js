@@ -47,16 +47,24 @@
       var t = K.tournament(draft.base), saved = !!B.brandKit(draft.base);
       form.appendChild(node('p', 'Kit de la marca ' + t.name + '. Lo que guardes se aplica a todas sus newsletters con «Kit automático del torneo» en este navegador (no en el de otras personas).' + (saved ? ' Ya está editado.' : ' Ahora mismo muestra el diseño original de la app.'), 'kit-note kit-base-note'));
       var tools = node('div', '', 'kit-base-tools');
-      tools.appendChild(button('Guardar como kit independiente', function () {
-        if (pending) return; var copy = JSON.parse(JSON.stringify(draft)); delete copy.base; copy.id = ''; copy.name = draft.name + ' (copia)';
-        try { var k = B.save(copy, localStorage); openDraft(k); renderList(); changed(); status('Copia guardada en «Tus kits». El kit de la marca no ha cambiado.'); } catch (e) { status('No se ha guardado: ' + e.message, true); }
-      }));
+      tools.appendChild(button('Duplicar como kit independiente', duplicate));
       if (saved) tools.appendChild(button('Volver al diseño original', function () {
         if (pending || !confirm('¿Quitar los cambios del kit de ' + t.name + ' y volver al diseño original de la app?')) return;
         try { B.remove('brand-' + draft.base, localStorage); openDraft(B.brandDraft(draft.base)); changed(); status('Kit de ' + t.name + ' restaurado al diseño original.'); } catch (e) { status(e.message, true); }
       }));
       form.appendChild(tools);
     }
+    // Kit independiente ya guardado: duplicar o eliminar (crear solo ocurre con «＋ Kit independiente», «Duplicar» o «Importar»).
+    if (!draft.base && draft.id) {
+      var own = node('div', '', 'kit-base-tools');
+      own.appendChild(button('Duplicar', duplicate));
+      own.appendChild(button('Eliminar kit', function () {
+        if (pending || !confirm('¿Eliminar el kit «' + draft.name + '»? Las newsletters que ya lo tienen aplicado conservan su copia. No se puede deshacer.')) return;
+        try { B.remove(draft.id, localStorage); dirty = false; openDraft(B.custom()[0] || B.brandDraft(K.CLIENT.tournaments[0].id)); changed(); status('Kit eliminado.'); } catch (e) { status(e.message, true); }
+      }, 'btn ghost2 danger'));
+      form.appendChild(own);
+    }
+    if (!draft.base && !draft.id) form.appendChild(node('p', 'Kit nuevo: al pulsar «Crear kit» se añade a «Tus kits independientes». Para cambiar el diseño de una marca, elígela en «Kits de cada marca».', 'kit-note kit-base-note'));
     form.appendChild(field('Nombre del brand kit', draft.name, function (v) { draft.name = v; }));
     var label = node('label', 'Asociación orientativa'), select = node('select');
     var opt = node('option', 'Marca / proyecto independiente'); opt.value = ''; select.appendChild(opt);
@@ -85,9 +93,17 @@
     }));
     $('#kit-editor-title').textContent = draft.base ? 'Kit de ' + K.tournament(draft.base).name : draft.id ? 'Editar kit guardado' : 'Crear un brand kit';
   }
+  // Duplicar = la única forma de crear un kit a partir de otro. Guarda la copia al momento con otro nombre.
+  function duplicate() {
+    if (pending) return; if (dirty) { status('Guarda o descarta los cambios antes de duplicar.', true); return; }
+    var copy = JSON.parse(JSON.stringify(draft)); delete copy.base; copy.id = ''; copy.name = draft.name + ' (copia)'; copy.tournament = draft.tournament || draft.base || '';
+    try { var k = B.save(copy, localStorage); openDraft(k); changed(); status('Copia «' + k.name + '» creada en «Tus kits independientes». El original no ha cambiado.'); } catch (e) { status('No se ha duplicado: ' + e.message, true); }
+  }
+  function firstBrand() { return B.brandDraft(K.CLIENT.tournaments[0].id); }
   function openDraft(kit) {
     draft = JSON.parse(JSON.stringify(kit)); dirty = false; renderForm(); renderList();
-    status(draft.base ? 'Edita y pulsa «Guardar kit»: se aplica a las newsletters de esta marca que usan su kit automático.' : draft.id ? 'Kit guardado. Sus cambios solo se aplican a newsletters cuando lo vuelvas a elegir.' : 'Punto de partida: edita los campos y guarda tu kit.');
+    $('#kit-save').textContent = !draft.base && !draft.id ? 'Crear kit' : 'Guardar cambios';
+    status(draft.base ? 'Edita y pulsa «Guardar cambios»: se aplica a las newsletters de esta marca que usan su kit automático.' : draft.id ? 'Kit guardado. Sus cambios solo se aplican a newsletters cuando lo vuelvas a elegir.' : 'Punto de partida: edita los campos y guarda tu kit.');
   }
   function renderList() {
     var list = $('#kit-list'); list.innerHTML = '';
@@ -136,18 +152,19 @@
     window.addEventListener('beforeunload', function (event) { if (dirty || pending) { event.preventDefault(); event.returnValue = ''; } });
     try { B.load(localStorage); } catch (e) { $('#kit-load-error').textContent = 'No se pudo cargar la biblioteca de marca: ' + e.message; $('#kit-load-error').hidden = false; }
     // Desde el editor se abre el kit de la marca de esa newsletter.
-    function open(tid) { renderList(); if (typeof tid === 'string' && tid && !dirty) openDraft(B.brandDraft(tid)); else if (!draft) openDraft(B.custom()[0] || B.empty()); $('#kits-dialog').showModal(); }
+    function open(tid) { renderList(); if (typeof tid === 'string' && tid && !dirty) openDraft(B.brandDraft(tid)); else if (!draft || (!draft.id && !draft.base && !dirty)) openDraft(firstBrand()); $('#kits-dialog').showModal(); }
     U.open = open;
     $('#brand-kits-open').addEventListener('click', function () { open(); });
     $('#brand-kits-editor').addEventListener('click', function () { open(U.currentTournament ? U.currentTournament() : ''); });
     $('#kit-new').addEventListener('click', function () { if (canLeave()) openDraft(B.empty()); });
-    $('#kit-discard').addEventListener('click', function () { if (pending) return; openDraft(draft.base ? B.brandDraft(draft.base) : (draft.id && B.find(draft.id)) || B.empty()); });
+    $('#kit-discard').addEventListener('click', function () { if (pending) return; openDraft(draft.base ? B.brandDraft(draft.base) : (draft.id && B.find(draft.id)) || firstBrand()); });
     $('#kits-close').addEventListener('click', function () { if (canLeave()) $('#kits-dialog').close(); });
     $('#kits-dialog').addEventListener('cancel', function (event) { if (!canLeave()) event.preventDefault(); });
     $('#kit-images-close').addEventListener('click', function () { $('#kit-images-dialog').close(); });
     $('#kit-form').addEventListener('submit', function (event) {
       event.preventDefault(); if (pending) { status('Espera a que termine la carga.', true); return; }
-      try { var saved = B.save(draft, localStorage); openDraft(saved); renderList(); changed(); status(saved.base ? 'Kit de ' + K.tournament(saved.base).name + ' guardado: ya se aplica a sus newsletters con el kit automático.' : 'Kit guardado en este navegador. Ya puedes elegirlo en una newsletter.'); }
+      try { var saved = B.save(draft, localStorage); openDraft(saved); renderList(); changed(); status(saved.base ? 'Kit de ' + K.tournament(saved.base).name + ' guardado: ya se aplica a sus newsletters con el kit automático.' : 'Kit guardado en este navegador. Ya puedes elegirlo en una newsletter.');
+        $('#kit-save').textContent = 'Guardar cambios'; }
       catch (e) { status('No se ha guardado el kit: ' + e.message, true); }
     });
     $('#kit-export').addEventListener('click', function () {
@@ -160,7 +177,7 @@
       try {
         if (file.size > 3 * 1024 * 1024) throw Error('El archivo de kit supera los 3 MB.');
         var raw = JSON.parse(await file.text()); if (raw.version !== 1 || !raw.kit) throw Error('Elige un archivo de brand kit exportado por esta app.');
-        var kit = B.normalize(raw.kit, true); kit.id = ''; openDraft(kit); touch(); status('Kit importado como borrador. Pulsa Guardar kit para añadirlo.');
+        var kit = B.normalize(raw.kit, true); kit.id = ''; openDraft(kit); touch(); status(kit.base ? 'Kit de ' + K.tournament(kit.base).name + ' importado. Pulsa «Guardar cambios» para aplicarlo a esa marca.' : 'Kit importado como borrador. Pulsa «Crear kit» para añadirlo.');
       } catch (e) { status('No se pudo importar: ' + e.message, true); }
       finally { pending = false; this.value = ''; }
     });

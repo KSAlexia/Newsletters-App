@@ -572,3 +572,13 @@ Corrección:
 Límites: el kit editado vive en el navegador (`kaptiva-newsletters-brand-kits-v1`); no llega a otros PMs ni cambia `brands.js`. Los kits que el usuario guardó antes desde «Copiar un kit de torneo» siguen como kits independientes y no afectan a la marca: hay que repetir el cambio en «Kits de cada marca». Las newsletters con una copia de kit aplicada (selector «… · copia aplicada») no cambian.
 
 Pruebas: `test/brand-kits.test.js` añade borrador de marca, guardado con id fijo y un solo kit por marca, persistencia tras recargar, footer editado en la newsletter de esa sección y no en otras, prioridad de la copia aplicada, WCH editado con su estilo y restauración al original. Pasan todas las suites y el HTML sin kits editados sigue idéntico. En el navegador integrado: cambiar el footer de Fundación Real Madrid · USA CAMPS, guardar, cerrar, recargar y volver a entrar conserva el cambio («· editado»); la newsletter de esa sección muestra el footer nuevo; «Gestionar brand kits» desde el editor abre ese kit, y «Volver al diseño original» restaura el footer en la vista previa al momento.
+
+### Seguimiento: editar no debe crear kits (2026-11-12)
+
+El usuario seguía viendo kits independientes nuevos al editar. Además de las copias creadas antes de la corrección anterior, quedaban dos trampas en `brand-kits-ui.js`: al abrir Brand kits desde el inicio se mostraba por defecto el formulario de un kit nuevo vacío (`B.empty()`), y «Descartar cambios» sobre un borrador sin guardar volvía a ese formulario. Cambiar el footer ahí y guardar creaba un kit nuevo.
+
+- Al abrir sin contexto se muestra el kit de la primera marca (o el último abierto); nunca un kit nuevo. «Descartar cambios» vuelve al kit de la marca, al kit guardado o a la primera marca.
+- Solo crean kits: «＋ Nuevo kit independiente», «Duplicar» (en kits de marca: «Duplicar como kit independiente») e «Importar kit». El botón de guardar dice «Crear kit» en un kit nuevo y «Guardar cambios» en uno existente o de marca; un kit nuevo muestra un aviso de que se añadirá a «Tus kits independientes».
+- Nuevo «Eliminar kit» (con confirmación) en los kits independientes, para limpiar las copias antiguas. Las newsletters que ya tenían una copia aplicada la conservan.
+
+Pruebas: `test/brand-kits.test.js` añade editar una marca dos veces sin crear kits, editar un independiente sin duplicarlo y eliminarlo. En el navegador integrado (biblioteca vacía): al abrir aparece «Kit de Surf Cup 2026 / Guardar cambios»; dos guardados dejan solo `brand-surfcup`; «Nuevo kit» → «Crear kit»; crear y editar dejan un único kit; Duplicar añade uno y Eliminar lo quita.

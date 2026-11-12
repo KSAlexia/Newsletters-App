@@ -443,3 +443,5 @@ button:focus-visible, summary:focus-visible { outline: none; box-shadow: var(--r
 .lobby-bar h1 { font-size: 26px; letter-spacing: -.2px; }
 .kit-base-note { grid-column: 1 / -1; background: var(--soft); border-left: 3px solid var(--brand); border-radius: var(--r); padding: 8px 12px; color: var(--brand-dark); }
 .kit-base-tools { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+.btn.ghost2.danger { color: var(--error); border-color: rgba(198, 47, 61, .45); }
+.btn.ghost2.danger:hover:not(:disabled) { background: #fff0f0; border-color: var(--error); color: var(--error); }
