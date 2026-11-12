@@ -36,6 +36,8 @@ Los scripts comparten el objeto global `KSA` mediante IIFEs. Algunos también fu
 | `js/brand-kits-ui.js` | Gestor de kits, referencias locales y selector de imágenes |
 | `test/brand-kits.test.js` | Pruebas de kits, snapshots, fuentes, colores, URLs y compatibilidad |
 | `js/hub.js` | Funciones de jerarquía, prevención de ciclos, ordenación y filtrado |
+| `js/history.js` | Deshacer/rehacer en memoria e historial de versiones por newsletter |
+| `test/history.test.js` | Pruebas de deshacer/rehacer y versiones (agrupación, límites, falta de espacio) |
 | `test/BASE-KSAGS-GLOBAL-STAGE.txt` | Referencia HTML de la BASE |
 | `test/test.js` | Comparación del ejemplo con la BASE y comprobación básica de paleta FIT |
 | `test/hub.test.js` | Pruebas sin dependencias de la organización del hub |
@@ -86,6 +88,7 @@ Claves:
 - `kaptiva-newsletters-projects-v1`: diccionario por ID de proyecto.
 - `kaptiva-newsletters-hub-v1`: organización del hub.
 - `kaptiva-newsletters-brand-kits-v1`: biblioteca local `{version: 1, kits: [...]}`. Es independiente de la colección de newsletters.
+- `kaptiva-newsletters-versions-v1`: historial de versiones `{version: 1, items: {<idNewsletter>: [{id, at, label, auto, content}]}}`. `content` es el JSON de la newsletter sin el estado plegado de los bloques. Se borra al eliminar la newsletter; duplicar no copia el historial.
 
 Proyecto en la colección:
 
@@ -316,7 +319,7 @@ Nueva clave localStorage: `kaptiva-newsletters-brand-kits-v1`. Cada kit puede gu
 Pedido por el usuario: previsualizar las imágenes de los brand kits en el editor, arrastrarlas a los bloques, intercambiarlas entre bloques y poder dejar placeholders. Sin backend ni dependencias nuevas; sin commit.
 
 - `brand-kits-ui.js`: `U.images(st)` devuelve la lista de imágenes (kit aplicado o del torneo primero, después la biblioteca, sin duplicados). `pickImage` la reutiliza.
-- `index.html` / `app.js`: panel `#image-panel` (details abierto, sticky en la columna del editor, scroll horizontal) con el placeholder y las imágenes con custom link como fuentes arrastrables; las referencias sin URL aparecen atenuadas y no se arrastran. Cada campo de imagen (`img: true` o `k: 'img'`) se pinta como `.img-slot` con miniatura, botones «Elegir del brand kit», «Usar placeholder» y «Quitar imagen», y acepta soltar. La cabecera (`summary`) de un módulo con campo de imagen también acepta soltar, aunque esté plegado, y lo abre.
+- `index.html` / `app.js`: panel `#image-panel` (details abierto, se desplaza con la columna del editor —ya no queda anclado, a petición del usuario 2026-11-12—, scroll horizontal) con el placeholder y las imágenes con custom link como fuentes arrastrables; las referencias sin URL aparecen atenuadas y no se arrastran. Cada campo de imagen (`img: true` o `k: 'img'`) se pinta como `.img-slot` con miniatura, botones «Elegir del brand kit», «Usar placeholder» y «Quitar imagen», y acepta soltar. La cabecera (`summary`) de un módulo con campo de imagen también acepta soltar, aunque esté plegado, y lo abre.
 - Arrastre con HTML5 DnD y estado en memoria (`dragImage`), mismo patrón que el hub; solo se aceptan arrastres iniciados en la app. Soltar la miniatura de un bloque sobre otro intercambia la URL y el alt. Soltar una imagen del kit rellena el alt si estaba vacío o coincidía con el nombre de la imagen de kit anterior; un alt escrito a mano se conserva.
 - `modules.js`: valor centinela `K.IMG_PH = 'PLACEHOLDER'` en el campo de imagen. Genera una tabla gris con borde discontinuo «IMAGEN PENDIENTE · N px» (650×260 a sangre, 570×220 con márgenes, 280×200 en Producto), sin `<img>` ni asset. `K.check` lo marca como error (y omite los errores de URL/alt duplicados), así que `okToExport()` pide confirmación. El HTML sin placeholders no cambia.
 - El arrastre no funciona con pantalla táctil (limitación de HTML5 DnD); los botones del campo son la alternativa, también para teclado.
@@ -582,3 +585,38 @@ El usuario seguía viendo kits independientes nuevos al editar. Además de las c
 - Nuevo «Eliminar kit» (con confirmación) en los kits independientes, para limpiar las copias antiguas. Las newsletters que ya tenían una copia aplicada la conservan.
 
 Pruebas: `test/brand-kits.test.js` añade editar una marca dos veces sin crear kits, editar un independiente sin duplicarlo y eliminarlo. En el navegador integrado (biblioteca vacía): al abrir aparece «Kit de Surf Cup 2026 / Guardar cambios»; dos guardados dejan solo `brand-surfcup`; «Nuevo kit» → «Crear kit»; crear y editar dejan un único kit; Duplicar añade uno y Eliminar lo quita.
+
+## Imágenes y banners del brand kit por separado (2026-11-12)
+
+Problema del usuario: en las imágenes del editor salían el header y el footer de Bayern en newsletters de otra marca. Causa: `U.images` añadía todos los kits guardados (`B.all()`), y desde la corrección anterior eso incluye los kits editados de cada marca (`brand-bayern`). Ahora solo se ofrecen el kit de la newsletter y los kits independientes (`B.custom()`).
+
+Después, a petición del usuario, «Imágenes» queda solo para fotos y hay un apartado aparte, «Banners del brand kit», para el header, el footer, el banner de Media Packages y otros gráficos recurrentes:
+- `brand-kits.js`: nueva lista `banners` (hasta 30, misma validación que `assets`; los kits guardados sin ella siguen siendo válidos). `B.groups(kit)` devuelve `{ banners: [header, footer, mediaBanner, ...banners], fotos: assets }`. `B.defaults` lee `t.banners` si una marca los define en `brands.js` (ninguna lo hace todavía).
+- `brand-kits-ui.js`: el gestor muestra «Banners del brand kit» (header, footer, media y «＋ Añadir banner») e «Imágenes (fotos para los bloques)». `U.images` marca cada recurso con `group: 'foto' | 'banner'`; el selector «Elegir del brand kit» los muestra en dos apartados.
+- `index.html` / `app.js` / `app.css`: el panel del editor («Imágenes y banners del brand kit») tiene dos filas: Imágenes (con el placeholder) y Banners. Los dos se pueden arrastrar a cualquier campo de imagen.
+
+Pruebas: `test/brand-kits.test.js` añade la separación (las fotos no incluyen header/footer/media), kits sin `banners` y el límite de 30. Las suites pasan; `test/test.js` mantiene el `igual: false` conocido, sin cambios respecto a antes. En el navegador integrado (`http://127.0.0.1:8781`, datos sintéticos): el gestor muestra el apartado de banners y «＋ Añadir banner» crea «Banner 1»; en una newsletter de Surf Cup, Imágenes solo tiene el placeholder y Banners tiene header, footer y Media Packages; el selector de RMF WC separa la foto WCH de su header y su footer. No probado: Firefox/Safari.
+
+## Corrección: «⠿ Mover» de la vista previa no arrastraba (2026-11-12)
+
+Problema del usuario: el botón Mover de la barra flotante de la vista previa no dejaba mantenerlo pulsado y arrastrar.
+
+Causas (`app.js`, `enhancePreview`):
+- El asa era un `<button draggable>`: los navegadores no inician el arrastre desde un botón (no llegaba a dispararse `dragstart`). Ahora es un `<span role="button" draggable>` con `cursor: grab`.
+- Con el botón del ratón pulsado, el `mousemove` del documento recolocaba la barra sobre el bloque bajo el cursor. Chrome busca el elemento arrastrable en el punto donde se pulsó, y ya no encontraba el asa. Ahora la barra no se mueve mientras haya un botón pulsado (`event.buttons`).
+- La barra se ocultaba dentro de `dragstart`; ocultar el origen ahí puede cancelar el arrastre en Chrome. Ahora se oculta en el siguiente tick.
+
+Pruebas: suites sin cambios (`test/test.js` mantiene el `igual: false` conocido). En el navegador integrado (`http://127.0.0.1:8782`, receta Anuncio, datos sintéticos), un arrastre real con el ratón desde «⠿ Mover» dispara `dragstart` → `drop` y el bloque queda en la posición de la línea de inserción (dos pruebas, hacia abajo). No probado: Firefox/Safari, ni arrastrar hacia arriba con desplazamiento automático.
+
+## Deshacer (Ctrl/⌘ + Z) e historial de versiones (2026-11-12)
+
+Pedido por el usuario: deshacer la última acción con Ctrl+Z y un historial de versiones en cada newsletter.
+
+- `js/history.js` (nuevo, sin dependencias): `K.History.undoStack()` guarda el contenido anterior a cada cambio. Lo escrito seguido (menos de 700 ms entre cambios) es un solo paso. `boundary()` hace que la siguiente acción (mover, añadir, quitar, duplicar, editar en la vista previa…: todo lo que llama a `renderSections`) sea un paso propio, y lo que se escriba después, otro. Límite de 100 pasos, en memoria: se vacía al abrir otra newsletter o si otra pestaña la cambia. Versiones: `list/add/find/remove/removeAll/autoDue` sobre `localStorage`, con un máximo de 20 automáticas y 30 guardadas a mano por newsletter. Si el navegador se queda sin espacio, se borran automáticas antiguas de cualquier newsletter, nunca las guardadas a mano; si aun así no cabe, se avisa.
+- `app.js`: `persist()` registra el paso y, si toca, una versión automática con el contenido anterior al cambio (al primer cambio y después cada 10 minutos de trabajo; no repite una idéntica a la última). Ctrl/⌘+Z deshace; Ctrl/⌘+Shift+Z o Ctrl+Y rehace, también con el foco en la vista previa o en los campos del editor (sustituye al deshacer nativo del campo para que sea siempre el de la newsletter). No actúa con un diálogo abierto, en el editor de código ni mientras se edita un texto en la vista previa (ahí funciona el deshacer del navegador). Antes de deshacer aplica lo que se esté escribiendo. Mensaje breve abajo («Deshecho», «No hay nada más que deshacer»…).
+- Botón «Historial» en la barra superior del editor: guardar la versión actual con nombre opcional, lista (más reciente primero) con fecha, tipo y número de bloques, vista previa de cada versión, «Restaurar» y «Eliminar». Restaurar guarda antes una versión «Antes de restaurar…» (salvo que ya coincida con la última) y se puede deshacer con Ctrl/⌘+Z.
+- Al eliminar una newsletter en el hub también se elimina su historial.
+
+Límites: el historial vive en este navegador (no viaja con «Exportar proyecto» ni llega a otras personas). Deshacer no restaura qué bloques estaban desplegados ni el foco del campo en el que se escribía.
+
+Pruebas: `test/history.test.js` (nuevo) y las suites existentes pasan (`test/hub.test.js` carga ahora `history.js`); `test/test.js` mantiene el `igual: false` conocido. En el navegador integrado (`http://127.0.0.1:8784`, datos sintéticos) con teclado real: escribir el nombre y pulsar ⌘Z lo deshace de una vez; un segundo ⌘Z quita la receta; ⌘⇧Z dos veces lo rehace todo; mover un bloque con ↓ y pulsar ⌘Z con el foco en la vista previa lo devuelve a su sitio; guardar una versión con nombre, verla en la vista previa del diálogo, restaurar la automática (0 bloques) y deshacer la restauración con ⌘Z. No probado: Ctrl+Z en Windows, Firefox/Safari ni el caso de quedarse sin espacio en un navegador real.

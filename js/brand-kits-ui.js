@@ -78,20 +78,28 @@
       var text = wrap.querySelector('input'), color = node('input'); text.setAttribute('aria-label', pair[1]); color.type = 'color'; color.setAttribute('aria-label', 'Elegir color ' + pair[1]); color.value = draft.colors[pair[0]] || '#ffffff';
       color.addEventListener('input', function () { text.value = color.value; draft.colors[pair[0]] = color.value; touch(); }); var row = node('div', '', 'kit-color'); row.appendChild(wrap); row.appendChild(color); form.appendChild(row);
     });
-    form.appendChild(node('h3', 'Header, footer y banner'));
-    form.appendChild(node('p', 'Los archivos se guardan como referencia en este navegador. Para incluir una imagen en Cvent, añade su custom link. No se sube ningún archivo a Cvent desde aquí.', 'kit-note'));
+    form.appendChild(node('h3', 'Banners del brand kit'));
+    form.appendChild(node('p', 'Header, footer, banner de Media Packages y otros gráficos recurrentes. Los archivos se guardan como referencia en este navegador. Para incluir una imagen en Cvent, añade su custom link. No se sube ningún archivo a Cvent desde aquí.', 'kit-note'));
     [['header', 'Header'], ['footer', 'Footer de imagen'], ['mediaBanner', 'Banner de Media Packages (opcional)']].forEach(function (pair) { form.appendChild(assetEditor(draft[pair[0]], pair[1])); });
+    draft.banners = draft.banners || [];
+    draft.banners.forEach(function (a, i) { form.appendChild(assetEditor(a, 'Banner ' + (i + 1), function () { draft.banners.splice(i, 1); })); });
+    form.appendChild(addButton('＋ Añadir banner', draft.banners, 'banners'));
     form.appendChild(node('h3', 'Fuentes · enlaces de los archivos'));
     form.appendChild(node('p', 'Asigna archivos .otf, .ttf, .woff o .woff2 a los usos del diseño. Un campo vacío usa las fuentes de sistema de respaldo. La compatibilidad depende del cliente de correo.', 'kit-note'));
     B.roles.forEach(function (r) { form.appendChild(field(r[1], draft.fonts[r[0]], function (v) { draft.fonts[r[0]] = v; }, 'url')); });
-    form.appendChild(node('h3', 'Biblioteca de imágenes para bloques'));
+    form.appendChild(node('h3', 'Imágenes (fotos para los bloques)'));
     draft.assets.forEach(function (a, i) { form.appendChild(assetEditor(a, 'Imagen ' + (i + 1), function () { draft.assets.splice(i, 1); })); });
-    form.appendChild(button('＋ Añadir imagen', function () {
-      if (pending) return; if (draft.assets.length >= 30) { status('Cada kit admite hasta 30 imágenes.', true); return; }
-      draft.assets.push({ name: '', url: '' }); touch(); renderForm();
-      var assets = form.querySelectorAll('.kit-asset'); assets[assets.length - 1].scrollIntoView({ block: 'center' });
-    }));
+    form.appendChild(addButton('＋ Añadir imagen', draft.assets, 'imágenes'));
     $('#kit-editor-title').textContent = draft.base ? 'Kit de ' + K.tournament(draft.base).name : draft.id ? 'Editar kit guardado' : 'Crear un brand kit';
+  }
+  // Añade un recurso vacío a una lista (banners o fotos) y lleva la vista hasta él.
+  function addButton(text, list, what) {
+    return button(text, function () {
+      if (pending) return; if (list.length >= 30) { status('Cada kit admite hasta 30 ' + what + '.', true); return; }
+      var item = { name: '', url: '' }; list.push(item); touch(); renderForm();
+      var boxes = $('#kit-fields').querySelectorAll('.kit-asset'), legend = list === draft.banners ? 'Banner ' : 'Imagen ';
+      Array.prototype.filter.call(boxes, function (b) { return b.querySelector('legend').textContent === legend + list.length; })[0].scrollIntoView({ block: 'center' });
+    });
   }
   // Duplicar = la única forma de crear un kit a partir de otro. Guarda la copia al momento con otro nombre.
   function duplicate() {
@@ -123,29 +131,39 @@
     if (st && st.brandKit) { o = node('option', st.brandKit.name + ' · copia aplicada'); o.value = '@current'; select.appendChild(o); }
     B.custom().forEach(function (k) { var x = node('option', k.name); x.value = k.id; select.appendChild(x); }); select.value = st && st.brandKit ? '@current' : '';
   };
-  // Imágenes disponibles para una newsletter: primero las del kit aplicado (o el del torneo) y después las de los kits independientes.
+  // Recursos disponibles para una newsletter: primero los del kit aplicado (o el del torneo) y después los de los kits independientes.
   // Los kits editados de otras marcas no se ofrecen: su header/footer no pertenece a esta newsletter.
+  // Cada recurso lleva group: 'foto' (apartado Imágenes) o 'banner' (apartado Banners del brand kit).
   U.images = function (st) {
     var current = B.forState(st) || B.defaults(st.tournament), sources = [current].concat(B.custom()), seen = {}, out = [];
     sources.forEach(function (kit) {
-      [kit.header, kit.footer, kit.mediaBanner].concat(kit.assets).forEach(function (a) {
-        if (!a || (!a.url && !a.reference)) return;
-        var key = JSON.stringify([a.url || (a.reference && a.reference.data), a.name]); if (seen[key]) return; seen[key] = true;
-        out.push({ url: a.url, name: a.name, kit: kit.name, preview: a.reference ? a.reference.data : a.url, current: kit === current });
+      var g = B.groups(kit);
+      [['banner', g.banners], ['foto', g.fotos]].forEach(function (pair) {
+        pair[1].forEach(function (a) {
+          if (!a || (!a.url && !a.reference)) return;
+          var key = JSON.stringify([pair[0], a.url || (a.reference && a.reference.data), a.name]); if (seen[key]) return; seen[key] = true;
+          out.push({ group: pair[0], url: a.url, name: a.name, kit: kit.name, preview: a.reference ? a.reference.data : a.url, current: kit === current });
+        });
       });
     });
     return out;
   };
+  U.GROUPS = [['foto', 'Imágenes'], ['banner', 'Banners del brand kit']];
   U.pickImage = function (st, onChoose) {
-    var dialog = $('#kit-images-dialog'), list = $('#kit-image-list'); list.innerHTML = '';
-    U.images(st).forEach(function (a) {
-      var card = node('div', '', 'kit-image-choice'), image = node('img'); image.alt = a.name || 'Imagen sin nombre'; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer'; image.src = a.preview; card.appendChild(image);
-      card.appendChild(node('strong', a.name || 'Imagen sin nombre')); card.appendChild(node('small', a.kit));
-      if (a.url) card.appendChild(button('Usar imagen', function () { onChoose({ url: a.url, name: a.name }); dialog.close(); }));
-      else card.appendChild(node('p', 'Solo referencia: añade su custom link en Brand kits para usarla.', 'kit-note'));
-      list.appendChild(card);
+    var dialog = $('#kit-images-dialog'), list = $('#kit-image-list'), all = U.images(st); list.innerHTML = '';
+    U.GROUPS.forEach(function (g) {
+      var items = all.filter(function (a) { return a.group === g[0]; }), grid = node('div', '', 'kit-image-grid');
+      list.appendChild(node('h3', g[1], 'kit-image-group'));
+      items.forEach(function (a) {
+        var card = node('div', '', 'kit-image-choice'), image = node('img'); image.alt = a.name || 'Imagen sin nombre'; image.loading = 'lazy'; image.referrerPolicy = 'no-referrer'; image.src = a.preview; card.appendChild(image);
+        card.appendChild(node('strong', a.name || 'Imagen sin nombre')); card.appendChild(node('small', a.kit));
+        if (a.url) card.appendChild(button('Usar imagen', function () { onChoose({ url: a.url, name: a.name }); dialog.close(); }));
+        else card.appendChild(node('p', 'Solo referencia: añade su custom link en Brand kits para usarla.', 'kit-note'));
+        grid.appendChild(card);
+      });
+      if (!items.length) grid.appendChild(node('p', g[0] === 'foto' ? 'Este kit no tiene fotos. Añádelas en «Imágenes» del brand kit.' : 'Este kit no tiene banners.', 'kit-note'));
+      list.appendChild(grid);
     });
-    if (!list.children.length) list.appendChild(node('p', 'Añade imágenes y sus custom links en Brand kits.'));
     dialog.showModal();
   };
   U.init = function (onChanged) {

@@ -45,7 +45,7 @@ function boot(storage) {
   const document = { body: new Element('body'), createElement: tag => new Element(tag), querySelector: key => { if (key.startsWith('[data-hub-id=') || key.startsWith('[data-tree-toggle=')) return null; if (!nodes[key]) throw Error('Missing node: ' + key); return nodes[key]; }, querySelectorAll: () => [] };
   const context = { document, console, Date, URL, setTimeout, clearTimeout, localStorage: { getItem: k => storage[k] || null, setItem: (k,v) => { storage[k] = v; }, removeItem: k => { delete storage[k]; } }, prompt: () => prompts.shift(), confirm: () => true, alert: t => alerts.push(t), addEventListener() {} };
   context.window = context; vm.createContext(context);
-  for (const file of ['head','brands','brand-kits','modules','hub','app']) vm.runInContext(fs.readFileSync(__dirname + '/../js/' + file + '.js', 'utf8'), context);
+  for (const file of ['head','brands','brand-kits','history','modules','hub','app']) vm.runInContext(fs.readFileSync(__dirname + '/../js/' + file + '.js', 'utf8'), context);
   const walk = node => [node, ...node.children.flatMap(walk)];
   const clickText = text => { const button = walk(nodes['#folders']).find(n => n.tag === 'button' && walk(n).some(child => child.textContent === text)); assert.ok(button, 'Button: ' + text); button.click(); };
   return { nodes, prompts, alerts, clickText, change(id, value) { const node = nodes[id]; node.value = value; node.handlers.change.call(node); } };

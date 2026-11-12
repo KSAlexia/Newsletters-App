@@ -8,7 +8,7 @@
 </head>
 <body>
 <header class="top">
-  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">Kaptiva · v0.3</span><button id="back" class="ed">← Newsletters</button><button id="switch" class="ed" title="Ir a otra newsletter (Ctrl/⌘ + K)">Ir a otra newsletter…</button></div>
+  <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">Kaptiva · v0.3</span><button id="back" class="ed">← Newsletters</button><button id="switch" class="ed" title="Ir a otra newsletter (Ctrl/⌘ + K)">Ir a otra newsletter…</button><button id="history" class="ed" title="Versiones guardadas de esta newsletter. Ctrl/⌘ + Z deshace y Ctrl/⌘ + Shift + Z rehace">Historial</button></div>
   <div class="actions ed">
     <select id="recipe" title="Empezar desde una receta"></select>
     <button id="import">Importar</button>
@@ -74,6 +74,7 @@
 
 <p id="kit-load-error" role="alert" hidden></p>
 <p id="sync-note" role="status" hidden></p>
+<p id="history-toast" role="status" hidden></p>
 <p id="storage-error" role="alert" hidden>No se han podido guardar los últimos cambios en este navegador. No cierres la app; exporta las newsletters que hayas editado para conservar su contenido.</p>
 <main>
   <section class="editor">
@@ -96,10 +97,14 @@
       </details>
     </div>
     <details id="image-panel" class="card image-panel" open>
-      <summary>Imágenes del brand kit</summary>
-      <p class="image-panel-note">Arrastra una imagen o el placeholder hasta un bloque (abierto o plegado). Arrastra la miniatura de un bloque a otro para intercambiar sus imágenes.</p>
+      <summary>Imágenes y banners del brand kit</summary>
+      <p class="image-panel-note">Arrastra una imagen, un banner o el placeholder hasta un bloque (abierto o plegado). Arrastra la miniatura de un bloque a otro para intercambiar sus imágenes.</p>
+      <h3 class="image-panel-group">Imágenes</h3>
       <div id="image-panel-list" class="image-panel-list"></div>
-      <p id="image-panel-empty" class="image-panel-note" hidden>Este kit todavía no tiene imágenes con custom link. Añádelas en «Gestionar brand kits».</p>
+      <p id="image-panel-empty" class="image-panel-note" hidden>Este kit todavía no tiene fotos con custom link. Añádelas en «Imágenes» del brand kit.</p>
+      <h3 class="image-panel-group">Banners del brand kit</h3>
+      <div id="banner-panel-list" class="image-panel-list"></div>
+      <p id="banner-panel-empty" class="image-panel-note" hidden>Este kit todavía no tiene banners con custom link.</p>
     </details>
     <div id="sections"></div>
     <div class="add">
@@ -218,14 +223,32 @@
     <div id="switch-list"></div>
   </div>
 </dialog>
+<dialog id="history-dialog" aria-labelledby="history-title">
+  <div class="kits-heading"><div><h2 id="history-title">Historial de versiones</h2><p class="muted">Guardado en este navegador. Ctrl/⌘ + Z deshace el último cambio y Ctrl/⌘ + Shift + Z lo rehace.</p></div><button id="history-close" type="button" class="btn ghost2">Cerrar</button></div>
+  <div class="history-body">
+    <div class="history-side">
+      <form id="history-form" class="history-form">
+        <label for="history-name">Guardar la versión actual</label>
+        <div class="history-row"><input id="history-name" type="text" maxlength="120" placeholder="Nombre (opcional), p. ej. «Enviada a revisión»"><button type="submit" class="btn">Guardar versión</button></div>
+        <p id="history-error" class="kit-status error" role="alert"></p>
+      </form>
+      <div id="history-list"></div>
+    </div>
+    <div class="history-preview">
+      <p id="history-preview-title" class="muted"></p>
+      <iframe id="history-frame" title="Vista previa de la versión"></iframe>
+    </div>
+  </div>
+</dialog>
 <dialog id="kit-images-dialog" aria-labelledby="kit-images-title">
-  <div class="kits-heading"><h2 id="kit-images-title">Imágenes de los brand kits</h2><button id="kit-images-close" type="button" class="btn ghost2">Cerrar</button></div>
+  <div class="kits-heading"><h2 id="kit-images-title">Imágenes y banners de los brand kits</h2><button id="kit-images-close" type="button" class="btn ghost2">Cerrar</button></div>
   <div id="kit-image-list"></div>
 </dialog>
 <script src="js/hub.js"></script>
 <script src="js/head.js"></script>
 <script src="js/brands.js"></script>
 <script src="js/brand-kits.js"></script>
+<script src="js/history.js"></script>
 <script src="js/modules.js"></script>
 <script src="js/brand-kits-ui.js"></script>
 <script src="js/app.js"></script>

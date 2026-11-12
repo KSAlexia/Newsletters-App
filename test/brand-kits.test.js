@@ -52,6 +52,18 @@ assert.throws(() => B.normalize({ ...kit, assets: Array.from({ length: 31 }, () 
 assert.throws(() => B.normalize({ ...kit, assets: [{ reference: { name: 'grande.png', data: 'data:image/png;base64,' + 'A'.repeat(960000) } }] }, true), /700 KB/);
 assert.throws(() => B.normalize({ ...kit, assets: Array.from({ length: 3 }, () => ({ reference: { name: 'local.png', data: 'data:image/png;base64,' + 'A'.repeat(880000) } })) }, true), /tamaño local/);
 
+// Banners (header, footer, media y gráficos recurrentes) separados de las fotos de los bloques.
+{
+  const bk = B.defaults('surfcup'); bk.banners = [{ name: 'Gráfico recurrente', url: bk.header.url + '?b=1' }]; bk.assets = [{ name: 'Foto', url: bk.header.url + '?f=1' }];
+  const n = B.snapshot(bk), g = B.groups(n);
+  assert.equal(n.banners[0].name, 'Gráfico recurrente');
+  assert.deepEqual(g.fotos.map(a => a.name), ['Foto'], 'Las fotos no incluyen header, footer ni banner de media');
+  assert.ok(g.banners.includes(n.header) && g.banners.includes(n.footer) && g.banners.includes(n.mediaBanner) && g.banners.some(a => a.name === 'Gráfico recurrente'));
+  assert.deepEqual(B.snapshot({ ...bk, banners: undefined }).banners, [], 'Kits guardados sin banners siguen siendo válidos');
+  assert.throws(() => B.normalize({ ...bk, banners: Array.from({ length: 31 }, () => ({ name: 'B', url: '' })) }, true), /30 banners/);
+  console.log('OK: banners del brand kit separados de las imágenes (fotos).');
+}
+
 const upperCaseImage = { ...K.fromRecipe('blank'), sections: [{ type: 'imagen', d: { src: 'https://CUSTOM.CVENT.COM/imagen.png', alt: 'Referencia', size: 'full' } }] };
 assert.ok(!K.check(upperCaseImage, K.build(upperCaseImage)).some(x => /custom link de Cvent válido/.test(x.msg)));
 upperCaseImage.sections[0].d.src = 'https://custom.cvent.com.evil.test/imagen.png';

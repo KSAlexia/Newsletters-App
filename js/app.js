@@ -41,7 +41,7 @@
       if (currentId && p.conflicts.indexOf(currentId) >= 0) syncNote('Esta newsletter también se modificó en otra pestaña. Se ha guardado la versión de esta pestaña.');
       else if (currentId && p.changed.indexOf(currentId) >= 0) {
         // Otra pestaña la cambió y aquí no había cambios: se carga su versión.
-        state = K.normalize(projects[currentId].state); savedContent = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
+        state = K.normalize(projects[currentId].state); savedContent = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; }); undo.clear();
         setTimeout(function () { if (!currentId) return; syncSettings(); renderSections(); refresh(); syncNote('Esta newsletter se ha actualizado con los cambios hechos en otra pestaña.'); }, 0);
       }
       return true;
@@ -50,7 +50,11 @@
   function persist() {
     if (!currentId) return;
     var p = projects[currentId], content = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
-    if (content !== savedContent) { p.updated = Date.now(); savedContent = content; }
+    if (content !== savedContent) {
+      // Historial: el contenido anterior es un paso de «deshacer» y, cada cierto tiempo, una versión automática.
+      if (!historyBusy && savedContent) { undo.record(savedContent, Date.now()); autoVersion(savedContent); }
+      p.updated = Date.now(); savedContent = content;
+    }
     p.state = state;
     if (p.folder && (!organization.folders[p.folder] || organization.folders[p.folder].tournament !== K.tournament(state.tournament).id)) p.folder = '';
     saveAll();
@@ -65,12 +69,101 @@
     if (old && !Object.keys(projects).length) { var id = 'p' + Date.now(); projects[id] = { id: id, updated: Date.now(), state: old }; saveAll(); try { localStorage.removeItem(STORE); } catch (e) {} }
   }
 
+  // ---------- Deshacer / rehacer e historial de versiones ----------
+  var KH = K.History, undo = KH.undoStack(), historyBusy = false, toastTimer;
+  function toast(text) {
+    var n = $('#history-toast'); n.textContent = text; n.hidden = false;
+    clearTimeout(toastTimer); toastTimer = setTimeout(function () { n.hidden = true; }, 2500);
+  }
+  function autoVersion(before) {
+    var now = Date.now();
+    try { if (KH.autoDue(localStorage, currentId, now)) KH.add(localStorage, currentId, before, 'Automática', true, now); }
+    catch (e) { syncNote('No se ha podido guardar la versión automática: ' + e.message); }
+  }
+  // Sustituye el contenido de la newsletter abierta sin registrarlo como un cambio nuevo.
+  function applyContent(content) {
+    var open = state.sections.map(function (x) { return !!x.open; });
+    historyBusy = true;
+    try { state = K.normalize(JSON.parse(content)); state.sections.forEach(function (x, i) { if (open[i]) x.open = true; }); persist(); }
+    finally { historyBusy = false; }
+    var keepSel = selectedSection; syncSettings(); selectedSection = keepSel < state.sections.length ? keepSel : -1; renderSections(); refresh();
+  }
+  // Aplica primero lo que se esté escribiendo (el refresco va con retraso) para que también se pueda deshacer.
+  function flushEdits() { if (timer) { clearTimeout(timer); timer = null; refresh(); } }
+  function doUndo() {
+    if (!currentId || editingCode) return; flushEdits();
+    var prev = undo.undo(savedContent); if (prev == null) { toast('No hay nada más que deshacer.'); return; }
+    applyContent(prev); toast('Deshecho · Ctrl/⌘ + Shift + Z para rehacer');
+  }
+  function doRedo() {
+    if (!currentId || editingCode) return; flushEdits();
+    var next = undo.redo(savedContent); if (next == null) { toast('No hay nada que rehacer.'); return; }
+    applyContent(next); toast('Rehecho');
+  }
+  // Ctrl/⌘+Z deshace, Ctrl/⌘+Shift+Z o Ctrl+Y rehace. El editor de código y la edición en la vista previa usan su propio deshacer.
+  function historyKey(event) {
+    if (!currentId || !(event.metaKey || event.ctrlKey) || event.altKey) return;
+    var k = (event.key || '').toLowerCase(), isUndo = k === 'z' && !event.shiftKey, isRedo = (k === 'z' && event.shiftKey) || (k === 'y' && event.ctrlKey && !event.metaKey);
+    if (!isUndo && !isRedo) return;
+    var t = event.target;
+    if (document.querySelector('dialog[open]') || editingCode || inlineEditing || (t && (t.id === 'code' || t.isContentEditable))) return;
+    event.preventDefault(); if (isUndo) doUndo(); else doRedo();
+  }
+  function versionDate(at) { try { return new Date(at).toLocaleString('es-ES', { dateStyle: 'medium', timeStyle: 'short' }); } catch (e) { return new Date(at).toLocaleString(); } }
+  function versionState(v) { try { return K.normalize(JSON.parse(v.content)); } catch (e) { return null; } }
+  var shownVersion = '';
+  function showVersion(v) {
+    shownVersion = v ? v.id : '';
+    var st = v && versionState(v), frame = $('#history-frame');
+    $('#history-preview-title').textContent = v ? v.label + ' · ' + versionDate(v.at) : 'Elige una versión para verla';
+    frame.srcdoc = st ? (typeof st.customHtml === 'string' ? st.customHtml : K.build(st)) : '';
+    Array.prototype.forEach.call(document.querySelectorAll('#history-list .history-item'), function (n) { n.classList.toggle('on', n.getAttribute('data-id') === shownVersion); });
+  }
+  function renderHistory() {
+    var list = $('#history-list'), versions = KH.list(localStorage, currentId).reverse(); list.innerHTML = '';
+    if (!versions.length) list.appendChild(el('p', { class: 'muted', text: 'Todavía no hay versiones. Se guarda una automática al empezar a editar y después cada 10 minutos de trabajo; también puedes guardar una ahora.' }));
+    versions.forEach(function (v) {
+      var st = versionState(v), blocks = st ? st.sections.length : 0;
+      var item = el('div', { class: 'history-item', 'data-id': v.id }, [
+        el('button', { type: 'button', class: 'history-main', title: 'Ver esta versión', onclick: function () { showVersion(v); } }, [
+          el('strong', { text: v.label }),
+          el('small', { text: versionDate(v.at) + (v.auto ? ' · automática' : ' · guardada a mano') + ' · ' + blocks + (blocks === 1 ? ' bloque' : ' bloques') })
+        ]),
+        el('div', { class: 'history-actions' }, [
+          el('button', { type: 'button', class: 'btn ghost2', text: 'Restaurar', onclick: function () { restoreVersion(v); } }),
+          el('button', { type: 'button', class: 'btn ghost2 danger', text: 'Eliminar', 'aria-label': 'Eliminar la versión ' + v.label, onclick: function () {
+            if (!confirm('¿Eliminar la versión «' + v.label + '» (' + versionDate(v.at) + ')?')) return;
+            try { KH.remove(localStorage, currentId, v.id); } catch (e) { alert(e.message); }
+            if (shownVersion === v.id) showVersion(null); renderHistory();
+          } })
+        ])
+      ]);
+      list.appendChild(item);
+    });
+    Array.prototype.forEach.call(list.querySelectorAll('.history-item'), function (n) { n.classList.toggle('on', n.getAttribute('data-id') === shownVersion); });
+  }
+  function restoreVersion(v) {
+    if (!versionState(v)) { alert('Esta versión no se puede leer.'); return; }
+    flushEdits();
+    if (v.content === savedContent) { toast('La newsletter ya está igual que esta versión.'); return; }
+    // Se guarda cómo estaba antes de restaurar, y la restauración se puede deshacer con Ctrl/⌘ + Z.
+    try { KH.add(localStorage, currentId, savedContent, 'Antes de restaurar «' + v.label + '»', true, Date.now()); } catch (e) { syncNote('No se ha podido guardar la versión previa: ' + e.message); }
+    undo.boundary(); undo.record(savedContent, Date.now());
+    applyContent(v.content); $('#history-dialog').close();
+    toast('Versión restaurada · Ctrl/⌘ + Z para deshacer');
+  }
+  function openHistory() {
+    if (!currentId || !canLeaveCode()) return;
+    flushEdits(); $('#history-name').value = ''; $('#history-error').textContent = '';
+    renderHistory(); showVersion(null); $('#history-dialog').showModal();
+  }
+
   // ---------- Hub: torneos, carpetas y newsletters ----------
   function newId() { return 'p' + Date.now() + Math.floor(Math.random() * 1000000); }
   function openProject(id) {
     // «opened» se guarda en el registro, no en el contenido: no cambia la fecha de modificación.
     projects[id].opened = Date.now(); saveAll();
-    currentId = id; state = K.normalize(projects[id].state);
+    currentId = id; state = K.normalize(projects[id].state); undo.clear();
     savedContent = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
     document.body.classList.remove('in-lobby'); syncSettings(); renderSections(); refresh();
     var here = editorLocation(); openPath(here.t, here.f); renderTree(); $('#name').focus();
@@ -405,7 +498,7 @@
         action('Duplicar', function () {
           var copy = JSON.parse(JSON.stringify(p)), id = newId(); copy.id = id; copy.updated = Date.now(); copy.state.name = item.name + ' (copia)'; projects[id] = copy; saveAll(); showLobby(); focusHubItem(id);
         });
-        action('Eliminar', function () { if (confirm('¿Eliminar «' + item.name + '»? No se puede deshacer.')) { delete projects[item.id]; saveAll(); showLobby(); } });
+        action('Eliminar', function () { if (confirm('¿Eliminar «' + item.name + '»? No se puede deshacer.')) { delete projects[item.id]; saveAll(); try { K.History.removeAll(localStorage, item.id); } catch (e) {} showLobby(); } });
       }
       if (mode === 'manual') {
         [-1, 1].forEach(function (dir) {
@@ -628,6 +721,7 @@
     var ph = dragSource(el('div', { class: 'panel-img is-ph', title: 'Arrástralo a un bloque para dejar un hueco de imagen pendiente' }, [el('div', { class: 'img-thumb is-ph', text: 'Imagen pendiente' }), el('strong', { text: 'Placeholder' })]),
       function () { return { kind: 'ph' }; }, function () { return 'Placeholder'; });
     list.appendChild(ph);
+    var banners = $('#banner-panel-list'); banners.innerHTML = '';
     var images = K.BrandKitsUI ? K.BrandKitsUI.images(state) : [];
     images.forEach(function (a) {
       var img = el('img', { alt: '', loading: 'lazy' }); img.referrerPolicy = 'no-referrer'; img.src = a.preview;
@@ -635,9 +729,10 @@
         el('div', { class: 'img-thumb' }, [img]), el('strong', { text: a.name || 'Imagen sin nombre' }), el('small', { text: a.kit })
       ]);
       if (a.url) dragSource(card, function () { return { kind: 'kit', url: a.url, name: a.name }; }, function () { return a.url; });
-      list.appendChild(card);
+      (a.group === 'banner' ? banners : list).appendChild(card);
     });
-    $('#image-panel-empty').hidden = images.some(function (a) { return a.url; });
+    $('#image-panel-empty').hidden = images.some(function (a) { return a.url && a.group === 'foto'; });
+    $('#banner-panel-empty').hidden = images.some(function (a) { return a.url && a.group === 'banner'; });
   }
 
   // ---------- Montar por bloques: paleta, arrastrar y editar en la vista previa ----------
@@ -749,7 +844,8 @@
     '.ksa-hover{border:2px dashed rgba(111,74,204,.6)}.ksa-sel{border:2px solid #6F4ACC;box-shadow:0 0 0 3px rgba(111,74,204,.18)}' +
     '.ksa-bar{position:absolute;z-index:10;display:flex;gap:2px;background:#1b1630;border-radius:8px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.3);font:12px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif}' +
     '.ksa-bar button{border:0;background:none;color:#fff;cursor:pointer;padding:5px 7px;border-radius:5px;font:inherit;white-space:nowrap}' +
-    '.ksa-bar button:hover{background:#6F4ACC}.ksa-bar .ksa-handle{cursor:grab}' +
+    '.ksa-bar button:hover,.ksa-bar .ksa-handle:hover{background:#6F4ACC}' +
+    '.ksa-bar .ksa-handle{color:#fff;padding:5px 7px;border-radius:5px;white-space:nowrap;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-user-drag:element}.ksa-bar .ksa-handle:active{cursor:grabbing}' +
     '.ksa-line{position:absolute;z-index:9;height:4px;margin-top:-2px;background:#6F4ACC;border-radius:2px;pointer-events:none;box-shadow:0 0 0 2px #fff}' +
     '.ksa-drop{border:3px solid #91FAFB;background:rgba(145,250,251,.12)}' +
     '[contenteditable=true]{outline:2px solid #6F4ACC !important;outline-offset:3px;cursor:text;background:rgba(145,250,251,.18)}' +
@@ -951,7 +1047,9 @@
     var bar = doc.createElement('div'), barFor = -1, line = doc.createElement('div'); bar.className = 'ksa-bar'; bar.style.display = 'none'; line.className = 'ksa-line'; line.style.display = 'none';
     doc.body.appendChild(bar); doc.body.appendChild(line);
     function btn(label, title, fn, cls) { var b = doc.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; if (cls) b.className = cls; b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); fn(barFor); }); bar.appendChild(b); return b; }
-    var handle = btn('⠿ Mover', 'Arrastra para mover el bloque', function () {}, 'ksa-handle'); handle.draggable = true;
+    // El asa no puede ser <button>: los navegadores no inician el arrastre desde un botón.
+    var handle = doc.createElement('span'); handle.className = 'ksa-handle'; handle.textContent = '⠿ Mover'; handle.title = 'Mantén pulsado y arrastra para mover el bloque';
+    handle.setAttribute('role', 'button'); handle.setAttribute('aria-label', 'Mover el bloque (arrastrar)'); handle.draggable = true; bar.appendChild(handle);
     btn('↑', 'Subir', function (i) { if (i > 0) { selectedSection = i - 1; move(i, -1); } });
     btn('↓', 'Bajar', function (i) { if (i < state.sections.length - 1) { selectedSection = i + 1; move(i, 1); } });
     btn('＋', 'Añadir un bloque debajo', function (i) { startPending(i + 1); });
@@ -975,8 +1073,10 @@
       pop.style.display = 'grid'; pop.style.top = (r.bottom + w.scrollY + 4) + 'px';
       pop.style.left = Math.max(4, Math.min(r.right + w.scrollX - pop.offsetWidth, w.scrollX + w.innerWidth - pop.offsetWidth - 6)) + 'px';
     }
-    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePop(); });
-    handle.addEventListener('dragstart', function (event) { dragBlock = { kind: 'move', from: barFor }; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', blockName(barFor)); bar.style.display = 'none'; });
+    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePop(); historyKey(e); });
+    handle.addEventListener('dragstart', function (event) { dragBlock = { kind: 'move', from: barFor }; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', blockName(barFor));
+      // Ocultar el origen dentro de dragstart cancela el arrastre en Chrome: se oculta justo después.
+      setTimeout(function () { if (dragBlock) bar.style.display = 'none'; }, 0); });
     handle.addEventListener('dragend', endBlockDrag);
     var hover = overlay(doc, 'ksa-hover');
     function secAt(target) { return target && target.closest ? target.closest('[data-ksa-section]') : null; }
@@ -987,7 +1087,8 @@
       bar.style.left = Math.max(4, Math.min(r.right, w.innerWidth) + w.scrollX - bar.offsetWidth - 6) + 'px';
     }
     doc.addEventListener('mousemove', function (event) {
-      if (dragBlock || inlineEditing) return;
+      // Con el botón pulsado la barra no se mueve: Chrome busca el asa en el punto donde se pulsó para iniciar el arrastre.
+      if (dragBlock || inlineEditing || event.buttons) return;
       if (bar.contains(event.target)) return;
       var sec = secAt(event.target);
       placeBox(doc, hover, sec); if (sec) showBar(sec); else bar.style.display = 'none';
@@ -1115,6 +1216,7 @@
     v = String(v).split('\n')[0]; return v.length > 46 ? v.slice(0, 46) + '…' : v;
   }
   function renderSections() {
+    undo.boundary(); // mover, añadir, quitar o editar en la vista previa: cada uno es un paso propio de «deshacer»
     var box = $('#sections'); box.innerHTML = '';
     if (!state.sections.length) box.appendChild(el('p', { class: 'blocks-empty', text: 'Todavía no hay bloques. Elige uno en «＋ Añadir bloque» o arrástralo a la vista previa.' }));
     state.sections.forEach(function (s, i) {
@@ -1306,6 +1408,14 @@
     });
     window.addEventListener('keydown', function (event) {
       if ((event.metaKey || event.ctrlKey) && (event.key === 'k' || event.key === 'K') && currentId) { event.preventDefault(); openSwitch(); }
+      historyKey(event);
+    });
+    $('#history').addEventListener('click', openHistory);
+    $('#history-close').addEventListener('click', function () { $('#history-dialog').close(); });
+    $('#history-form').addEventListener('submit', function (event) {
+      event.preventDefault(); flushEdits();
+      try { KH.add(localStorage, currentId, savedContent, $('#history-name').value, false, Date.now()); $('#history-name').value = ''; $('#history-error').textContent = ''; renderHistory(); toast('Versión guardada'); }
+      catch (e) { $('#history-error').textContent = e.message; }
     });
     $('#compare').addEventListener('change', function () { compareId = this.value; renderCompare(); });
     $('#compare-close').addEventListener('click', function () { compareId = ''; $('#compare').value = ''; renderCompare(); });

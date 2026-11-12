@@ -25,7 +25,7 @@
   }
   B.normalize = function (raw, refs) {
     if (!raw || typeof raw !== 'object') throw Error('El archivo no contiene un brand kit válido.');
-    var out = { id: str(raw.id), name: str(raw.name), tournament: str(raw.tournament), colors: {}, fonts: {}, assets: [] };
+    var out = { id: str(raw.id), name: str(raw.name), tournament: str(raw.tournament), colors: {}, fonts: {}, banners: [], assets: [] };
     // base: este kit sustituye al diseño de esa marca/sección para sus newsletters con «Kit automático del torneo».
     var base = str(raw.base);
     if (base) { if (!K.CLIENT.tournaments.some(function (t) { return t.id === base; })) throw Error('El kit de marca apunta a una sección que no existe.'); out.base = base; out.tournament = base; }
@@ -39,6 +39,10 @@
     });
     ['header', 'footer', 'mediaBanner'].forEach(function (key) { out[key] = image(raw[key], refs); });
     B.roles.forEach(function (role) { out.fonts[role[0]] = B.url((raw.fonts || {})[role[0]], false); });
+    // banners: gráficos recurrentes extra (además de header, footer y banner de media). assets: fotos para los bloques.
+    if (raw.banners && !Array.isArray(raw.banners)) throw Error('La lista de banners no es válida.');
+    if ((raw.banners || []).length > 30) throw Error('Cada kit admite hasta 30 banners.');
+    (raw.banners || []).forEach(function (a) { out.banners.push(image(a, refs)); });
     if (raw.assets && !Array.isArray(raw.assets)) throw Error('La biblioteca de imágenes no es válida.');
     if ((raw.assets || []).length > 30) throw Error('Cada kit admite hasta 30 imágenes.');
     (raw.assets || []).forEach(function (a) { out.assets.push(image(a, refs)); });
@@ -64,7 +68,11 @@
       var face = (K.HEAD.match(/@font-face\s*\{[^}]*\}/g) || []).filter(function (x) { return x.indexOf("font-family: '" + r[0] + "'") >= 0; })[0] || '';
       var url = face.match(/src: url\('([^']+)'\)/); fonts[r[0]] = url ? url[1] : '';
     });
-    return { id: '', name: t.name, tournament: t.id, colors: { principal: t.principal, acento: t.acento, secundario: t.secundario || '' }, header: { name: t.club ? t.brand : K.CLIENT.name + ' · ' + t.name, url: t.header || '' }, footer: { name: t.footerAlt || '', url: t.footer || '' }, mediaBanner: { name: 'Media Packages', url: t.club ? (t.mediaBanner || '') : K.CLIENT.mediaBanner }, fonts: fonts, assets: (t.assets || []).map(function (a) { return { name: a.name, url: a.url }; }) };
+    return { id: '', name: t.name, tournament: t.id, colors: { principal: t.principal, acento: t.acento, secundario: t.secundario || '' }, header: { name: t.club ? t.brand : K.CLIENT.name + ' · ' + t.name, url: t.header || '' }, footer: { name: t.footerAlt || '', url: t.footer || '' }, mediaBanner: { name: 'Media Packages', url: t.club ? (t.mediaBanner || '') : K.CLIENT.mediaBanner }, fonts: fonts, banners: (t.banners || []).map(function (a) { return { name: a.name, url: a.url }; }), assets: (t.assets || []).map(function (a) { return { name: a.name, url: a.url }; }) };
+  };
+  // Recursos de un kit por apartado: «banners» (header, footer, banner de media y gráficos recurrentes) y «fotos».
+  B.groups = function (kit) {
+    return { banners: [kit.header, kit.footer, kit.mediaBanner].concat(kit.banners || []), fotos: (kit.assets || []).slice() };
   };
   B.empty = function () { var k = B.defaults(); k.name = 'Nuevo brand kit'; k.tournament = ''; ['header', 'footer', 'mediaBanner'].forEach(function (x) { k[x] = { name: '', url: '' }; }); B.roles.forEach(function (r) { k.fonts[r[0]] = ''; }); return k; };
   B.load = function (storage) {
