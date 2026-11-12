@@ -287,3 +287,32 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.equal(cards.a_title, 'PENDIENTE: Título (Tarjeta 1)'); assert.equal(cards.b_title, 'PENDIENTE: Título (Tarjeta 2)', 'Los textos pendientes de cada tarjeta se distinguen');
   console.log('OK: paleta de bloques (añadir con textos PENDIENTE y cerrar).');
 })().catch(e => { console.error(e); process.exit(1); });
+
+// Accesos rápidos del hub: panel de ubicaciones, recientes en el inicio y búsqueda en todas las newsletters.
+{
+  const walk = n => [n, ...n.children.flatMap(walk)], texts = n => walk(n).map(c => c.textContent);
+  const st = {
+    [PROJ]: JSON.stringify({
+      a: { id: 'a', updated: 300, folder: 'fv', state: { tournament: 'surfcup', name: 'Early bird Surf', sections: [], off: {}, franjaLeft: '' } },
+      b: { id: 'b', updated: 200, state: { tournament: 'arsenal-usa', name: 'Early bird Arsenal', sections: [], off: {}, franjaLeft: '' } },
+      c: { id: 'c', updated: 100, state: { tournament: 'fit', name: 'Otra', sections: [], off: {}, franjaLeft: '' } }
+    }),
+    [HUB]: JSON.stringify({ folders: { fv: { id: 'fv', name: 'Ventas', tournament: 'surfcup', parent: '', updated: 1 } }, sorts: {}, orders: {} })
+  };
+  const q = boot(st);
+  assert.ok(texts(q.nodes['#folders']).includes('Editadas recientemente'));
+  assert.ok(texts(q.nodes['#folders']).includes('Surf Cup 2026 › Ventas'), 'Las recientes muestran su ubicación');
+  assert.ok(texts(q.nodes['#hub-tree']).includes('Arsenal'), 'El panel lista los clubs');
+  q.nodes['#hub-search'].value = 'early'; q.nodes['#hub-search'].handlers.input();
+  assert.match(q.nodes['#hub-count'].textContent, /^2 resultados/);
+  assert.ok(texts(q.nodes['#folders']).includes('Arsenal › USA CAMPS'), 'La búsqueda del inicio recorre todos los torneos y clubs');
+  // Dentro de una sección, «En esta carpeta» mantiene el filtro local y «En todas» busca en todo.
+  q.nodes['#hub-search'].value = ''; q.nodes['#hub-search'].handlers.input(); q.clickText('📁 Surf Cup 2026');
+  assert.ok(texts(q.nodes['#hub-tree']).includes('📁 Ventas'), 'El panel despliega las carpetas de la sección abierta');
+  assert.ok(texts(q.nodes['#folders']).includes('Carpeta · 1 newsletter'));
+  q.nodes['#hub-search'].value = 'arsenal'; q.nodes['#hub-search'].handlers.input();
+  assert.match(q.nodes['#hub-count'].textContent, /^0 de 1/);
+  q.change('#hub-scope', 'all');
+  assert.match(q.nodes['#hub-count'].textContent, /^1 resultado en todas/);
+  console.log('OK: panel de ubicaciones, recientes con ubicación y búsqueda en todas las newsletters.');
+}

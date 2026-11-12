@@ -29,10 +29,22 @@
     <button id="from-script" type="button" class="btn ghost2">＋ Desde un guion</button>
     <button id="open" class="btn ghost2">Abrir archivo de proyecto</button>
   </div>
-  <p class="muted lobby-note">Organiza tus newsletters en carpetas dentro de cada torneo. Arrastra una newsletter sobre una carpeta o sobre la ruta para moverla; también puedes usar «Mover». Se guardan en este navegador. Para pasárselo a otra persona, usa «Exportar proyecto» dentro del proyecto.</p>
+  <p class="muted lobby-note">Se guardan en este navegador. Arrastra una newsletter sobre una carpeta (aquí o en el panel de ubicaciones) para moverla. Para pasársela a otra persona, usa «Exportar proyecto» dentro de ella.</p>
+  <div class="hub-layout">
+  <details id="hub-tree-box" open>
+    <summary>Ubicaciones</summary>
+    <nav id="hub-tree" aria-label="Todas las ubicaciones"></nav>
+  </details>
+  <div class="hub-main">
+  <div class="hub-find">
+    <label for="hub-search" class="sr-only">Buscar newsletters</label>
+    <input id="hub-search" type="search" placeholder="Buscar newsletter o carpeta por nombre…">
+    <select id="hub-scope" aria-label="Dónde buscar" hidden>
+      <option value="here">En esta carpeta</option><option value="all">En todas</option>
+    </select>
+  </div>
   <nav id="hub-path" aria-label="Ubicación actual"></nav>
   <div id="hub-controls" hidden>
-    <label>Buscar en esta carpeta<input id="hub-search" type="search" placeholder="Nombre…"></label>
     <label>Ordenar<select id="hub-sort">
       <option value="newest">Modificación: más recientes</option><option value="oldest">Modificación: más antiguas</option>
       <option value="az">Nombre: A–Z</option><option value="za">Nombre: Z–A</option><option value="manual">Orden manual (↑ ↓)</option>
@@ -44,6 +56,8 @@
   <p id="hub-count" class="muted" aria-live="polite"></p>
   <p id="hub-feedback" class="hub-feedback" role="status"></p>
   <div id="folders"></div>
+  </div>
+  </div>
 </section>
 
 <p id="kit-load-error" role="alert" hidden></p>

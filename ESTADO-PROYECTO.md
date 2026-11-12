@@ -436,3 +436,16 @@ Pedido por el usuario: si se escribe el texto de un botón sin enlace, el botón
 - `app.js`: en «＋ Texto/botón», «＋ Botón» admite dejar el enlace vacío (se añade igual); un botón con texto y sin enlace ofrece «＋ Enlace del botón» y «Quitar botón».
 
 Pruebas: `test/brand-kits.test.js` añade botón sin enlace visible en tarjetas y título, con sus errores; pasan todas las suites y la comparación BASE no cambia. Navegador integrado (`http://127.0.0.1:8778`): texto de botón en Tarjeta 2 desde el panel sin enlace → botón visible y error en Revisión.
+
+## Hub más directo: panel de ubicaciones, recientes y búsqueda en todo (2026-11-12)
+
+Pedido por el usuario: optimizar el menú principal para que sea más intuitivo y llegar antes a las newsletters (jerarquías). Antes, llegar a una newsletter de un club exigía Inicio → club → sección → carpeta, y la búsqueda solo miraba la carpeta abierta.
+
+- `index.html`: el hub pasa a dos columnas (`.hub-layout`). A la izquierda, `#hub-tree-box` (`<details>`) con `#hub-tree`; a la derecha, buscador `#hub-search` siempre visible con `#hub-scope` («En esta carpeta» / «En todas»), ruta, controles (orden y fechas) y `#folders`. El texto de ayuda se acorta.
+- `app.js`: `renderTree()` en cada `showLobby()`: Inicio, torneos KSA y clubs con contador; las secciones de un club se despliegan con ▸/▾ (abierto si es el club activo; el estado manual vive en memoria, `treeOpen`); la sección abierta muestra sus carpetas y solo despliega subcarpetas del camino actual. Ubicación actual marcada con `aria-current`. Las entradas de la sección abierta y sus carpetas aceptan arrastrar newsletters (mismo `dropDestination`, mismas reglas: no cambia de torneo).
+- Inicio: bloque «Editadas recientemente» con las 6 últimas newsletters (`quickCard`: abrir, ubicación clicable que lleva a su carpeta, fecha). Luego los grupos KSA / Clubs como antes.
+- Búsqueda: en Inicio y en el nivel de club busca en todas las newsletters y carpetas (`showResults`, ordenadas por modificación, con ubicación). Dentro de una sección se mantiene por defecto el comportamiento anterior (hijos inmediatos de la carpeta abierta, con fechas) y se puede cambiar a «En todas». Navegar limpia búsqueda, fechas y vuelve a «En esta carpeta». En resultados globales no se aplican orden ni fechas (se ocultan los controles).
+- Tarjetas de carpeta: «Carpeta · N newsletters» (cuenta recursiva).
+- `css/app.css`: panel fijo (sticky) de 260 px; por debajo de 800 px pasa arriba como desplegable «Ubicaciones», plegado al cargar (`matchMedia`).
+
+Pruebas: `test/hub.test.js` añade recientes con ubicación, panel con clubs y carpetas de la sección abierta, búsqueda global desde Inicio (encuentra Surf Cup y Arsenal) y cambio de alcance dentro de una sección. Pasan todas las suites; `test/test.js` mantiene la diferencia BASE conocida. En el navegador integrado sobre `http://127.0.0.1:8771` con datos sintéticos (origen distinto al `file://` del usuario): Inicio con panel y recientes a 1300 px, desplegar Arsenal y abrir USA CAMPS desde el panel (ruta y carpeta mostradas), búsqueda «early» en todas (6 resultados con ubicación) y 375 px sin desbordamiento horizontal con el panel plegado. No probado: arrastrar sobre el panel en navegador real (solo lógica compartida con las tarjetas), Firefox/Safari.
