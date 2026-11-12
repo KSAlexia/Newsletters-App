@@ -117,35 +117,46 @@
   function gap(h) { return '<div style="height:' + h + 'px;line-height:' + h + 'px;font-size:0;">&nbsp;</div>'; }
 
   // Contenido de una tarjeta (se usa igual en escritorio y móvil → nunca se desincronizan)
-  function cardBody(c) {
-    var h = '';
-    if (has(c.label)) h += '<p style="' + F.med + 'font-size:11px;line-height:14px;color:' + GREY + ';letter-spacing:1.5px;text-transform:uppercase;">' + esc(c.label.trim()) + '</p>';
+  // dark: tarjeta sobre el color de banda (textos en blanco, etiqueta en color de acento).
+  function cardBody(c, dark) {
+    var h = '', fg = dark ? '#FFFFFF' : C.title;
+    if (has(c.label)) h += '<p style="' + F.med + 'font-size:11px;line-height:14px;color:' + (dark ? A : GREY) + ';letter-spacing:1.5px;text-transform:uppercase;">' + esc(c.label.trim()) + '</p>';
     if (has(c.title)) {
       var st = hasDigits(c.title) ? F.black + 'font-size:20px;line-height:24px;letter-spacing:0.3px;' : F.ex40 + 'font-size:28px;line-height:31px;';
-      h += '<p style="' + st + 'color:' + C.title + ';text-transform:' + C.titleCase + ';' + (has(c.label) ? 'padding-top:6px;' : '') + 'word-break:break-word;">' + esc(c.title.trim()) + '</p>';
+      h += '<p style="' + st + 'color:' + fg + ';text-transform:' + C.titleCase + ';' + (has(c.label) ? 'padding-top:6px;' : '') + 'word-break:break-word;">' + esc(c.title.trim()) + '</p>';
     }
-    if (has(c.price)) h += '<p style="' + F.black + 'font-size:26px;line-height:30px;color:' + C.title + ';padding-top:6px;word-break:break-word;">' + esc(c.price.trim()) + '</p>';
+    if (has(c.price)) h += '<p style="' + F.black + 'font-size:26px;line-height:30px;color:' + fg + ';padding-top:6px;word-break:break-word;">' + esc(c.price.trim()) + '</p>';
     paras(c.text).forEach(function (p, i) {
-      h += '<p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:left;padding-top:' + (i ? 8 : 10) + 'px;word-break:break-word;">' + inline(p) + '</p>';
+      var t = '<p style="' + F.reg + 'font-size:15px;line-height:23px;color:' + (dark ? '#FFFFFF' : '#000000') + ';text-align:left;padding-top:' + (i ? 8 : 10) + 'px;word-break:break-word;">' + inline(p, dark ? '#FFFFFF' : undefined) + '</p>';
+      h += dark ? t.split(C.link).join('#FFFFFF') : t;
     });
     return h;
   }
-  // Dos tarjetas de igual altura: rejilla en escritorio + copia apilada en móvil
-  function twoCards(c1, c2) {
+  // Tarjetas de igual altura: en escritorio, filas de dos (una tarjeta sola o la última impar ocupa todo el ancho);
+  // en móvil, una copia apilada. Con exactamente dos tarjetas el HTML es el mismo de siempre.
+  function cardGrid(cs) {
     // El botón se pinta en cuanto tiene texto; si falta el enlace, la revisión da error.
-    var cs = [c1, c2], btn = cs.some(function (c) { return has(c.btn); });
+    var btn = cs.some(function (c) { return has(c.btn); });
     function cardBtn(c) { return has(c.btn) ? button(c.btn.trim(), String(c.url || '').trim() || '#', true) : '&nbsp;'; }
     var SP = '<td width="16" style="width:16px;font-size:0;line-height:0;">&nbsp;</td>';
     var desk = '<table role="presentation" class="desk-only" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody>';
-    var mob = '';
+    var mob = '', rows = [];
+    for (var r = 0; r < cs.length; r += 2) rows.push(cs.slice(r, r + 2));
+    function w(row) { return row.length === 1 ? ' colspan="3" width="100%"' : ' width="277"'; }
+    rows.forEach(function (row, ri) {
+      if (ri) desk += '<tr><td colspan="3" height="16" style="height:16px;font-size:0;line-height:0;">&nbsp;</td></tr>';
+      if (btn) {
+        desk += '<tr>' + row.map(function (c) { return '<td' + w(row) + ' valign="top" style="border:2px solid ' + P + ';border-bottom:none;border-radius:14px 14px 0 0;padding:22px 20px 0 20px;background-color:#FFFFFF;">' + cardBody(c) + '</td>'; }).join(SP) + '</tr>';
+        desk += '<tr>' + row.map(function (c) { return '<td' + w(row) + ' valign="bottom" style="border:2px solid ' + P + ';border-top:none;border-radius:0 0 14px 14px;padding:18px 20px 22px 20px;background-color:#FFFFFF;">' + cardBtn(c) + '</td>'; }).join(SP) + '</tr>';
+      } else {
+        desk += '<tr>' + row.map(function (c) { return '<td' + w(row) + ' valign="top" style="border:2px solid ' + P + ';border-radius:14px;padding:22px 20px;background-color:#FFFFFF;">' + cardBody(c) + '</td>'; }).join(SP) + '</tr>';
+      }
+    });
     if (btn) {
-      desk += '<tr>' + cs.map(function (c) { return '<td width="277" valign="top" style="border:2px solid ' + P + ';border-bottom:none;border-radius:14px 14px 0 0;padding:22px 20px 0 20px;background-color:#FFFFFF;">' + cardBody(c) + '</td>'; }).join(SP) + '</tr>';
-      desk += '<tr>' + cs.map(function (c) { return '<td width="277" valign="bottom" style="border:2px solid ' + P + ';border-top:none;border-radius:0 0 14px 14px;padding:18px 20px 22px 20px;background-color:#FFFFFF;">' + cardBtn(c) + '</td>'; }).join(SP) + '</tr>';
       mob = cs.map(function (c) {
         return TBL + ' height="100%" style="height:100%;background-color:#FFFFFF;border:2px solid ' + P + ';border-radius:14px;border-collapse:separate !important;"><tbody><tr><td valign="top" height="100%" style="height:100%;padding:22px 20px 0 20px;">' + cardBody(c) + '</td></tr><tr><td align="center" valign="bottom" style="padding:18px 20px 22px 20px;">' + cardBtn(c) + '</td></tr></tbody></table>';
       }).join(gap(16));
     } else {
-      desk += '<tr>' + cs.map(function (c) { return '<td width="277" valign="top" style="border:2px solid ' + P + ';border-radius:14px;padding:22px 20px;background-color:#FFFFFF;">' + cardBody(c) + '</td>'; }).join(SP) + '</tr>';
       mob = cs.map(function (c) {
         return TBL + ' style="background-color:#FFFFFF;border:2px solid ' + P + ';border-radius:14px;border-collapse:separate !important;"><tbody><tr><td valign="top" style="padding:22px 20px;">' + cardBody(c) + '</td></tr></tbody></table>';
       }).join(gap(16));
@@ -153,6 +164,162 @@
     desk += '</tbody></table>';
     return desk + '<!--[if !mso]><!--><div class="mob-only" style="display:none;max-height:0;overflow:hidden;mso-hide:all;">' + mob + '</div><!--<![endif]-->';
   }
+  function twoCards(c1, c2) { return cardGrid([c1, c2]); }
+
+  // Opciones con precio (módulo Producto), responsive según cuántas haya y cuánto texto tengan:
+  // · 1 (o una que queda sola en su fila): ancho completo, nombre a la izquierda, precio en el borde derecho y texto debajo.
+  // · 2, 4 y 8: filas de dos (rejilla 2×2…). · 3, 5, 6 y 7 con textos cortos: filas de tres (5 → 3+2, 7 → 3+2+2).
+  //   Con textos largos, filas de dos y la última impar a todo el ancho. · En móvil, siempre una debajo de otra.
+  var CARD_W = 570, CARD_GAP = 16;
+  function plain(t) { return String(t || '').replace(/\*\*|==|\+\+|[*_]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').trim(); }
+  K.optionRows = function (cs) {
+    var n = cs.length, rows = [], i;
+    if (n <= 2) return n ? [cs.slice()] : [];
+    var short = cs.every(function (c) { return plain(c.title).length <= 22 && plain(c.price).length <= 12 && plain(c.text).length <= 140; });
+    var per = short && n !== 4 && n !== 8 ? 3 : 2;
+    for (i = 0; i < n; i += per) rows.push(cs.slice(i, i + per));
+    // Con filas de tres, no dejar una sola al final: 3+3+1 → 3+2+2.
+    if (per === 3 && rows.length > 1 && rows[rows.length - 1].length === 1) { var last = rows.pop(), prev = rows.pop(); rows.push(prev.slice(0, 2), [prev[2]].concat(last)); }
+    return rows;
+  };
+  function priceTag(price, size, dark) {
+    return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" align="right" style="border-collapse:separate !important;"><tbody><tr><td align="center" style="border:2px solid ' + (dark ? '#FFFFFF' : P) + ';border-radius:40px;padding:6px 16px;white-space:nowrap;"><p style="' + F.black + 'font-size:' + size + 'px;line-height:' + (size + 4) + 'px;color:' + (dark ? '#FFFFFF' : C.title) + ';text-align:center;">' + esc(price.trim()) + '</p></td></tr></tbody></table>';
+  }
+  // Tarjeta ancha: nombre y precio en la misma línea, texto debajo.
+  function wideCard(c, dark) {
+    var fg = dark ? '#FFFFFF' : C.title;
+    var title = (has(c.label) ? '<p style="' + F.med + 'font-size:11px;line-height:14px;color:' + (dark ? A : GREY) + ';letter-spacing:1.5px;text-transform:uppercase;padding-bottom:6px;">' + esc(c.label.trim()) + '</p>' : '') +
+      (has(c.title) ? '<p style="' + (hasDigits(c.title) ? F.black + 'font-size:20px;line-height:24px;letter-spacing:0.3px;' : F.ex40 + 'font-size:28px;line-height:31px;') + 'color:' + fg + ';text-transform:' + C.titleCase + ';word-break:break-word;">' + esc(c.title.trim()) + '</p>' : '');
+    var h = TBL + '><tbody><tr><td valign="middle" style="padding:0 12px 0 0;">' + title + '</td>' + (has(c.price) ? '<td valign="middle" align="right" style="padding:0;white-space:nowrap;">' + priceTag(c.price, 22, dark) + '</td>' : '') + '</tr></tbody></table>';
+    paras(c.text).forEach(function (p, i) {
+      var t = '<p style="' + F.reg + 'font-size:15px;line-height:23px;color:' + (dark ? '#FFFFFF' : '#000000') + ';text-align:left;padding-top:' + (i ? 8 : 12) + 'px;word-break:break-word;">' + inline(p, dark ? '#FFFFFF' : undefined) + '</p>';
+      h += dark ? t.split(C.link).join('#FFFFFF') : t;
+    });
+    return h;
+  }
+  // Botón de tarjeta: en una tarjeta oscura va en blanco para que se vea sobre el fondo de color.
+  function cardButton(c, dark, wide) {
+    var b = button(c.btn.trim(), String(c.url || '').trim() || '#', !wide);
+    if (wide) b = b.replace('align="center" style="margin:22px auto 0 auto;', 'align="left" style="margin:18px 0 0 0;');
+    return dark ? b.split('bgcolor="' + C.button + '" style="background-color:' + C.button).join('bgcolor="#FFFFFF" style="background-color:#FFFFFF').split('color:' + C.buttonText).join('color:' + C.title) : b;
+  }
+  // Rejilla responsive de tarjetas (bloque «Tarjetas»): mismas filas que las opciones de Producto (K.optionRows),
+  // con etiqueta, botón (alineado abajo en cada fila) y estilo claro u oscuro por tarjeta. En móvil, apiladas.
+  function cardRows(cs) {
+    if (!cs.length) return '';
+    var rows = K.optionRows(cs), SP = '<td width="' + CARD_GAP + '" style="width:' + CARD_GAP + 'px;font-size:0;line-height:0;">&nbsp;</td>';
+    function look(c) { var bg = c.dark ? C.band : '#FFFFFF'; return 'border:2px solid ' + (c.dark ? C.band : P) + ';border-radius:14px;background-color:' + bg + ';'; }
+    function bg(c) { return ' bgcolor="' + (c.dark ? C.band : '#FFFFFF') + '"'; }
+    var desk = '<table role="presentation" class="desk-only" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody>';
+    rows.forEach(function (row, ri) {
+      if (ri) desk += '<tr><td height="' + CARD_GAP + '" style="height:' + CARD_GAP + 'px;font-size:0;line-height:0;">&nbsp;</td></tr>';
+      var k = row.length, padX = k === 3 ? 16 : 20, w = Math.floor((CARD_W - CARD_GAP * (k - 1)) / k) - padX * 2 - 4, inner;
+      if (k === 1) {
+        var c = row[0];
+        inner = '<tr><td width="100%"' + bg(c) + ' valign="top" style="' + look(c) + 'padding:22px 24px;">' + wideCard(c, c.dark) + (has(c.btn) ? cardButton(c, c.dark, true) : '') + '</td></tr>';
+      } else if (row.some(function (c) { return has(c.btn); })) {
+        // Dos filas (cuerpo y botón) para que los botones queden alineados abajo aunque los textos midan distinto.
+        inner = '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="top" style="' + look(c) + 'border-bottom:none;border-radius:14px 14px 0 0;width:' + w + 'px;padding:' + (k === 3 ? '20px ' : '22px ') + padX + 'px 0 ' + padX + 'px;">' + cardBody(c, c.dark) + '</td>'; }).join(SP) + '</tr>' +
+          '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="bottom" style="' + look(c) + 'border-top:none;border-radius:0 0 14px 14px;width:' + w + 'px;padding:18px ' + padX + 'px ' + (k === 3 ? 20 : 22) + 'px ' + padX + 'px;">' + (has(c.btn) ? cardButton(c, c.dark) : '&nbsp;') + '</td>'; }).join(SP) + '</tr>';
+      } else {
+        inner = '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="top" style="' + look(c) + 'width:' + w + 'px;padding:' + (k === 3 ? '20px ' : '22px ') + padX + 'px;">' + cardBody(c, c.dark) + '</td>'; }).join(SP) + '</tr>';
+      }
+      desk += '<tr><td style="padding:0;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody>' + inner + '</tbody></table></td></tr>';
+    });
+    desk += '</tbody></table>';
+    var mob = cs.map(function (c) {
+      return TBL + bg(c) + ' style="' + look(c) + 'border-collapse:separate !important;"><tbody><tr><td valign="top" style="padding:22px 20px;">' + (cs.length === 1 ? wideCard(c, c.dark) : cardBody(c, c.dark)) + (has(c.btn) ? '<div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>' + cardButton(c, c.dark) : '') + '</td></tr></tbody></table>';
+    }).join(gap(16));
+    return desk + '<!--[if !mso]><!--><div class="mob-only" style="display:none;max-height:0;overflow:hidden;mso-hide:all;">' + mob + '</div><!--<![endif]-->';
+  }
+  function optionCards(cs) {
+    if (cs.length === 2) return cardGrid(cs); // mismo HTML que antes
+    var rows = K.optionRows(cs), SP = '<td width="' + CARD_GAP + '" style="width:' + CARD_GAP + 'px;font-size:0;line-height:0;">&nbsp;</td>';
+    var box = 'border:2px solid ' + P + ';border-radius:14px;background-color:#FFFFFF;';
+    var desk = '<table role="presentation" class="desk-only" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody>';
+    rows.forEach(function (row, ri) {
+      if (ri) desk += '<tr><td height="' + CARD_GAP + '" style="height:' + CARD_GAP + 'px;font-size:0;line-height:0;">&nbsp;</td></tr>';
+      // El ancho de una celda no incluye su padding ni el borde: se resta para que la fila no pase de CARD_W.
+      var k = row.length, padX = k === 3 ? 16 : 20, w = Math.floor((CARD_W - CARD_GAP * (k - 1)) / k) - padX * 2 - 4;
+      var cells = k === 1 ? '<td width="100%" valign="top" style="' + box + 'padding:22px 24px;">' + wideCard(row[0]) + '</td>'
+        : row.map(function (c) { return '<td width="' + w + '" valign="top" style="' + box + 'width:' + w + 'px;padding:' + (k === 3 ? '20px ' : '22px ') + padX + 'px;">' + cardBody(c) + '</td>'; }).join(SP);
+      desk += '<tr><td style="padding:0;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody><tr>' + cells + '</tr></tbody></table></td></tr>';
+    });
+    desk += '</tbody></table>';
+    var mob = cs.map(function (c) {
+      return TBL + ' style="background-color:#FFFFFF;border:2px solid ' + P + ';border-radius:14px;border-collapse:separate !important;"><tbody><tr><td valign="top" style="padding:22px 20px;">' + (cs.length === 1 ? wideCard(c) : cardBody(c)) + '</td></tr></tbody></table>';
+    }).join(gap(16));
+    return desk + '<!--[if !mso]><!--><div class="mob-only" style="display:none;max-height:0;overflow:hidden;mso-hide:all;">' + mob + '</div><!--<![endif]-->';
+  }
+
+  // Grupos repetibles «de 1 a N, con ＋ Añadir otro»: claves <prefix><n>_<campo> y d[countKey] con cuántos se ven en el editor.
+  // cfg: { prefix, countKey, max, keys (los que cuentan como rellenos), titleKey, noun ('opción'/'tarjeta'), fields(n, show) }
+  K.repeat = function (cfg) {
+    var g = {};
+    function key(n, k) { return cfg.prefix + n + '_' + k; }
+    g.filled = function (d, n) { return cfg.keys.some(function (k) { return has(d[key(n, k)]); }); };
+    g.count = function (d) {
+      var hi = 0, n; d = d || {};
+      for (n = 1; n <= cfg.max; n++) if (g.filled(d, n)) hi = n;
+      return Math.min(cfg.max, Math.max(1, hi, parseInt(d[cfg.countKey], 10) || 0));
+    };
+    g.add = function (d) { d[cfg.countKey] = Math.min(cfg.max, g.count(d) + 1); return d[cfg.countKey]; };
+    // Quita el elemento n y sube los siguientes (todas sus claves, también las que no cuentan como rellenas).
+    g.remove = function (d, n) {
+      var count = g.count(d), j, all = cfg.allKeys || cfg.keys;
+      for (j = n; j < cfg.max; j++) all.forEach(function (k) { var v = d[key(j + 1, k)]; if (has(v)) d[key(j, k)] = v; else delete d[key(j, k)]; });
+      all.forEach(function (k) { delete d[key(cfg.max, k)]; });
+      d[cfg.countKey] = Math.max(1, count - 1);
+    };
+    // Elementos que se pintan: los que tienen título, en orden.
+    g.items = function (d) {
+      var out = [], n, all = cfg.allKeys || cfg.keys;
+      for (n = 1; n <= cfg.max; n++) if (has(d[key(n, cfg.titleKey)])) { var it = {}; all.forEach(function (k) { it[k] = d[key(n, k)]; }); out.push(it); }
+      return out;
+    };
+    g.fields = function () {
+      var out = [], n;
+      for (n = 1; n <= cfg.max; n++) (function (n) {
+        var show = function (d) { return n <= g.count(d); }, name = cfg.noun.charAt(0).toUpperCase() + cfg.noun.slice(1) + ' ' + n;
+        out.push({ type: 'opt', n: n, label: name, showIf: show, canRemove: function (d) { return g.count(d) > 1 || g.filled(d, n); }, remove: function (d) { g.remove(d, n); } });
+        cfg.fields(n, show).forEach(function (f) { out.push(f); });
+      })(n);
+      out.push({ type: 'more', label: '＋ Añadir otra ' + cfg.noun, hint: cfg.hint, showIf: function (d) { return g.count(d) < cfg.max; }, add: function (d) { return key(g.add(d), cfg.titleKey); } });
+      return out;
+    };
+    // Revisión: un elemento con contenido pero sin título no se muestra.
+    g.check = function (d, W, where) {
+      for (var n = 1; n <= cfg.max; n++) if (!has(d[key(n, cfg.titleKey)]) && g.filled(d, n)) W(where + ': la ' + cfg.noun + ' ' + n + ' no tiene ' + cfg.titleName + ' y no se mostrará.');
+    };
+    return g;
+  };
+  var LAYOUT_HINT = 'Una sola va a todo el ancho; con textos cortos van hasta tres por fila (con 4, en rejilla 2×2). En móvil, una debajo de otra.';
+
+  // Opciones con precio del módulo Producto: de 1 a PK_MAX (p1_*, p2_*…). d.pkN guarda cuántas se muestran en el editor.
+  var PK_MAX = 8;
+  var PK = K.repeat({ prefix: 'p', countKey: 'pkN', max: PK_MAX, keys: ['title', 'price', 'text'], titleKey: 'title', titleName: 'nombre', noun: 'opción',
+    hint: 'Hasta ' + PK_MAX + ' opciones. Una sola va a todo el ancho con el precio a la derecha; con textos cortos van hasta tres por fila (con 4, en rejilla 2×2). En móvil, una debajo de otra.',
+    fields: function (n, show) {
+      return [{ k: 'p' + n + '_title', label: 'Opción ' + n, type: 'text', half: true, showIf: show }, { k: 'p' + n + '_price', label: 'Precio ' + n, type: 'text', half: true, showIf: show },
+        { k: 'p' + n + '_text', label: 'Texto opción ' + n, type: 'area', showIf: show }];
+    } });
+  K.PK_MAX = PK_MAX; K.pkCount = PK.count; K.pkAdd = PK.add; K.pkRemove = PK.remove; K.pkOptions = PK.items;
+  function pkFields() { return PK.fields(); }
+
+  // Bloque «Tarjetas»: de 1 a 8 (c1_*, c2_*…).
+  var CARDS = K.repeat({ prefix: 'c', countKey: 'cN', max: 8, keys: ['label', 'title', 'price', 'text', 'btn', 'url'], allKeys: ['label', 'title', 'price', 'text', 'btn', 'url', 'style'], titleKey: 'title', titleName: 'título', noun: 'tarjeta',
+    hint: 'Hasta 8 tarjetas. ' + LAYOUT_HINT,
+    fields: function (n, show) {
+      var c = 'c' + n + '_';
+      return [
+        { k: c + 'title', label: 'Título ' + n, type: 'text', req: n === 1, half: true, showIf: show, ph: 'Pack, dato o fecha' }, { k: c + 'price', label: 'Precio ' + n + ' (opcional)', type: 'text', half: true, showIf: show, ph: '$49' },
+        { k: c + 'label', label: 'Etiqueta ' + n + ' (opcional)', type: 'text', half: true, showIf: show, ph: 'Dates' }, { k: c + 'style', label: 'Estilo ' + n, type: 'select', half: true, showIf: show, opts: [['', 'Clara con borde'], ['dark', 'Oscura (color de banda)']] },
+        { k: c + 'text', label: 'Texto ' + n + ' (opcional)', type: 'area', hint: TIP, showIf: show },
+        { k: c + 'btn', label: 'Botón ' + n + ' (opcional)', type: 'text', half: true, showIf: show }, { k: c + 'url', label: 'Enlace ' + n, type: 'url', half: true, showIf: show }
+      ];
+    } });
+  K.cardItems = function (d) { return CARDS.items(d || {}).map(function (c) { c.dark = c.style === 'dark'; return c; }); };
+  K.cardsCount = CARDS.count;
 
   // ============================================================
   // MÓDULOS  (fields = lo que se rellena en la app)
@@ -175,7 +342,7 @@
   };
 
   M.intro = {
-    letter: 'C', name: 'Texto / Intro', tag: 'INTRO',
+    letter: 'C', name: 'Texto / Intro (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Título» (estilo saludo) y «Texto».', tag: 'INTRO',
     fields: [
       { k: 'greet', label: 'Saludo (opcional, sale como título)', type: 'text', ph: 'Dear {[C-FIRST NAME]},' },
       { k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }
@@ -191,7 +358,7 @@
   };
 
   M.titulo = {
-    letter: 'I', name: 'Título centrado con barra', tag: 'TITULO',
+    letter: 'I', name: 'Título centrado (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Título», «Texto» y «Botón».', tag: 'TITULO',
     fields: [
       { k: 'title', label: 'Título', type: 'text', req: true },
       { k: 'text', label: 'Texto (opcional)', type: 'area', hint: TIP },
@@ -208,7 +375,7 @@
   };
 
   M.lista = {
-    letter: 'D', name: 'Título + lista con bullets', tag: 'TITULO + LISTA',
+    letter: 'D', name: 'Título + lista (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Título» (estilo sección) y «Lista».', tag: 'TITULO + LISTA',
     fields: [
       { k: 'title', label: 'Título', type: 'text', req: true },
       { k: 'items', label: 'Puntos', type: 'area', req: true, hint: 'Un punto por línea. **negrita** · [texto](enlace)' }
@@ -283,8 +450,21 @@
     }
   };
 
+  M.cards = {
+    letter: 'K', name: 'Tarjetas', tag: 'TARJETAS',
+    fields: CARDS.fields(),
+    // Mismo margen que «Dos tarjetas»; con dos tarjetas claras el HTML es idéntico al del bloque antiguo.
+    build: function (d) {
+      var cs = K.cardItems(d);
+      // Sin ningún título todavía, se pintan los recuadros vacíos (como el bloque antiguo) para poder verlos y pulsarlos.
+      if (!cs.length) for (var n = 1; n <= K.cardsCount(d); n++) cs.push({ dark: d['c' + n + '_style'] === 'dark' });
+      return section(cell('32px 40px 10px 40px', 'left', cs.length === 2 && !cs[0].dark && !cs[1].dark ? twoCards(cs[0], cs[1]) : cardRows(cs)));
+    }
+  };
+
+  // Bloque antiguo: ya no sale en la paleta, pero las newsletters que lo usan se siguen viendo igual.
   M.tarjetas = {
-    letter: 'K', name: 'Dos tarjetas de igual altura', tag: 'TARJETAS',
+    letter: 'K', name: 'Dos tarjetas (antiguo)', tag: 'TARJETAS', note: 'Bloque antiguo. Para newsletters nuevas usa «Tarjetas» (de 1 a 8).',
     fields: [
       { type: 'head', label: 'Tarjeta 1' },
       { k: 'a_label', label: 'Etiqueta (opcional)', type: 'text' }, { k: 'a_title', label: 'Título', type: 'text', req: true },
@@ -302,7 +482,7 @@
   };
 
   M.cierre = {
-    letter: 'M', name: 'Cierre entre dos líneas', tag: 'CIERRE',
+    letter: 'M', name: 'Cierre (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Título» (estilo entre dos líneas) y «Texto».', tag: 'CIERRE',
     fields: [{ k: 'title', label: 'Titular', type: 'text', req: true }, { k: 'text', label: 'Texto (opcional)', type: 'area', hint: TIP }],
     build: function (d) {
       var ps = paras(d.text);
@@ -313,7 +493,7 @@
   };
 
   M.info = {
-    letter: 'N', name: 'Banda informativa (fondo suave)', tag: 'BANDA INFORMATIVA',
+    letter: 'N', name: 'Banda informativa (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Caja» (suave), con un «Título» de sección encima si hace falta.', tag: 'BANDA INFORMATIVA',
     fields: [{ k: 'title', label: 'Título fuera de la banda (opcional)', type: 'text' }, { k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }],
     build: function (d) {
       var h = has(d.title) ? '<p style="' + titleFont(d.title, 'ex60', 34, 38) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;padding-bottom:16px;">' + esc(d.title.trim()) + '</p>' : '';
@@ -333,14 +513,11 @@
       { k: 'incTitle', label: 'Título de la lista', type: 'text', ph: "What's included?" },
       { k: 'items', label: 'Puntos', type: 'area', hint: 'Un punto por línea.' },
       { type: 'head', label: 'Opciones con precio (opcional)' },
-      { k: 'pkTitle', label: 'Título de las opciones', type: 'text', ph: 'Choose your package:' },
-      { k: 'p1_title', label: 'Opción 1', type: 'text', half: true }, { k: 'p1_price', label: 'Precio 1', type: 'text', half: true },
-      { k: 'p1_text', label: 'Texto opción 1', type: 'area' },
-      { k: 'p2_title', label: 'Opción 2', type: 'text', half: true }, { k: 'p2_price', label: 'Precio 2', type: 'text', half: true },
-      { k: 'p2_text', label: 'Texto opción 2', type: 'area' },
+      { k: 'pkTitle', label: 'Título de las opciones', type: 'text', ph: 'Choose your package:' }
+    ].concat(pkFields(), [
       { type: 'head', label: 'Aviso (opcional)' },
       { k: 'note', label: 'Aviso en banda suave', type: 'area', hint: TIP }
-    ],
+    ]),
     build: function (d) {
       var sub16 = F.bold + 'font-size:16px;line-height:25px;color:' + C.title + ';';
       var h = TBL + '><tbody><tr><td valign="middle" style="padding:0 16px 0 0;"><p style="' + titleFont(d.title, 'ex60', 38, 42) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:left;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' +
@@ -361,9 +538,10 @@
         if (has(d.incTitle)) h += '<p style="' + sub16 + 'padding-top:24px;padding-bottom:10px;word-break:break-word;">' + esc(d.incTitle.trim()) + '</p>'; else h += gap(18);
         h += bullets(d.items); endsList = true;
       }
-      if (has(d.p1_title) && has(d.p2_title)) {
+      var opts = K.pkOptions(d);
+      if (opts.length) {
         if (has(d.pkTitle)) h += '<p style="' + sub16 + 'padding-top:14px;padding-bottom:10px;word-break:break-word;">' + esc(d.pkTitle.trim()) + '</p>'; else h += gap(14);
-        h += twoCards({ title: d.p1_title, price: d.p1_price, text: d.p1_text }, { title: d.p2_title, price: d.p2_price, text: d.p2_text }); endsList = false;
+        h += optionCards(opts); endsList = false;
         if (has(d.note)) h += gap(24);
       } else if (has(d.note)) h += gap(10);
       if (has(d.note)) { h += softBand(d.note); endsList = false; }
@@ -379,7 +557,7 @@
   };
 
   M.imagen = {
-    letter: 'A', name: 'Imagen', tag: 'IMAGEN',
+    letter: 'A', name: 'Imagen (antiguo)', tag: 'IMAGEN', note: 'Bloque antiguo. Para newsletters nuevas usa «Imagen» (de 1 a 3).',
     fields: [
       { k: 'src', label: 'Custom link de Cvent', type: 'url', req: true, img: true },
       { k: 'alt', label: 'Descripción de la imagen (alt)', type: 'text', req: true },
@@ -439,7 +617,7 @@
   }
 
   M.step = {
-    letter: 'S', name: 'Caja «Step» con fecha límite', tag: 'STEP',
+    letter: 'S', name: 'Caja «Step» (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Caja» (suave) con etiqueta, título y fecha límite.', tag: 'STEP',
     fields: [
       { k: 'label', label: 'Etiqueta pequeña', type: 'text', half: true, ph: 'Step 1' }, { k: 'deadline', label: 'Fecha límite (etiqueta dorada)', type: 'text', half: true, ph: 'Deadline: May 1' },
       { k: 'title', label: 'Título de la caja', type: 'text', req: true },
@@ -501,7 +679,7 @@
   };
 
   M.fotos3 = {
-    letter: 'Q', name: 'Tres fotos en fila', tag: 'TRES FOTOS',
+    letter: 'Q', name: 'Tres fotos en fila (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Imagen» con tres imágenes.', tag: 'TRES FOTOS',
     fields: [1, 2, 3].reduce(function (all, n) {
       return all.concat([{ k: 'src' + n, label: 'Foto ' + n + ' · custom link de Cvent', type: 'url', req: true, img: true }, { k: 'alt' + n, label: 'Foto ' + n + ' · descripción (alt)', type: 'text', req: true }]);
     }, []),
@@ -517,7 +695,7 @@
   };
 
   M.cta = {
-    letter: 'R', name: 'Llamada a la acción (caja con borde)', tag: 'CTA',
+    letter: 'R', name: 'Llamada a la acción (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Caja» con borde.', tag: 'CTA',
     fields: [
       { k: 'title', label: 'Título', type: 'text', req: true },
       { k: 'text', label: 'Texto (opcional)', type: 'area', hint: TIP },
@@ -532,7 +710,7 @@
   };
 
   M.boton = {
-    letter: 'U', name: 'Botón suelto', tag: 'BOTON',
+    letter: 'U', name: 'Botón suelto (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Botón».', tag: 'BOTON',
     fields: [
       { k: 'btn', label: 'Texto del botón', type: 'text', req: true, half: true }, { k: 'url', label: 'Enlace', type: 'url', req: true, half: true },
       { k: 'btnStyle', label: 'Estilo', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']] }
@@ -542,7 +720,7 @@
   };
 
   M.important = {
-    letter: 'V', name: 'Aviso «Important» (caja oscura)', tag: 'IMPORTANT',
+    letter: 'V', name: 'Aviso «Important» (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Caja» oscura.', tag: 'IMPORTANT',
     fields: [{ k: 'label', label: 'Etiqueta', type: 'text', ph: 'IMPORTANT' }, { k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }],
     defaults: { label: 'IMPORTANT' },
     build: function (d) {
@@ -568,7 +746,173 @@
     }
   };
 
-  K.MODULE_ORDER = ['intro', 'titulo', 'lista', 'datos', 'tarjetas', 'info', 'producto', 'separador', 'imagen', 'cierre', 'compra', 'contacto', 'step', 'glance', 'timeline', 'deadlines', 'fotos3', 'cta', 'boton', 'important', 'wallet'];
+
+  // ============================================================
+  // PIEZAS MÍNIMAS (fase 2): Título, Texto, Lista, Botón e Imagen.
+  // Título, Texto, Lista y Botón seguidos (con la misma alineación) se montan en UNA celda con el espaciado de los
+  // bloques antiguos, así que la misma combinación da el mismo HTML:
+  //   Título principal + Texto + Botón = «Título centrado» · Título saludo + Texto = «Texto / Intro»
+  //   Título sección + Lista = «Título + lista» · Título entre líneas + Texto = «Cierre» · Botón solo = «Botón suelto»
+  // Un Título siempre empieza celda nueva; tras un Botón, también. El Botón solo se une tras un Título principal.
+  // ============================================================
+  var TITLE_STYLES = [['principal', 'Principal (grande, con barra)'], ['seccion', 'Sección (mediano)'], ['saludo', 'Saludo (Dear…)'], ['entre', 'Entre dos líneas (cierre)']];
+  var TITLE_ALIGN = { principal: 'center', seccion: 'left', saludo: 'left', entre: 'center' };
+  function titleStyle(d) { return TITLE_STYLES.some(function (o) { return o[0] === d.style; }) ? d.style : 'principal'; }
+  // Alineación de una pieza: el Título según su estilo (o la elegida); Texto y Botón heredan la de la celda si no se elige.
+  function flowAlign(s, groupAlign) {
+    var d = s.d || {};
+    if (s.type === 'title') return titleStyle(d) === 'entre' ? 'center' : (d.align === 'left' || d.align === 'center' ? d.align : TITLE_ALIGN[titleStyle(d)]);
+    if (s.type === 'list') return 'left';
+    return d.align === 'left' || d.align === 'center' ? d.align : (groupAlign || (s.type === 'button' ? 'center' : 'left'));
+  }
+  K.FLOW = { title: true, text: true, list: true, button: true };
+  // Reparte las secciones en celdas: [{ start, end, align }] para las piezas encadenadas; el resto, una por sección.
+  K.flowGroups = function (secs, breakAt) {
+    var out = [], g = null;
+    secs.forEach(function (s, i) {
+      var flow = K.FLOW[s.type];
+      // El Botón solo se une a una celda que empieza con un Título principal (como en el antiguo «Título centrado»);
+      // si no, es el Botón suelto de siempre.
+      var head = g && secs[g.start], principalHead = head && head.type === 'title' && titleStyle(head.d || {}) === 'principal';
+      var joins = flow && g && i !== breakAt && s.type !== 'title' && secs[i - 1] && secs[i - 1].type !== 'button' && secs[i - 1].type !== 'box' && (s.type !== 'button' || principalHead) && flowAlign(s, g.align) === g.align;
+      // Una Caja suave solo de texto justo después de un Título de sección = la antigua «Banda informativa» con título.
+      if (s.type === 'box' && g && i !== breakAt && g.start === g.end && g.align === 'left' && head.type === 'title' && titleStyle(head.d || {}) === 'seccion' && boxSimple(s.d || {})) { g.end = i; return; }
+      if (joins) { g.end = i; return; }
+      g = flow ? { start: i, end: i, align: flowAlign(s) } : null;
+      out.push(g || { start: i, end: i });
+    });
+    return out;
+  };
+  // Contenido de una pieza dentro de su celda. prev: pieza anterior de la misma celda (o null).
+  function flowPiece(s, prev, align, first, next) {
+    var d = s.d || {}, h = '';
+    if (s.type === 'box') return softBand(d.text);
+    if (s.type === 'title' && next && next.type === 'box') return '<p style="' + titleFont(d.text, 'ex60', 34, 38) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;padding-bottom:16px;">' + esc((d.text || '').trim()) + '</p>';
+    if (s.type === 'title') {
+      var st = titleStyle(d), txt = esc((d.text || '').trim()), ta = align === 'center' ? 'text-align:center;' : '';
+      if (st === 'principal') return '<p style="' + titleFont(d.text, 'ex60', 38, 42) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:' + align + ';word-break:break-word;">' + txt + '</p>' + bar(56, P, align === 'center' ? 'center' : 'left', align === 'center' ? '14px auto 0 auto' : '14px 0 0 0');
+      if (st === 'seccion') return '<p style="' + titleFont(d.text, 'ex60', 34, 38) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';' + ta + 'padding-bottom:16px;word-break:break-word;">' + txt + '</p>';
+      if (st === 'saludo') return '<p style="' + F.bold + 'font-size:28px;line-height:34px;color:' + C.title + ';' + ta + 'word-break:break-word;">' + txt + '</p>';
+      return bar(80, A, 'center', '0 auto') + '<p style="' + titleFont(d.text, 'ex60', 36, 40) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;padding-top:18px;word-break:break-word;">' + txt + '</p>' + bar(80, A, 'center', '18px auto 0 auto');
+    }
+    if (s.type === 'text') {
+      var afterTitle = prev && prev.type === 'title';
+      paras(d.text).forEach(function (p, i) {
+        if (align === 'center') h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;text-align:center;padding-top:' + (i ? 8 : (prev ? 20 : 0)) + 'px;word-break:break-word;">' + inline(p) + '</p>';
+        else h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;' + (i || prev ? 'padding-top:14px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
+      });
+      return h;
+    }
+    if (s.type === 'list') return (prev && !(prev.type === 'title' && titleStyle(prev.d || {}) === 'seccion') ? gap(18) : '') + bullets(d.items);
+    // Botón dentro de una celda (tras un título o un texto): el estilo de botón del antiguo «Título centrado».
+    var b = button(String(d.btn || '').trim(), String(d.url || '').trim() || '#', false);
+    if (align === 'left') b = b.replace('align="center" style="margin:22px auto 0 auto;', 'align="left" style="margin:18px 0 0 0;');
+    if (d.btnStyle === 'dark') b = b.split('bgcolor="' + C.button + '" style="background-color:' + C.button).join('bgcolor="' + C.band + '" style="background-color:' + C.band).split('color:' + C.buttonText).join('color:#FFFFFF');
+    return b;
+  }
+  // Márgenes de la celda: arriba según la primera pieza; abajo según la última (y el estilo del título que abre la celda).
+  var FLOW_TOP = { principal: 34, seccion: 30, saludo: 32, entre: 30, text: 32, list: 30, button: 6 };
+  function flowPad(pieces) {
+    var a = pieces[0], z = pieces[pieces.length - 1], head = a.type === 'title' ? titleStyle(a.d || {}) : '', bottom;
+    if (z.type === 'title') bottom = { principal: 6, seccion: 10, saludo: 22, entre: 30 }[head];
+    else if (z.type === 'text') bottom = head === 'principal' ? 36 : head === 'entre' ? 14 : 22;
+    else if (z.type === 'list') bottom = 10;
+    else if (z.type === 'box') bottom = 30;
+    else bottom = 36;
+    return FLOW_TOP[head || a.type] + 'px 40px ' + bottom + 'px 40px';
+  }
+  // Monta una celda de piezas. wrap(i, html): en la vista previa, cada pieza va marcada para poder seleccionarla.
+  K.flowCell = function (pieces, align, wrap) {
+    var h = '';
+    pieces.forEach(function (s, j) { var part = flowPiece(s, j ? pieces[j - 1] : null, align, j === 0, pieces[j + 1]); h += wrap ? wrap(j, part) : part; });
+    // Un Botón solo es el antiguo «Botón suelto» (190 px, dorado u oscuro).
+    if (pieces.length === 1 && pieces[0].type === 'button') { var d = pieces[0].d || {}; return section(cell('6px 40px 16px 40px', 'center', wrap ? wrap(0, btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle)) : btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle))); }
+    return section(cell(flowPad(pieces), align, h));
+  };
+  var ALIGN_OPTS = [['', 'Automática'], ['left', 'Izquierda'], ['center', 'Centrada']];
+  M.title = {
+    letter: 'I', name: 'Título', tag: 'TITULO', flow: true,
+    fields: [
+      { k: 'text', label: 'Título', type: 'text', req: true },
+      { k: 'style', label: 'Estilo', type: 'select', half: true, opts: TITLE_STYLES }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: ALIGN_OPTS, showIf: function (d) { return titleStyle(d) !== 'entre'; } }
+    ],
+    defaults: { style: 'principal' },
+    build: function (d) { var s = { type: 'title', d: d }; return K.flowCell([s], flowAlign(s)); }
+  };
+  M.text = {
+    letter: 'C', name: 'Texto', tag: 'TEXTO', flow: true,
+    fields: [{ k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }, { k: 'align', label: 'Alineación', type: 'select', opts: [['', 'Como el título de encima (o izquierda)'], ['left', 'Izquierda'], ['center', 'Centrada']] }],
+    build: function (d) { var s = { type: 'text', d: d }; return K.flowCell([s], flowAlign(s)); }
+  };
+  M.list = {
+    letter: 'D', name: 'Lista', tag: 'LISTA', flow: true,
+    fields: [{ k: 'items', label: 'Puntos', type: 'area', req: true, hint: 'Un punto por línea. **negrita** · [texto](enlace)' }],
+    build: function (d) { return K.flowCell([{ type: 'list', d: d }], 'left'); }
+  };
+  M.button = {
+    letter: 'U', name: 'Botón', tag: 'BOTON', flow: true,
+    note: 'Debajo de un Título principal (y su texto) se une a ellos como en el antiguo «Título centrado». En cualquier otro sitio es un botón de 190 px.',
+    fields: [
+      { k: 'btn', label: 'Texto del botón', type: 'text', req: true, half: true }, { k: 'url', label: 'Enlace', type: 'url', req: true, half: true },
+      { k: 'btnStyle', label: 'Estilo', type: 'select', half: true, opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']] }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: [['', 'Como el texto de encima'], ['left', 'Izquierda'], ['center', 'Centrada']] }
+    ],
+    defaults: { btnStyle: 'gold' },
+    build: function (d) { var s = { type: 'button', d: d }; return K.flowCell([s], flowAlign(s)); }
+  };
+  // Imagen: de 1 a 3 por fila. Una = el antiguo «Imagen» (a sangre o con márgenes); tres = «Tres fotos en fila».
+  var IMGS = K.repeat({ prefix: 'f', countKey: 'fN', max: 3, keys: ['src', 'alt'], titleKey: 'src', titleName: 'enlace de imagen', noun: 'imagen',
+    hint: 'Hasta 3 imágenes en fila. En móvil, una debajo de otra.',
+    fields: function (n, show) {
+      return [{ k: 'f' + n + '_src', label: 'Imagen ' + n + ' · custom link de Cvent', type: 'url', req: n === 1, img: true, showIf: show }, { k: 'f' + n + '_alt', label: 'Imagen ' + n + ' · descripción (alt)', type: 'text', req: n === 1, showIf: show }];
+    } });
+  K.imagesCount = IMGS.count;
+  M.images = {
+    letter: 'A', name: 'Imagen', tag: 'IMAGEN',
+    fields: IMGS.fields().concat([{ k: 'size', label: 'Tamaño (con una imagen)', type: 'select', opts: [['full', 'A sangre (650 px)'], ['inset', 'Con márgenes (570 px)']], showIf: function (d) { return IMGS.count(d) === 1; } }]),
+    defaults: { size: 'full' },
+    build: function (d) {
+      var its = IMGS.items(d);
+      if (its.length <= 1) return M.imagen.build({ src: its.length ? its[0].src : d.f1_src, alt: its.length ? its[0].alt : d.f1_alt, size: d.size });
+      if (its.length === 3) return M.fotos3.build({ src1: its[0].src, alt1: its[0].alt, src2: its[1].src, alt2: its[1].alt, src3: its[2].src, alt3: its[2].alt });
+      var cells = its.map(function (it) {
+        var src = String(it.src || '').trim();
+        return '<td class="col2" width="279" valign="top" style="width:279px;">' + (isPh(src) ? phBlock(279, 210) : '<img src="' + attr(src) + '" alt="' + attr(it.alt) + '" title="' + attr(it.alt) + '" border="0" width="279" style="width:279px;max-width:100%;height:auto;display:block;" class="img-max" />') + '</td>';
+      });
+      return section(cell('12px 40px', 'center', TBL + '><tbody><tr>' + cells.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
+    }
+  };
+
+
+  // ============================================================
+  // CAJA (fase 3): un recuadro para destacar algo. Mismo HTML que los bloques antiguos equivalentes:
+  //   suave solo con texto = «Banda informativa» (con Título de sección encima = la banda con título)
+  //   suave con etiqueta, título, fecha o botón = «Step» · con borde = «Llamada a la acción» · oscura = «Important»
+  // ============================================================
+  function boxStyle(d) { return d.style === 'borde' || d.style === 'oscura' ? d.style : 'suave'; }
+  function boxSimple(d) { return boxStyle(d) === 'suave' && !has(d.label) && !has(d.title) && !has(d.deadline) && !has(d.btn); }
+  M.box = {
+    letter: 'N', name: 'Caja', tag: 'CAJA',
+    fields: [
+      { k: 'style', label: 'Estilo', type: 'select', opts: [['suave', 'Suave (fondo claro y barra lateral)'], ['borde', 'Con borde (centrada)'], ['oscura', 'Oscura (aviso)']] },
+      { k: 'label', label: 'Etiqueta (opcional)', type: 'text', half: true, ph: 'Step 1 · IMPORTANT' }, { k: 'deadline', label: 'Fecha límite (etiqueta de color, opcional)', type: 'text', half: true, ph: 'Deadline: May 1', showIf: function (d) { return boxStyle(d) === 'suave'; } },
+      { k: 'title', label: 'Título de la caja (opcional)', type: 'text', showIf: function (d) { return boxStyle(d) !== 'oscura'; } },
+      { k: 'text', label: 'Texto', type: 'area', hint: TIP },
+      { k: 'line', label: 'Línea con enlace de Cvent (opcional)', type: 'text', ph: 'Register here: {[E-RSVP YES LINK]}', hint: 'Escribe el campo de Cvent suelto: genera su propio enlace.', showIf: function (d) { return boxStyle(d) === 'borde'; } },
+      { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true, showIf: function (d) { return boxStyle(d) !== 'oscura'; } }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true, showIf: function (d) { return boxStyle(d) !== 'oscura'; } },
+      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']], showIf: function (d) { return boxStyle(d) !== 'oscura' && has(d.btn); } }
+    ],
+    defaults: { style: 'suave', btnStyle: 'gold' },
+    build: function (d) {
+      var st = boxStyle(d);
+      if (st === 'oscura') return M.important.build({ label: has(d.label) ? d.label : 'IMPORTANT', text: d.text });
+      if (st === 'borde') return M.cta.build(d);
+      if (boxSimple(d)) return section(cell('10px 40px 30px 40px', 'left', softBand(d.text)));
+      return M.step.build(d);
+    }
+  };
+  K.MODULE_ORDER = ['title', 'text', 'list', 'images', 'button', 'cards', 'box', 'datos', 'producto', 'separador', 'compra', 'contacto', 'glance', 'timeline', 'deadlines', 'wallet'];
+  // Bloques antiguos: fuera de la paleta, pero se siguen pintando igual en las newsletters que los usan.
+  K.LEGACY = { intro: 'text', titulo: 'title', lista: 'list', cierre: 'title', imagen: 'images', fotos3: 'images', boton: 'button', tarjetas: 'cards', info: 'box', step: 'box', cta: 'box', important: 'box' };
 
   // ============================================================
   // MONTAJE
@@ -588,9 +932,16 @@
     var preview = !!(opts && opts.preview), pendingAt = preview && opts.pendingAt != null ? opts.pendingAt : -1;
     // Bloque nuevo aún sin tipo: solo en la vista previa, nunca en el email.
     var PENDING = '</tbody><tbody data-ksa-pending="1"><tr><td align="center" style="padding:34px 24px;background:#FFFFFF;border:2px dashed #6F4ACC;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#48237E;"><strong>Bloque nuevo</strong><br /><span style="font-size:13px;color:#6F4ACC;">Elige qué tipo de bloque es en el panel de la derecha →</span></td></tr></tbody><tbody>';
-    (st.sections || []).forEach(function (s, i) {
-      if (i === pendingAt) add('BLOQUE NUEVO', PENDING);
-      var m = M[s.type]; if (!m) return;
+    var secs = st.sections || [];
+    K.flowGroups(secs, pendingAt).forEach(function (g) {
+      if (g.start === pendingAt) add('BLOQUE NUEVO', PENDING);
+      if (g.align) {
+        // Piezas encadenadas: una sola celda. En la vista previa, cada pieza va en su propio <div> seleccionable.
+        var pieces = secs.slice(g.start, g.end + 1);
+        add(pieces.map(function (s) { return M[s.type].tag; }).join(' + '), K.flowCell(pieces, g.align, preview ? function (j, part) { return '<div data-ksa-section="' + (g.start + j) + '">' + part + '</div>'; } : null));
+        return;
+      }
+      var s = secs[g.start], i = g.start, m = M[s.type]; if (!m) return;
       var part = m.build(s.d || {}, t);
       add(m.tag, preview ? '</tbody><tbody data-ksa-section="' + i + '">' + part + '</tbody><tbody>' : part);
     });
@@ -698,9 +1049,12 @@
       }
       if (s.type === 'tarjetas') btnCheck('Tarjetas, tarjeta 1', d.a_btn, d.a_url), btnCheck('Tarjetas, tarjeta 2', d.b_btn, d.b_url);
       if (s.type === 'titulo') btnCheck('Título', d.btn, d.url);
-      if (s.type === 'producto' && has(d.p1_title) !== has(d.p2_title)) W('Módulo ' + (i + 1) + ' (Producto): las opciones con precio van de dos en dos.');
+      if (s.type === 'images') IMGS.check(d, W, 'Módulo ' + (i + 1) + ' (Imagen)');
+      if (s.type === 'box' && boxStyle(d) !== 'oscura') btnCheck('Caja', d.btn, d.url);
+      if (s.type === 'producto') PK.check(d, W, 'Módulo ' + (i + 1) + ' (Producto)');
+      if (s.type === 'cards') { CARDS.check(d, W, 'Módulo ' + (i + 1) + ' (Tarjetas)'); for (var cn = 1; cn <= 8; cn++) btnCheck('Tarjetas, tarjeta ' + cn, d['c' + cn + '_btn'], d['c' + cn + '_url']); }
       if (s.type === 'producto' && has(d.img) && !isPh(d.img) && !has(d.alt)) E('Módulo ' + (i + 1) + ' (Producto): falta la descripción de la imagen.');
-      if (i && secs[i - 1].type === s.type && (s.type === 'datos' || s.type === 'info')) W('Módulos ' + i + ' y ' + (i + 1) + ': el mismo recurso dos veces seguidas.');
+      if (i && secs[i - 1].type === s.type && (s.type === 'datos' || s.type === 'info' || (s.type === 'box' && boxSimple(d) && boxSimple(secs[i - 1].d || {})))) W('Módulos ' + i + ' y ' + (i + 1) + ': el mismo recurso dos veces seguidas.');
     });
 
     // Contenido marcado como pendiente al crear desde un guion
@@ -739,11 +1093,12 @@
   // ============================================================
   K.RECIPES = [
     { id: 'blank', name: 'En blanco', sections: [] },
-    { id: 'media', name: 'Media Packages / venta', mediaPackages: true, sections: [['intro'], ['imagen'], ['imagen'], ['compra'], ['lista'], ['contacto']] },
-    { id: 'anuncio', name: 'Anuncio / previa del torneo', sections: [['intro'], ['titulo'], ['datos'], ['tarjetas'], ['cierre'], ['compra', { variant: 'modificar' }]] },
-    { id: 'recordatorio', name: 'Recordatorio / instrucciones', sections: [['intro'], ['info'], ['lista'], ['compra', { variant: 'modificar' }]] },
-    { id: 'productos', name: 'Venta de varios servicios con precio', sections: [['titulo'], ['intro'], ['producto'], ['separador'], ['producto'], ['cierre'], ['compra', { layout: 'bottom' }], ['intro']] },
-    { id: 'transaccional', name: 'Transaccional / confirmación', sections: [['intro'], ['compra'], ['contacto']] },
+    { id: 'media', name: 'Media Packages / venta', mediaPackages: true, sections: [['text'], ['images'], ['images'], ['compra'], ['title', { style: 'seccion' }], ['list'], ['contacto']] },
+    { id: 'anuncio', name: 'Anuncio / previa del torneo', sections: [['text'], ['title'], ['datos'], ['cards', { cN: 2 }], ['title', { style: 'entre' }], ['compra', { variant: 'modificar' }]] },
+    { id: 'recordatorio', name: 'Recordatorio / instrucciones', sections: [['text'], ['box'], ['title', { style: 'seccion' }], ['list'], ['compra', { variant: 'modificar' }]] },
+    { id: 'productos', name: 'Venta de varios servicios con precio', sections: [['title'], ['text', { align: 'left' }], ['producto'], ['separador'], ['producto'], ['title', { style: 'entre' }], ['compra', { layout: 'bottom' }], ['text']] },
+    { id: 'transaccional', name: 'Transaccional / confirmación', sections: [['text'], ['compra'], ['contacto']] },
+    // La receta de la BASE se queda con los bloques antiguos: la prueba la compara con la newsletter de referencia.
     { id: 'ref1', name: 'Ejemplo: Media Packages · Surf Cup 2026', tournament: 'surfcup', mediaPackages: true, name2: 'Media Packages', desc: 'media_packages', headerAlt: 'Kaptiva Global Stage',
       franja: 'Media Packages',
       sections: [
@@ -810,16 +1165,17 @@
     L.push('- No inventes titulares, etiquetas, botones, precios, fechas ni enlaces. Si un campo no tiene contenido en el guion, déjalo vacío ("").');
     L.push('- Campos de Cvent como {[C-FIRST NAME]} o {[E-MODIFY REG LINK]}: cópialos carácter a carácter.');
     L.push('- Negritas: **así**. Cursiva: *así*. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
-    L.push('- Fotos o imágenes: si el guion da una URL de custom.cvent.com, úsala tal cual. Si solo dice «foto», «imagen» o la describe, usa el módulo imagen con "src":"PLACEHOLDER" y pon en "alt" la descripción del guion (o "" si no hay).');
-    L.push('- Botones: el texto del botón en su campo y el enlace solo si el guion lo da; si no, deja el enlace vacío. Botón suelto bajo un título → titulo (btn, url). Dos opciones con botón → tarjetas. Botón de registro o modificar inscripción con {[E-MODIFY REG LINK]} → compra.');
+    L.push('- Fotos o imágenes: si el guion da una URL de custom.cvent.com, úsala tal cual. Si solo dice «foto», «imagen» o la describe, usa el módulo images con "f1_src":"PLACEHOLDER" y pon en "f1_alt" la descripción del guion (o "" si no hay). Dos o tres fotos en fila → un solo images con f1_*, f2_*, f3_*.');
+    L.push('- Botones: el texto del botón en su campo y el enlace solo si el guion lo da; si no, deja el enlace vacío. Botón bajo un titular → button justo después del title principal (y su text). Opciones paralelas con botón → cards (una tarjeta por opción: c1_*, c2_*…). Botón de registro o modificar inscripción con {[E-MODIFY REG LINK]} → compra.');
     L.push('- NO incluyas header, footer de imagen ni línea de baja (opt-out): la app los pone sola. Si el guion indica la etiqueta de la franja identificadora, ponla en "franja"; si no, "".');
-    L.push('- Reparto: saludo y párrafos → intro. Fecha, hora, lugar → datos. Dos opciones paralelas → tarjetas. Instrucciones o avisos → info. Lista de puntos → lista. Servicio con precio → producto (separador entre dos productos seguidos). Cierre o despedida → cierre. Texto que no encaje → intro.');
+    L.push('- PIEZAS: cada titular es un módulo title ("style": principal para titulares grandes, seccion para el título de una lista o sección, saludo para «Dear …», entre para la frase de despedida); los párrafos que van juntos, un text; cada lista de puntos, un list; cada botón, un button.');
+    L.push('- Reparto: saludo y párrafos → title (saludo) + text. Titular con texto y botón → title + text + button. Fecha, hora, lugar → datos. Opciones, precios, datos o fechas paralelos → cards (de 1 a 8 tarjetas: c1_title, c1_price, c1_text…). Instrucciones → box (style suave; con título fuera de la caja → title (seccion) + box). Paso con fecha límite → box (suave) con label, title y deadline. Llamada a la acción con botón o enlace de Cvent → box (borde). Aviso importante → box (oscura) con label. Lista de puntos → title (seccion) + list. Servicio con precio → producto (separador entre dos productos seguidos). Cierre o despedida → title (entre) + text. Texto que no encaje → text.');
     L.push('- No dejes fuera ningún texto del guion.');
     L.push('');
     moduleList(L);
     L.push('');
     L.push('RESPUESTA: devuelve SOLO el JSON, en un bloque de código, sin explicaciones, con esta forma:');
-    L.push('{"tournament":"' + t.id + '","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"","mediaPackages":false,"sections":[{"type":"intro","d":{"greet":"","text":"..."}}]}');
+    L.push('{"tournament":"' + t.id + '","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"","mediaPackages":false,"sections":[{"type":"title","d":{"text":"Dear {[C-FIRST NAME]},","style":"saludo"}},{"type":"text","d":{"text":"..."}}]}');
     L.push('');
     L.push('GUION:');
     L.push('');
@@ -853,7 +1209,8 @@
     L.push('- NO copies iconos, emojis ni símbolos decorativos del original (ni como texto ni como imagen). Quítalos y deja el resto del texto igual.');
     L.push('- Si la newsletter es de Media Packages, pon "mediaPackages": true y NO añadas el banner de Media Packages como imagen.');
     L.push('- Imágenes: solo las que estén en el original y con su URL de custom.cvent.com tal cual. Si no hay URL, no pongas el módulo.');
-    L.push('- Reparto: saludo y párrafos de apertura → intro. Fecha, hora, lugar → datos. Dos opciones paralelas → tarjetas. Instrucciones o avisos → info. Cada servicio con precio → producto, con un separador entre dos productos seguidos. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra. Texto que no encaje en nada → intro.');
+    L.push('- PIEZAS: cada titular es un módulo title ("style": principal para titulares grandes, seccion para el título de una lista o sección, saludo para «Dear …», entre para la frase de despedida); los párrafos que van juntos, un text; cada lista de puntos, un list; cada botón, un button.');
+    L.push('- Reparto: saludo y párrafos de apertura → title (saludo) + text. Titular con texto y botón → title + text + button. Fecha, hora, lugar → datos. Opciones, precios, datos o fechas paralelos → cards (de 1 a 8 tarjetas: c1_title, c1_price, c1_text…). Instrucciones → box (style suave; con título fuera de la caja → title (seccion) + box). Paso con fecha límite → box (suave) con label, title y deadline. Llamada a la acción con botón o enlace de Cvent → box (borde). Aviso importante → box (oscura) con label. Lista de puntos → title (seccion) + list. Cada servicio con precio → producto, con un separador entre dos productos seguidos. Cierre o despedida → title (entre) + text. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra. Texto que no encaje en nada → text.');
     L.push('- No uses el mismo recurso dos veces seguidas y no dejes fuera ningún texto del original.');
     L.push('');
     L.push('TORNEOS ("tournament"): ' + K.CLIENT.tournaments.map(function (t) { return t.id + ' = ' + t.name; }).join(' · '));
@@ -861,7 +1218,7 @@
     moduleList(L);
     L.push('');
     L.push('RESPUESTA: devuelve SOLO el JSON, en un bloque de código, sin explicaciones, con esta forma:');
-    L.push('{"tournament":"surfcup","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"Etiqueta izquierda","mediaPackages":false,"sections":[{"type":"intro","d":{"greet":"","text":"..."}}]}');
+    L.push('{"tournament":"surfcup","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"Etiqueta izquierda","mediaPackages":false,"sections":[{"type":"title","d":{"text":"Dear {[C-FIRST NAME]},","style":"saludo"}},{"type":"text","d":{"text":"..."}}]}');
     L.push('');
     L.push('NEWSLETTER A CONVERTIR:');
     L.push('');

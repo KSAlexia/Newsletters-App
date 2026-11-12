@@ -737,9 +737,13 @@
 
   // ---------- Montar por bloques: paleta, arrastrar y editar en la vista previa ----------
   var BLOCK_INFO = {
+    title: 'Un titular: principal, de sección, saludo o entre dos líneas.', text: 'Párrafos de texto. Bajo un título, se alinea con él.',
+    list: 'Puntos con viñeta. Pon un Título (sección) encima si hace falta.', images: 'De 1 a 3 imágenes en fila, a sangre o con márgenes.',
+    button: 'Un botón. Bajo un Título principal se une a él.',
+    box: 'Recuadro para destacar: suave (avisos, pasos), con borde (llamada a la acción) u oscuro (Important).',
     intro: 'Saludo y párrafos de texto.', titulo: 'Título grande centrado, con texto y botón opcionales.',
     lista: 'Título con una lista de puntos.', datos: 'Banda de color con fecha, hora, lugar…',
-    tarjetas: 'Dos opciones lado a lado, con botón.', info: 'Aviso o instrucciones sobre fondo suave.',
+    tarjetas: 'Dos opciones lado a lado, con botón.', cards: 'De 1 a 8 tarjetas: opciones, precios, datos o fechas. Claras u oscuras, con botón opcional.', info: 'Aviso o instrucciones sobre fondo suave.',
     producto: 'Servicio con precio, imagen y opciones.', separador: 'Línea fina entre dos productos.',
     imagen: 'Imagen a sangre o con márgenes.', cierre: 'Frase de cierre entre dos líneas.',
     compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.',
@@ -840,7 +844,7 @@
 
   // Vista previa interactiva: solo con el HTML generado (no con código editado a mano).
   var PREVIEW_CSS = '[data-ksa-section],[data-ksa-empty]{cursor:pointer}' +
-    '.ksa-box{position:absolute;z-index:8;pointer-events:none;border-radius:3px}' +
+    '.ksa-box{position:absolute;z-index:8;pointer-events:none;border-radius:3px;box-sizing:border-box}' +
     '.ksa-hover{border:2px dashed rgba(111,74,204,.6)}.ksa-sel{border:2px solid #6F4ACC;box-shadow:0 0 0 3px rgba(111,74,204,.18)}' +
     '.ksa-bar{position:absolute;z-index:10;display:flex;gap:2px;background:#1b1630;border-radius:8px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.3);font:12px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif}' +
     '.ksa-bar button{border:0;background:none;color:#fff;cursor:pointer;padding:5px 7px;border-radius:5px;font:inherit;white-space:nowrap}' +
@@ -853,6 +857,7 @@
     '.ksa-fmt button{border:0;background:none;color:#1b1630;cursor:pointer;padding:5px 9px;border-radius:5px;font:inherit;white-space:nowrap}.ksa-fmt button:hover{background:#F7F4FC;color:#6F4ACC}' +
     '.ksa-plus{position:absolute;z-index:9;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:#6F4ACC;color:#fff;font:700 17px/20px -apple-system,"Segoe UI",sans-serif;cursor:pointer;opacity:.45;box-shadow:0 2px 8px rgba(27,22,48,.35);padding:0}' +
     '.ksa-plus:hover{opacity:1;transform:scale(1.12)}[data-ksa-pending]{cursor:pointer}' +
+    '.ksa-pending-x{position:absolute;z-index:10;border:0;background:#1b1630;color:#fff;border-radius:8px;padding:5px 9px;font:12px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3)}.ksa-pending-x:hover{background:#6F4ACC}' +
     '.ksa-pop{position:absolute;z-index:13;gap:2px;min-width:220px;max-width:300px;background:#fff;border:1px solid #d9d3ea;border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(27,22,48,.28);font:13px/1.3 -apple-system,"Segoe UI",Roboto,sans-serif;color:#1b1630}' +
     '.ksa-pop strong{font-size:12px;color:#6f6a85;padding:2px 6px 6px}.ksa-pop p{margin:0;padding:4px 6px;color:#6f6a85}' +
     '.ksa-pop button{border:0;background:none;text-align:left;padding:7px 8px;border-radius:6px;cursor:pointer;font:inherit;color:#1b1630}.ksa-pop button:hover{background:#F7F4FC;color:#6F4ACC}' +
@@ -1073,7 +1078,7 @@
       pop.style.display = 'grid'; pop.style.top = (r.bottom + w.scrollY + 4) + 'px';
       pop.style.left = Math.max(4, Math.min(r.right + w.scrollX - pop.offsetWidth, w.scrollX + w.innerWidth - pop.offsetWidth - 6)) + 'px';
     }
-    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePop(); historyKey(e); });
+    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') { closePop(); if (pendingInsert != null && !inlineEditing) closePalette(); } historyKey(e); });
     handle.addEventListener('dragstart', function (event) { dragBlock = { kind: 'move', from: barFor }; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', blockName(barFor));
       // Ocultar el origen dentro de dragstart cancela el arrastre en Chrome: se oculta justo después.
       setTimeout(function () { if (dragBlock) bar.style.display = 'none'; }, 0); });
@@ -1095,7 +1100,7 @@
     });
     doc.addEventListener('mouseleave', function () { if (!dragBlock) { hover.style.display = 'none'; bar.style.display = 'none'; } });
     doc.addEventListener('click', function (event) {
-      if (pop.contains(event.target)) return;
+      if (pop.contains(event.target) || (pendingX && pendingX.contains(event.target))) return;
       if (pop.style.display !== 'none') { closePop(); if (!bar.contains(event.target)) return; }
       if (bar.contains(event.target) || (event.target.closest && event.target.closest('[contenteditable]'))) return;
       if (event.target.closest && event.target.closest('a')) event.preventDefault();
@@ -1148,7 +1153,22 @@
     });
     // «＋» en cada separación entre bloques (y antes del primero / después del último).
     var plus = [];
+    // «Bloque nuevo» sin tipo todavía: ✕ arriba a la derecha, como en los demás bloques, para quitarlo.
+    var pendingX = null;
+    function placePendingX() {
+      var node = doc.querySelector('[data-ksa-pending]'), w = doc.defaultView;
+      if (!node) { if (pendingX) { pendingX.remove(); pendingX = null; } return; }
+      if (!pendingX) {
+        pendingX = doc.createElement('button'); pendingX.type = 'button'; pendingX.className = 'ksa-pending-x'; pendingX.textContent = '✕';
+        pendingX.title = 'Quitar el bloque nuevo'; pendingX.setAttribute('aria-label', 'Quitar el bloque nuevo');
+        pendingX.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); closePalette(); });
+        doc.body.appendChild(pendingX);
+      }
+      var r = node.getBoundingClientRect();
+      pendingX.style.top = (r.top + w.scrollY + 6) + 'px'; pendingX.style.left = (r.right + w.scrollX - pendingX.offsetWidth - 6) + 'px';
+    }
     function placePlus() {
+      placePendingX();
       plus.forEach(function (p) { p.remove(); }); plus = [];
       var secs = doc.querySelectorAll('[data-ksa-section]'), w = doc.defaultView;
       if (!secs.length || pendingInsert != null) return;
@@ -1249,6 +1269,24 @@
       if (m.note) body.appendChild(el('p', { class: 'note', text: m.note }));
       m.fields.forEach(function (f) {
         if (f.type === 'head') { body.appendChild(el('h4', { text: f.label })); return; }
+        // Grupos repetibles (p. ej. opciones con precio): cabecera con «Quitar» y botón «＋ Añadir otra».
+        if (f.type === 'opt') {
+          if (f.showIf && !f.showIf(s.d)) return;
+          body.appendChild(el('div', { class: 'opt-head' }, [el('h5', { text: f.label }), f.canRemove(s.d) ? el('button', { type: 'button', class: 'kit-pick', text: 'Quitar', 'aria-label': 'Quitar ' + f.label, onclick: function () {
+            f.remove(s.d); renderSections(); update();
+          } }) : null]));
+          return;
+        }
+        if (f.type === 'more') {
+          if (f.showIf && !f.showIf(s.d)) return;
+          body.appendChild(el('div', { class: 'opt-more' }, [el('button', { type: 'button', class: 'btn ghost2', text: f.label, onclick: function () {
+            var key = f.add(s.d); renderSections(); update();
+            var card = document.querySelectorAll('#sections details')[i], target = null;
+            if (card) Array.prototype.forEach.call(card.querySelectorAll('label'), function (l) { if (l._f && l._f.k === key) target = l.querySelector('input, textarea'); });
+            if (target) { target.focus(); if (target.scrollIntoView) target.scrollIntoView({ block: 'center' }); }
+          } }), f.hint ? el('small', { text: f.hint }) : null]));
+          return;
+        }
         var input;
         if (f.type === 'area') input = el('textarea', { rows: 4 });
         else if (f.type === 'select') { input = el('select'); f.opts.forEach(function (o) { input.appendChild(el('option', { value: o[0], text: o[1] })); }); }
@@ -1409,6 +1447,7 @@
     window.addEventListener('keydown', function (event) {
       if ((event.metaKey || event.ctrlKey) && (event.key === 'k' || event.key === 'K') && currentId) { event.preventDefault(); openSwitch(); }
       historyKey(event);
+      if (event.key === 'Escape' && currentId && pendingInsert != null && !document.querySelector('dialog[open]')) closePalette();
     });
     $('#history').addEventListener('click', openHistory);
     $('#history-close').addEventListener('click', function () { $('#history-dialog').close(); });

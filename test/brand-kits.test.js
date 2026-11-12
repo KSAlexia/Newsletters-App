@@ -208,7 +208,8 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
 // Componentes del kit de WCH como módulos nuevos (válidos para cualquier marca) y marcas ==etiqueta== / ++subrayado++.
 {
   const NEW = ['step', 'glance', 'timeline', 'deadlines', 'fotos3', 'cta', 'boton', 'important', 'wallet'];
-  NEW.forEach(type => assert.ok(K.MODULE_ORDER.includes(type) && K.MODULES[type], 'Módulo ' + type));
+  // Tres fotos y Botón suelto quedan como bloques antiguos (sustituidos por «Imagen» y «Botón»): fuera de la paleta, pero se pintan.
+  NEW.forEach(type => assert.ok((K.MODULE_ORDER.includes(type) || K.LEGACY[type]) && K.MODULES[type], 'Módulo ' + type));
   const letters = K.MODULE_ORDER.map(t => K.MODULES[t].letter); assert.equal(new Set(letters).size, letters.length, 'Letras únicas');
   const photo = 'https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/a13a3c67f33046eb8dc29f11262c117f.jpg?d=650';
   const data = {

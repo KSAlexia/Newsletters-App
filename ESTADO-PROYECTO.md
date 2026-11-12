@@ -37,6 +37,9 @@ Los scripts comparten el objeto global `KSA` mediante IIFEs. Algunos también fu
 | `test/brand-kits.test.js` | Pruebas de kits, snapshots, fuentes, colores, URLs y compatibilidad |
 | `js/hub.js` | Funciones de jerarquía, prevención de ciclos, ordenación y filtrado |
 | `js/history.js` | Deshacer/rehacer en memoria e historial de versiones por newsletter |
+| `test/pieces.test.js` | Equivalencia exacta piezas nuevas ↔ bloques antiguos en todos los torneos, reglas de encadenado e Imagen 1–3 |
+| `test/cards.test.js` | Pruebas del bloque Tarjetas (1 a 8, estilos, botones, revisión e importación) |
+| `test/producto.test.js` | Pruebas del módulo Producto con 1 a 8 opciones con precio |
 | `test/history.test.js` | Pruebas de deshacer/rehacer y versiones (agrupación, límites, falta de espacio) |
 | `test/BASE-KSAGS-GLOBAL-STAGE.txt` | Referencia HTML de la BASE |
 | `test/test.js` | Comparación del ejemplo con la BASE y comprobación básica de paleta FIT |
@@ -620,3 +623,70 @@ Pedido por el usuario: deshacer la última acción con Ctrl+Z y un historial de 
 Límites: el historial vive en este navegador (no viaja con «Exportar proyecto» ni llega a otras personas). Deshacer no restaura qué bloques estaban desplegados ni el foco del campo en el que se escribía.
 
 Pruebas: `test/history.test.js` (nuevo) y las suites existentes pasan (`test/hub.test.js` carga ahora `history.js`); `test/test.js` mantiene el `igual: false` conocido. En el navegador integrado (`http://127.0.0.1:8784`, datos sintéticos) con teclado real: escribir el nombre y pulsar ⌘Z lo deshace de una vez; un segundo ⌘Z quita la receta; ⌘⇧Z dos veces lo rehace todo; mover un bloque con ↓ y pulsar ⌘Z con el foco en la vista previa lo devuelve a su sitio; guardar una versión con nombre, verla en la vista previa del diálogo, restaurar la automática (0 bloques) y deshacer la restauración con ⌘Z. No probado: Ctrl+Z en Windows, Firefox/Safari ni el caso de quedarse sin espacio en un navegador real.
+
+## «Bloque nuevo» sin tipo: cruz para quitarlo (2026-11-12)
+
+Problema del usuario: costaba quitar un bloque recién añadido que aún no tenía contenido. Era el «Bloque nuevo» que aparece al pulsar «+» en la vista previa antes de elegir su tipo: no tenía la barra flotante (no es un bloque de `state.sections`) y solo se quitaba con la × de la paleta, en el panel derecho.
+
+- `app.js` (`enhancePreview`): ✕ oscura arriba a la derecha del «Bloque nuevo», con el mismo estilo que la barra de los demás bloques, que lo quita y cierra la paleta (`closePalette`). Se recoloca con `placePlus` al cambiar el tamaño.
+- Escape también lo cancela, tanto con el foco en la vista previa (si no se está editando un texto) como en el editor (si no hay un diálogo abierto).
+
+Pruebas: `test/hub.test.js` pasa. En el navegador integrado (`http://127.0.0.1:8785`, datos sintéticos): «+» entre bloques → aparece «Bloque nuevo» con la ✕; un clic real en la ✕ lo quita, cierra la paleta y deja los 6 bloques intactos; Escape con el foco en la vista previa hace lo mismo.
+
+## Producto con precio: de 1 a 8 opciones (2026-11-12)
+
+Pedido por el usuario: en «Producto con precio» las opciones con precio iban siempre de dos en dos (con una sola no se mostraban y la revisión avisaba, y no se podía poner una tercera). Ahora se empieza con una, «＋ Añadir otra opción» suma más hasta 8, y el resultado es responsive.
+
+- `modules.js`: campos `p1_*` … `p8_*` (`title`, `price`, `text`). `d.pkN` guarda cuántas se ven en el editor; `K.pkCount` usa el mayor entre `pkN` y la última opción rellenada (las newsletters antiguas con dos opciones muestran dos). `K.pkAdd`, `K.pkRemove` (quita una y sube las siguientes) y `K.pkOptions` (las que tienen nombre, en orden). Nuevo tipo de campo `opt` (cabecera «Opción N» con «Quitar») y `more` («＋ Añadir otra opción», oculto con 8).
+- `twoCards` pasa a ser `cardGrid(cards)`: en escritorio, filas de dos tarjetas con 16 px entre filas; una tarjeta sola o la última de un número impar ocupa todo el ancho. En móvil, todas apiladas (la misma técnica `desk-only`/`mob-only` de antes). Con exactamente dos tarjetas el HTML es idéntico byte a byte al anterior: se comprobó en todas las recetas y torneos, y con datos antiguos de dos opciones. «Dos tarjetas de igual altura» no cambia.
+- Revisión: desaparece el aviso «van de dos en dos». Avisa si una opción tiene precio o texto pero no nombre (no se muestra).
+- `app.js`: el formulario pinta las cabeceras «Opción N» con «Quitar» y el botón «＋ Añadir otra opción», que lleva el cursor al nombre de la nueva opción.
+
+Pruebas: `test/producto.test.js` (nuevo) y las suites existentes pasan; `test/test.js` mantiene el `igual: false` conocido. En el navegador integrado (`http://127.0.0.1:8786`, receta «Venta de varios servicios», datos sintéticos) con clics y teclado reales: al principio solo se ve la Opción 1; tres opciones → en escritorio dos en fila y la tercera a todo el ancho, en «Móvil» las tres apiladas; «Quitar» en la opción 2 sube la 3. No probado: rendering en Outlook, Gmail ni otros clientes de correo reales.
+
+### Seguimiento: diseño responsive según el número de opciones (2026-11-12)
+
+Pedido por el usuario: una sola opción con el precio en el borde derecho y el texto debajo; tres opciones cortas en una fila de tres; cuatro en rejilla 2×2.
+
+- `modules.js`: `optionCards(cs)` sustituye a `cardGrid` en Producto. `K.optionRows` decide las filas: 1 → una ancha; 2 → el HTML de siempre (`cardGrid`, idéntico byte a byte); 4 y 8 → filas de dos; 3, 5, 6 y 7 con textos cortos (nombre ≤ 22, precio ≤ 12 y texto ≤ 140 caracteres sin formato) → filas de tres, sin dejar una sola al final (5 → 3+2, 7 → 3+2+2); con textos largos → filas de dos y la última impar ancha. Una tarjeta sola en su fila usa `wideCard`: nombre a la izquierda, precio en una píldora en el borde derecho y el texto debajo (también en móvil). Cada fila es su propia tabla dentro de la tabla `desk-only`; en móvil siguen todas apiladas.
+- El ancho de cada celda descuenta su padding y el borde (143 px con tres por fila, 233 px con dos), para que la fila no supere los 570 px. Un primer intento con `table-layout:fixed` se salía del ancho del email en la vista previa; se corrigió así.
+
+Pruebas: `test/producto.test.js` cubre 1, 2, 3 (corta y larga), 4, 5, 7 y 8 opciones; las demás suites pasan y las recetas generan el mismo HTML que antes. En el navegador integrado (`http://127.0.0.1:8787`, datos sintéticos): 1 opción con el precio a la derecha, 3 en fila, 4 en 2×2, y en «Móvil» todas apiladas, sin desbordamiento horizontal (`scrollWidth` igual al ancho de la vista) en escritorio ni en móvil. No probado: Outlook, Gmail y otros clientes de correo reales.
+
+## Catálogo de bloques mínimos · fase 1: «Tarjetas» de 1 a 8 (2026-11-12)
+
+Propuesta aprobada por el usuario: pasar de 21 bloques a 13 piezas mínimas que se combinan (publicada como página privada «Catálogo de bloques mínimos», https://claude.ai/artifact/CiKeVKLzeVVjvoGExs7im9). Decisiones tomadas con las opciones recomendadas: las newsletters existentes no se convierten (los bloques antiguos se siguen pintando igual, solo desaparecen de la paleta); la imagen junto al texto se conservará como opción de Imagen; la receta de la BASE (ref1) mantiene los bloques antiguos. Fases pendientes: 2) Título, Texto, Lista, Botón e Imagen 1–3 con espaciado automático; 3) Caja; 4) Banda de datos y Timeline repetibles; 5) paleta con esquemas, recetas e instrucciones de ChatGPT; 6) «Convertir» bloques antiguos.
+
+Fase 1 hecha:
+- `modules.js`: `K.repeat(cfg)` generaliza los grupos «de 1 a N, con ＋ Añadir otro» (contar, añadir, quitar subiendo los siguientes, elementos con título, campos del editor y aviso de revisión). Las opciones de Producto lo reutilizan (`K.pkCount`, `K.pkAdd`, `K.pkRemove`, `K.pkOptions` siguen existiendo); su HTML no cambia.
+- Bloque nuevo `cards` («Tarjetas»): de 1 a 8 (`c1_*` … `c8_*`, `d.cN`). Cada tarjeta: título (obligatorio solo en la primera), precio, etiqueta, estilo (clara con borde u oscura con el color de banda), texto, botón y enlace. Usa las mismas filas que Producto (`K.optionRows`): 1 ancha con el precio a la derecha y el botón a la izquierda; 3, 5, 6 y 7 cortas en filas de tres; 4 y 8 en filas de dos; móvil apilado. Si alguna tarjeta de una fila tiene botón, la fila se divide en cuerpo y botón para que los botones queden alineados abajo. En la tarjeta oscura los textos y enlaces van en blanco y el botón en blanco con el texto en color de título. `cardBody` y `wideCard` aceptan `dark`; sin él generan lo mismo que antes.
+- «Dos tarjetas de igual altura» pasa a «Dos tarjetas (antiguo)»: fuera de la paleta y de las instrucciones de ChatGPT, con una nota en el panel; las newsletters que lo usan, la revisión y el importador lo siguen aceptando. At a glance y Dos fechas límite siguen en la paleta hasta que exista el bloque Título (fase 2), porque llevan título de sección.
+- La receta «Anuncio» usa ahora «Tarjetas» con dos tarjetas; es la única receta cuyo HTML cambia. Las instrucciones de importar y de guion hablan de `cards`.
+- Revisión: tarjeta con contenido pero sin título, y botón sin enlace (o al revés) en cada tarjeta.
+- Vista previa: el recuadro de selección (`.ksa-box`) usa `box-sizing: border-box`; antes sobresalía 4 px y daba scroll horizontal en móvil.
+
+Pruebas: `test/cards.test.js` (nuevo); `test/hub.test.js` añade el bloque desde la paleta y comprueba que el antiguo no aparece; el resto de suites pasan. Todas las recetas salvo «Anuncio» generan el mismo HTML que antes en los 19 torneos y secciones. En el navegador integrado (`http://127.0.0.1:8788`, datos sintéticos): «Tarjetas» desde la paleta empieza con una; con tres (una oscura con etiqueta y botones en dos) salen en fila con los botones alineados; en móvil, apiladas y sin desbordamiento horizontal. No probado: Outlook, Gmail y otros clientes reales.
+
+## Catálogo de bloques mínimos · fase 2: Título, Texto, Lista, Botón e Imagen (2026-11-12)
+
+Regla acordada con el usuario (le preocupaba perder el resultado actual): cada pieza nueva, usada para lo mismo que un bloque antiguo, genera EXACTAMENTE el mismo HTML. `test/pieces.test.js` lo comprueba en los 19 torneos y secciones; solo se ignoran los comentarios internos `<!-- [n] TIPO -->`, que no se ven.
+
+- `modules.js`, piezas encadenadas: Título, Texto, Lista y Botón seguidos y con la misma alineación se montan en UNA celda (`K.flowGroups`, `K.flowCell`) con el espaciado de los bloques antiguos. Equivalencias: Título principal (+ Texto) (+ Botón) = «Título centrado»; Título saludo + Texto = «Texto / Intro»; Texto solo = Intro sin saludo; Título sección + Lista = «Título + lista»; Título entre dos líneas (+ Texto) = «Cierre»; Botón solo = «Botón suelto» (190 px, dorado u oscuro). Reglas: un Título siempre abre celda; tras un Botón, celda nueva; el Botón solo se une a una celda que empieza con un Título principal; una alineación distinta o cualquier otro bloque corta la celda. Márgenes de la celda: arriba según la primera pieza y abajo según la última (`flowPad`).
+- Bloques nuevos: `title` (texto, estilo principal/sección/saludo/entre dos líneas, alineación), `text` (texto, alineación: como el título de encima o izquierda), `list` (puntos), `button` (texto, enlace, estilo, alineación) e `images` (1 a 3 con `K.repeat`: 1 = «Imagen» antiguo a sangre o con márgenes, 3 = «Tres fotos en fila», 2 = dos de 279 px que se apilan en móvil).
+- «Tarjetas» usa el margen de «Dos tarjetas» y, con dos tarjetas claras, su mismo HTML. Sin ningún título todavía pinta los recuadros vacíos (como el antiguo), para poder verlos y pulsarlos.
+- Paleta: Título, Texto, Lista, Imagen, Botón y Tarjetas sustituyen a Intro, Título centrado, Título + lista, Cierre, Imagen, Tres fotos y Botón suelto (`K.LEGACY`), que pasan a «(antiguo)» con una nota en el panel; se siguen pintando, revisando e importando. Siguen en la paleta: Banda de datos, Banda informativa, Producto (hasta que exista la imagen junto al texto), Separador, Compra, Contacto, Step, At a glance, Timeline, Fechas límite, CTA, Important y Wallet (fases 3 y 4).
+- Recetas: todas salvo la de la BASE usan las piezas nuevas y generan el mismo HTML que antes de la fase 1 (comparado en todos los torneos). Instrucciones de importar y de guion: piezas (`title` con estilo, `text`, `list`, `button`, `images` con `f1_src`…) y su reparto.
+- Vista previa: cada pieza de una celda va en su propio `<div data-ksa-section>`, así que se selecciona, se edita, se mueve y se borra por separado. Un «Bloque nuevo» entre dos piezas las separa solo en la vista previa.
+
+Pruebas: `test/pieces.test.js` (nuevo); `cards`, `hub` y `brand-kits` adaptados al catálogo nuevo; todas las suites pasan y `test/test.js` mantiene el `igual: false` conocido. En el navegador integrado (`http://127.0.0.1:8789`, datos sintéticos): Título + Texto + Botón desde la paleta se ven como el antiguo «Título centrado», en una sola celda con tres piezas seleccionables; la ✕ de la barra flotante quita solo el Texto y Título + Botón conservan el margen 34/36. No probado: Outlook, Gmail y otros clientes reales (el HTML es el mismo que antes en las combinaciones equivalentes).
+
+## Catálogo de bloques mínimos · fase 3: «Caja» (2026-11-12)
+
+Misma regla: la Caja usada para lo mismo que un bloque antiguo genera exactamente su HTML (`test/pieces.test.js`, 19 torneos y secciones).
+
+- `modules.js`: bloque `box` («Caja») con estilo suave, con borde u oscura; cada estilo muestra solo sus campos (suave: etiqueta, fecha límite, título, texto y botón; con borde: título, texto, línea con enlace de Cvent y botón; oscura: etiqueta y texto). Equivalencias: suave solo con texto = «Banda informativa»; Título de sección + Caja suave solo con texto = la banda con título (se montan en una celda, con el título en el orden de estilos de la banda antigua); suave con etiqueta, título, fecha o botón = «Step»; con borde = «Llamada a la acción»; oscura = «Important» (sin etiqueta pone IMPORTANT, como el antiguo). Tras una Caja empieza celda nueva.
+- Banda informativa, Step, Llamada a la acción e Important pasan a «(antiguo)» (`K.LEGACY` → `box`), fuera de la paleta; se siguen pintando, revisando e importando. La receta «Recordatorio» usa la Caja y da el mismo HTML que antes. Las instrucciones de ChatGPT reparten avisos, pasos, llamadas a la acción e Important en `box` con su estilo.
+- Revisión: botón sin enlace (o al revés) en la Caja; dos Cajas suaves de texto seguidas avisan como dos bandas informativas.
+- Siguen en la paleta: Banda de datos, Producto (aviso incluido), At a glance, Timeline, Dos fechas límite (fase 4 o pendientes de equivalencia exacta), Separador, Compra, Contacto y Wallet.
+
+Pruebas: nuevas equivalencias en `test/pieces.test.js` (suave, suave con título encima, Step, CTA, Important y una newsletter mixta) y reglas de encadenado de la Caja; todas las suites pasan y todas las recetas salvo la de la BASE dan el mismo HTML que antes de la fase 1. En el navegador integrado (`http://127.0.0.1:8790`, datos sintéticos): Título de sección + Caja suave, Caja con borde con botón y Caja oscura se ven como los bloques antiguos; cada estilo muestra solo sus campos; sin desbordamiento horizontal.

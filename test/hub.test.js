@@ -275,16 +275,18 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   const st = {}, ui5 = boot(st), walk = n => [n, ...n.children.flatMap(walk)];
   ui5.clickText('Surf Cup 2026'); ui5.nodes['#new'].click();
   assert.equal(ui5.nodes['#palette'].hidden, false, 'Una newsletter vacía abre la paleta');
-  const card = walk(ui5.nodes['#palette-list']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent === 'Título centrado con barra'));
+  const card = walk(ui5.nodes['#palette-list']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent === 'Título'));
   card.click(); await new Promise(r => setTimeout(r, 260));
   const saved = Object.values(JSON.parse(st[PROJ]))[0].state;
-  assert.equal(saved.sections.length, 1); assert.equal(saved.sections[0].type, 'titulo');
-  assert.equal(saved.sections[0].d.title, 'PENDIENTE: Título'); assert.equal(ui5.nodes['#palette'].hidden, true);
+  assert.equal(saved.sections.length, 1); assert.equal(saved.sections[0].type, 'title');
+  assert.equal(saved.sections[0].d.text, 'PENDIENTE: Título'); assert.equal(saved.sections[0].d.style, 'principal'); assert.equal(ui5.nodes['#palette'].hidden, true);
   ui5.nodes['#add-toggle'].click();
-  walk(ui5.nodes['#palette-list']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent === 'Dos tarjetas de igual altura')).click();
+  assert.ok(!walk(ui5.nodes['#palette-list']).some(n => n.textContent === 'Dos tarjetas (antiguo)'), 'El bloque antiguo de dos tarjetas ya no sale en la paleta');
+  walk(ui5.nodes['#palette-list']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent === 'Tarjetas')).click();
   await new Promise(r => setTimeout(r, 260));
-  const cards = Object.values(JSON.parse(st[PROJ]))[0].state.sections[1].d;
-  assert.equal(cards.a_title, 'PENDIENTE: Título (Tarjeta 1)'); assert.equal(cards.b_title, 'PENDIENTE: Título (Tarjeta 2)', 'Los textos pendientes de cada tarjeta se distinguen');
+  const added = Object.values(JSON.parse(st[PROJ]))[0].state.sections[1];
+  assert.equal(added.type, 'cards');
+  assert.equal(added.d.c1_title, 'PENDIENTE: Título 1'); assert.equal(added.d.c2_title, undefined, 'Un bloque Tarjetas nuevo empieza con una sola tarjeta');
   console.log('OK: paleta de bloques (añadir con textos PENDIENTE y cerrar).');
 })().catch(e => { console.error(e); process.exit(1); });
 
