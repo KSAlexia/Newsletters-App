@@ -81,7 +81,7 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
 
 // Clubs: nombre, fuentes, colores y pendientes por sección; KSA sigue igual (prueba de igualdad del principio).
 {
-  const make = id => { const st = { ...K.fromRecipe('blank'), tournament: id, franjaLeft: 'Camp', name: 'Prueba', sections: [{ type: 'contacto', d: {} }] }; return [st, K.build(st)]; };
+  const make = id => { const st = { ...K.fromRecipe('blank'), tournament: id, look: 'classic', franjaLeft: 'Camp', name: 'Prueba', sections: [{ type: 'contacto', d: {} }] }; return [st, K.build(st)]; };
   const [ars, arsHtml] = make('arsenal-exp');
   assert.match(arsHtml, /<title>Arsenal Football Development Clinic – Prueba<\/title>/);
   assert.ok(arsHtml.includes('e1baea18930047838d4054ffe1d0f262.png') && arsHtml.includes('#B4001E'));
@@ -155,7 +155,7 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
     'academy-residential': { title: 'Kaptiva Sports Academy', colors: ['#790B81', '#AF6CB3'], header: '6cc70ed029dd494b80735f821e8158a2.png', footer: '0e125d09d568466780e1bd113486df30.png', alt: 'Kaptiva Sports Academy', mail: 'admissions@kaptivasports.com', font: '8ee7cfe4f92440f99df5a47fdee34944.otf' }
   };
   for (const [id, c] of Object.entries(cases)) {
-    const st = K.fromRecipe('media', id), out = K.build(st), msgs = K.check(st, out).map(x => x.msg).join('\n');
+    const st = { ...K.fromRecipe('media', id), look: 'classic' }, out = K.build(st), msgs = K.check(st, out).map(x => x.msg).join('\n');
     assert.ok(out.includes('<title>' + c.title), id + ': título');
     c.colors.forEach(col => assert.ok(out.includes(col), id + ': color ' + col));
     assert.equal((out.match(/#6F4ACC|#91FAFB/gi) || []).length, 0, id + ': sin restos de la paleta KSA');

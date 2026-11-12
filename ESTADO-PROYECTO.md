@@ -1,6 +1,83 @@
 # Traspaso técnico · Kaptiva Newsletters
 
-Actualizado: 11 de noviembre de 2026. Documento compartido para Codex, Claude y cualquier persona que continúe el proyecto. Describe el estado observado; los pendientes no son autorización para implementarlos todos. La petición actual del usuario determina el alcance.
+Actualizado: 12 de noviembre de 2026. Documento compartido para Codex, Claude y cualquier persona que continúe el proyecto. Describe el estado observado; los pendientes no son autorización para implementarlos todos. La petición actual del usuario determina el alcance.
+
+**Cómo leer este documento:** el apartado 0 es el resumen vigente para retomar el trabajo. Los apartados 1 a 14 son el traspaso del 11/11 y algunas partes (archivos, módulos, pruebas, estado del repositorio) han quedado desactualizadas: si chocan con el apartado 0 o con el código, manda el apartado 0 / el código. Las secciones fechadas que siguen al 14 son el registro de cambios, en orden.
+
+## 0. Estado actual · resumen para retomar (12/11/2026)
+
+### Qué es
+
+App estática (HTML + CSS + JS sin framework, sin compilación ni backend) para montar newsletters de Kaptiva y exportarlas a Cvent (`.txt`/`.html`). Se abre `index.html`; Node solo para pruebas. Todo se guarda en `localStorage`. Interfaz y documentación en español.
+
+### Archivos
+
+| Archivo | Qué hace |
+| --- | --- |
+| `index.html` | Hub, editor, diálogos (importar, guion, brand kits, historial) y orden de carga de scripts |
+| `css/app.css` | Solo la interfaz de la app (no el email) |
+| `js/brands.js` | Cliente, 5 torneos de Kaptiva Global Stage y clubs con secciones (19 en total), colores, header/footer, fuentes, `theme` por roles (WCH) y campos Cvent permitidos |
+| `js/head.js` | `K.HEAD`/`K.BODY_*`: cabecera del email, reglas móviles (480 px) y condicionales de Outlook |
+| `js/brand-kits.js` / `js/brand-kits-ui.js` | Biblioteca de brand kits (validación, copia guardada con la newsletter, banners/fotos) y su interfaz |
+| `js/modules.js` | **Núcleo del email**: piezas y bloques (`K.MODULES`), `K.build` (HTML), `K.check` (revisión), recetas, importación, instrucciones de ChatGPT, estilo de club |
+| `js/block-icons.js` | Esquemas SVG de cada bloque para la paleta y el panel (solo interfaz) |
+| `js/history.js` | Deshacer/rehacer y versiones por newsletter |
+| `js/hub.js` | Árbol de ubicaciones/carpetas, ordenación y filtros del hub |
+| `js/app.js` | Estado, guardado, hub, editor de campos, vista previa interactiva (iframe `srcdoc` + `enhancePreview`), exportación |
+
+Claves de `localStorage`: `kaptiva-newsletters-projects-v1` (newsletters), `-hub-v1` (carpetas), `-hub-view-v1` (vista del hub), `-brand-kits-v1`, `-versions-v1` (historial), `kaptiva-newsletters-v1` (formato antiguo, migrado).
+
+### Modelo de una newsletter (`state`)
+
+`{ tournament, name, desc, franjaLeft, franjaRight, mediaPackages, headerAlt, look, brandKit?, off: {header, franja, footer}, sections: [{ id, type, d: {campos}, open, hidden? }] }`
+
+- `look`: `'auto'` (nuevas: estilo de club en los clubs) o `'classic'` (las guardadas antes; `K.normalize` lo pone si falta).
+- `hidden: true`: bloque oculto con el ojo; no sale en el email ni se revisa.
+
+### Bloques
+
+- **Paleta** (`K.MODULE_ORDER`): piezas mínimas `title` (principal, sección, saludo, entre líneas, antetítulo), `text` (normal/pequeño), `list`, `images` (1–3), `button`, `cards` (Tarjetas 1–8), `box` (Caja suave/borde/oscura; texto o puntos); y bloques `datos` (1–4), `producto` (1–8 opciones), `separador`, `compra` (frase fija u «otra»), `contacto`, `glance`, `timeline` (1–8 hitos, etiqueta bajo la fecha, puntos), `deadlines`, `wallet`.
+- **Antiguos** (`K.LEGACY`: intro, titulo, lista, cierre, imagen, fotos3, boton, tarjetas, info, step, cta, important): fuera de la paleta, pero se siguen pintando e importando igual.
+- **Piezas encadenadas**: `title`/`text`/`list`/`button` seguidos se unen en una celda (`K.flowGroups`, `K.flowCell`) para reproducir exactamente el HTML de los bloques antiguos. Reglas en `js/modules.js` (comentario sobre `TITLE_STYLES`).
+- Grupos repetibles con `K.repeat(cfg)` (Producto, Tarjetas, Imagen, Banda de datos, Timeline).
+- Cada bloque nuevo necesita: entrada en `K.MODULES` (`fields`, `build`, `tag`, `letter`, `name`), `BLOCK_INFO` en `js/app.js`, esquema en `js/block-icons.js` y, si procede, línea en la guía de composición.
+
+### Estilos del email
+
+- Colores: el HTML se escribe con `P = #6F4ACC` (principal) y `A = #91FAFB` (acento) y `K.build` los cambia al final por los del torneo o kit. Roles por marca con `%%C:rol%%` (`C`/`C_DEFAULT` en `js/modules.js`), sustituidos por `theme`.
+- **Estilo de club** (`K.lookIsClub`, `K.clubTheme`): con `look: 'auto'` en clubs (no torneos, no Kaptiva Sports Academy, no secciones con `theme` propio como WCH). Referencia de diseño: newsletter «Essential Pack» de PSG (`K.REFERENCE_CLUB`).
+- Vista previa: `K.build(st, { preview: true })` añade marcas `data-ksa-section`, tiras de bloques ocultos y textos guía; nunca salen en lo exportado.
+
+### Reglas de trabajo acordadas con el usuario
+
+1. **Lo antiguo no cambia**: cualquier cambio en el generador debe dar exactamente el mismo HTML para newsletters y bloques existentes. Las novedades van como opciones apagadas por defecto o con `look`. Verificar con `node test/compare-modules.js <copia-anterior-de-modules.js>` (copiar `js/modules.js` antes de tocarlo, o usar `git show HEAD:js/modules.js > /tmp/m.js`) y con las pruebas de equivalencia de `test/pieces.test.js`.
+2. Bloques mínimos que se combinan, no bloques grandes con muchas opciones; lo nuevo se añade como opción de una pieza existente si encaja.
+3. Conservar textos literales, custom links y campos Cvent. No inventar assets ni URLs.
+4. Probar en el navegador (escritorio y móvil, sin desbordes) además de las pruebas de Node; no está probado en Outlook/Gmail reales.
+5. Documentar cada cambio en este archivo. Commit solo cuando el usuario lo pide.
+
+### Instrucciones de ChatGPT
+
+`K.importPrompt()` (HTML antiguo o guion → JSON) y `K.scriptPrompt()` (guion → JSON) se generan desde el código: reglas, «GUÍA DE COMPOSICIÓN» (`composeGuide`), lista de bloques y campos (`moduleList`, sale sola de `fields`) y el ejemplo `K.REFERENCE_CLUB`. `K.importProject` valida el JSON y descarta lo desconocido. Si se añade una opción de bloque, revisar la guía.
+
+### Pruebas
+
+```sh
+for t in test/*.test.js; do node "$t" || echo "FALLA $t"; done
+node test/test.js            # comparación con la BASE; muestra «igual: false 20205 20211» (diferencia conocida del footer)
+node test/compare-modules.js /tmp/modules.antes.js
+git diff --check
+```
+
+Suites: `hub`, `brand-kits`, `history`, `producto`, `cards`, `pieces` (equivalencia piezas ↔ antiguos en los 19 torneos), `hidden`, `icons`, `datos-timeline`, `compra`, `variantes`, `club-style`.
+
+### Pendiente (no implementar sin petición)
+
+- Fase 6 del catálogo: botón «Convertir» de bloque antiguo a piezas (opcional).
+- At a glance y Dos fechas límite siguen como bloques propios (Tarjetas no los reproduce byte a byte).
+- Probar en Outlook, Gmail y Cvent reales.
+- Si el usuario pasa newsletters de referencia de otros clubs, ajustar su estilo (hoy todos usan el de PSG con sus colores).
+- Deuda técnica del apartado 9 que siga vigente.
 
 ## 1. Objetivo y decisiones de producto
 
@@ -725,3 +802,35 @@ Pruebas: nuevas equivalencias en `test/pieces.test.js` (suave, suave con título
 - **Caja de compra · Frase principal**: siguen las dos frases fijas y la tercera opción pasa a ser «Otra (escribe tu frase)», con texto libre. Puede llevar {[E-MODIFY REG LINK]}, un enlace propio [texto](https://…) o **negrita**. Ya no se exige el campo de Cvent: la revisión da error si la frase está vacía y aviso si no tiene ningún enlace.
 - HTML: las dos frases fijas y las frases propias ya guardadas (texto llano con el campo de Cvent) salen igual que antes (76 casos comparados en los 19 torneos); el formato solo se aplica a la frase propia.
 - Prueba: `node test/compra.test.js`.
+
+## Caja vacía visible en la vista previa (2026-11-12)
+
+- Una Caja suave recién añadida (sin texto, etiqueta, título ni botón) solo era una banda clara casi invisible. Ahora, **solo en la vista previa**, lleva dentro un texto guía gris en cursiva: «Caja vacía · escribe su texto en el panel de la derecha». También cuando va pegada a un Título de sección.
+- No rellena el bloque (los datos quedan vacíos) y nunca sale en el email: `K.build` usa una marca interna (`BOX_EMPTY`) solo con `preview` y la cambia por el texto guía al final. Las recetas siguen dando el mismo HTML.
+- Prueba añadida en `node test/pieces.test.js`. Comprobado en el navegador.
+- Nota: el navegador puede guardar en caché los `.js` antiguos; si un cambio no se ve, recargar sin caché (⌘ + Mayús + R).
+
+## Variantes sacadas de la newsletter de PSG Experiences (2026-11-12)
+
+Se revisó una newsletter de PSG («Essential Pack Information»). Casi todo ya existía (header, franja, Título principal + Texto, At a glance, Timeline, Dos fechas límite, Imagen de 3, Caja con borde, banner final). Lo distinto se añadió como **opciones de las piezas que ya hay**, no como bloques nuevos (regla de bloques mínimos). Todas vienen apagadas: sin tocarlas, el HTML es el mismo de antes (recetas, Banda de datos/Timeline y Caja de compra comparados con la versión anterior: 0 diferencias).
+
+- **Título · estilo «Antetítulo (pequeño, en mayúsculas)»** (`style: 'ante'`): rótulo de 12 px en mayúsculas del color principal (p. ej. «Your week, day by day», «Good to know»). Se encadena con el Texto de debajo en la misma celda.
+- **Texto · Tamaño «Pequeño»** (`size: 'small'`): 13/21 px para notas o «good to know». Solo con alineación a la izquierda.
+- **Caja suave · Formato «Puntos»** (`fmt: 'puntos'`): una línea, un punto con «•» del color principal (p. ej. «Your reference hotel», «Meals included»). Sirve con o sin título.
+- **Timeline · «Texto de los hitos: Puntos»** (`fmt`) y **«Etiqueta bajo la fecha»** por hito (`s1`…`s8`, p. ej. «Arrival», «Training»).
+- **Franja · etiqueta derecha (opcional)** (`st.franjaRight`, en «Datos»): sustituye al nombre del torneo o de la marca (p. ej. «November 2026 · Paris»). Se importa desde el JSON como `franjaRight`; las instrucciones de ChatGPT lo explican.
+- **Corrección**: con un Título principal alineado a la izquierda, el texto de debajo se colocaba al lado de la barrita (la tabla con `align="left"` flotaba). Ahora la barra va sin `align`. No afecta a lo antiguo (el antiguo «Título centrado» siempre va centrado).
+- Prueba: `node test/variantes.test.js`. Comprobado en el navegador recreando la newsletter de PSG, en escritorio y en móvil.
+
+## Estilo de club y guía de composición para ChatGPT (referencia: PSG «Essential Pack», 2026-11-12)
+
+Problema: la newsletter de PSG importada desde el JSON de ChatGPT no se parecía al original. Causas: (1) la app pintaba los clubs con el estilo de los torneos de Kaptiva (títulos grandes en mayúsculas, franja blanca, texto negro); (2) ChatGPT no sabía qué pieza usar (título + lista en vez de caja con puntos, Tarjetas en vez de Dos fechas límite, «Arrival» como título del hito, etc.).
+
+- **Estilo de club** (`K.clubTheme(t)`, con los colores del kit de cada club): franja del color principal con texto blanco (sin línea de acento), títulos sin mayúsculas (principal 32/40, sección 26/32), texto `#444444`, fondos suaves `#F5F7FB`, etiqueta blanca en recuadros oscuros, y el acento en el borde y la etiqueta de los recuadros claros destacados (At a glance, Dos fechas límite, Caja con borde). En móvil, la fecha del Timeline va encima de su texto. Roles nuevos en `C` (`onDark`, `hilite`, `franjaBar`, `h1`, `h2`) con valores por defecto iguales a los de siempre.
+- **Quién lo usa**: `st.look`. Las newsletters nuevas (receta, guion o importación) llevan `look: 'auto'` = estilo de club en los clubs (PSG, Arsenal, Bayern, Fundación Real Madrid; no en Kaptiva Sports Academy ni en secciones con estilo propio como WCH, ni en los torneos). Las guardadas antes no tienen `look` y `K.normalize` les pone `'classic'`: **no cambian**. Se puede cambiar en «Más opciones → Estilo de la newsletter».
+- **Saltos de línea** (`\n`) en títulos y datos → `<br />` («Your Week in Paris,↵{[C-FIRST NAME:TC]}», «Nov 22 – 28↵2026»).
+- **Caja con borde** sin título ya no deja un `<p>` vacío.
+- **ChatGPT** (importar y guion): nueva «GUÍA DE COMPOSICIÓN» (qué pieza para cada contenido: glance para datos clave, title ante + timeline con s y puntos para la agenda, box suave con título dentro y puntos para hotel/comidas, deadlines para plazos, ante + texto pequeño para notas, box con borde con título dentro para la pregunta final, franjaRight…) y la newsletter de PSG como **ejemplo de referencia** (`K.REFERENCE_CLUB`).
+- HTML con `look: 'classic'`: igual que antes en todas las recetas y torneos (0 diferencias).
+- Prueba: `node test/club-style.test.js`. Comprobado en el navegador: la referencia de PSG (escritorio y móvil) frente al original, la misma con Arsenal y Bayern, y el selector de estilo en el editor.
+- Pendiente: probar en Outlook/Gmail reales; si hay newsletters de referencia de otros clubs, comparar con ellas.

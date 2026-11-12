@@ -581,7 +581,7 @@
     if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
     editingCode = false; renderImagePanel(); renderCompareSelect(); renderCompare();
     selectedSection = -1; previewScroll = 0; pendingInsert = null; if (state.sections.length) closePalette(); else openPalette(null);
-    $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || '';
+    $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || ''; $('#franja-right').value = state.franjaRight || ''; $('#look').value = state.look === 'auto' ? 'auto' : 'classic'; lookNote();
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
   }
@@ -737,10 +737,10 @@
 
   // ---------- Montar por bloques: paleta, arrastrar y editar en la vista previa ----------
   var BLOCK_INFO = {
-    title: 'Un titular: principal, de sección, saludo o entre dos líneas.', text: 'Párrafos de texto. Bajo un título, se alinea con él.',
+    title: 'Un titular: principal, de sección, saludo, entre dos líneas o antetítulo pequeño.', text: 'Párrafos de texto, normal o pequeño. Bajo un título, se alinea con él.',
     list: 'Puntos con viñeta. Pon un Título (sección) encima si hace falta.', images: 'De 1 a 3 imágenes en fila, a sangre o con márgenes.',
     button: 'Un botón. Bajo un Título principal se une a él.',
-    box: 'Recuadro para destacar: suave (avisos, pasos), con borde (llamada a la acción) u oscuro (Important).',
+    box: 'Recuadro para destacar: suave (avisos, pasos; texto o puntos), con borde (llamada a la acción) u oscuro (Important).',
     intro: 'Saludo y párrafos de texto.', titulo: 'Título grande centrado, con texto y botón opcionales.',
     lista: 'Título con una lista de puntos.', datos: 'Banda de color con 1 a 4 datos en fila: fecha, hora, lugar…',
     tarjetas: 'Dos opciones lado a lado, con botón.', cards: 'De 1 a 8 tarjetas: opciones, precios, datos o fechas. Claras u oscuras, con botón opcional.', info: 'Aviso o instrucciones sobre fondo suave.',
@@ -748,7 +748,7 @@
     imagen: 'Imagen a sangre o con márgenes.', cierre: 'Frase de cierre entre dos líneas.',
     compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.',
     step: 'Paso con etiqueta, título, fecha límite y botón.', glance: 'Tres datos clave: dos tarjetas oscuras y una clara.',
-    timeline: 'De 1 a 8 fechas o hitos, uno debajo de otro.', deadlines: 'Dos fechas límite lado a lado.',
+    timeline: 'De 1 a 8 fechas o hitos, uno debajo de otro. Texto en párrafos o en puntos.', deadlines: 'Dos fechas límite lado a lado.',
     fotos3: 'Tres fotos en fila (se apilan en móvil).', cta: 'Caja con borde para inscribirse o actuar.',
     boton: 'Un botón solo, del color principal u oscuro.', important: 'Aviso destacado en caja oscura.',
     wallet: 'Botones para añadir la entrada al wallet.'
@@ -756,6 +756,11 @@
   // dragBlock: { kind: 'move', from } (bloque existente) | { kind: 'new', type } (desde la paleta)
   var dragBlock = null, selectedSection = -1, insertAt = null, pendingInsert = null, previewDoc = null, previewScroll = 0, inlineEditing = false;
   // Miniatura con el esquema del bloque (js/block-icons.js); si no hay, la letra de siempre.
+  // Estilo: «auto» = estilo de club en los clubs (newsletters nuevas); «classic» = el de siempre (las guardadas antes).
+  function lookNote() {
+    var t = K.tournament(state.tournament), club = K.lookIsClub({ look: 'auto' }, t);
+    $('#look-note').textContent = !club ? 'Este torneo usa siempre su estilo propio.' : state.look === 'auto' ? 'Estilo de club: franja del color principal, títulos sin mayúsculas, texto gris y el acento en las cajas destacadas.' : 'Estilo clásico de Kaptiva (como las newsletters hechas antes).';
+  }
   function blockThumb(id, cls) {
     var svg = K.blockIcon && K.blockIcon(id), n = el('span', { class: cls });
     if (svg) n.innerHTML = svg; else { n.classList.add('letter'); n.textContent = K.MODULES[id].letter; }
@@ -1450,6 +1455,8 @@
       createProject(st);
     });
     $('#franja').addEventListener('input', function () { state.franjaLeft = this.value; update(); });
+    $('#franja-right').addEventListener('input', function () { state.franjaRight = this.value; update(); });
+    $('#look').addEventListener('change', function () { state.look = this.value; lookNote(); update(); });
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).addEventListener('change', function () { state.off[k] = !this.checked; update(); }); });
     window.addEventListener('beforeunload', function () { if (currentId) persist(); });
     // Otra pestaña ha guardado: fusionar y refrescar lo que se ve.
@@ -1487,7 +1494,7 @@
       if (kit) state.brandKit = K.BrandKits.snapshot(kit); else delete state.brandKit;
       update(); K.BrandKitsUI.refreshSelect(state); renderImagePanel();
     });
-    $('#tournament').addEventListener('change', function () { state.tournament = this.value; update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); });
+    $('#tournament').addEventListener('change', function () { state.tournament = this.value; lookNote(); update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); });
     $('#name').addEventListener('input', function () { state.name = this.value; update(); });
     $('#desc').addEventListener('input', function () { state.desc = this.value; update(); });
     $('#mp').addEventListener('change', function () { state.mediaPackages = this.checked; update(); });

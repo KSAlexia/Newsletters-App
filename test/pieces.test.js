@@ -87,3 +87,15 @@ console.log('OK: las piezas nuevas generan el mismo HTML que los bloques antiguo
   assert.deepEqual(r.state.sections.map(s => s.type), ['titulo', 'title']);
   console.log('OK: paleta con las piezas nuevas; los bloques antiguos se siguen pintando e importando.');
 }
+
+// Caja vacía: en la vista previa sale con un texto guía gris (sola o tras un Título de sección); nunca en el email ni en los datos.
+{
+  const K = globalThis.KSA;
+  const st = { tournament: 'surfcup', name: 'x', off: {}, franjaLeft: 'X', sections: [{ type: 'box', d: { style: 'suave' } }, { type: 'title', d: { text: 'T', style: 'seccion' } }, { type: 'box', d: {} }] };
+  const p = K.build(st, { preview: true }), e = K.build(st);
+  assert.equal((p.match(/Caja vacía · escribe su texto/g) || []).length, 2);
+  assert.ok(!/Caja vacía|KSA_CAJA/.test(e), 'El email no lleva el texto guía');
+  assert.deepEqual(st.sections[0].d, { style: 'suave' }, 'No se rellena el bloque');
+  assert.ok(!K.build({ ...st, sections: [{ type: 'box', d: { text: 'Hola' } }] }, { preview: true }).includes('Caja vacía'));
+  console.log('OK: Caja vacía visible en la vista previa con texto guía, sin tocar el email ni los datos.');
+}

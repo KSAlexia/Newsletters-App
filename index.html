@@ -87,9 +87,12 @@
       <label>Nombre de archivo<input id="desc" type="text" placeholder="media_packages"><small id="filename"></small></label>
       <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner del kit bajo el header)</label>
       <label>Franja identificadora · etiqueta izquierda *<input id="franja" type="text" placeholder="Media Packages"></label>
+      <label>Franja · etiqueta derecha (opcional)<input id="franja-right" type="text" placeholder="Por defecto, el torneo o la marca"></label>
       <p class="fixed">Automático: header y footer del kit elegido, franja identificadora y footer legal con la baja.</p>
       <details class="more">
         <summary>Más opciones</summary>
+        <label>Estilo de la newsletter<select id="look"><option value="auto">Automático (clubs: estilo de club)</option><option value="classic">Clásico (el de siempre)</option></select></label>
+        <small id="look-note"></small>
         <label class="check"><input id="on-header" type="checkbox"> Mostrar el header del kit</label>
         <label class="check"><input id="on-franja" type="checkbox"> Mostrar la franja identificadora</label>
         <label class="check"><input id="on-footer" type="checkbox"> Mostrar el footer de imagen</label>
