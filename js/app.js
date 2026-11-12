@@ -647,7 +647,12 @@
     tarjetas: 'Dos opciones lado a lado, con botón.', info: 'Aviso o instrucciones sobre fondo suave.',
     producto: 'Servicio con precio, imagen y opciones.', separador: 'Línea fina entre dos productos.',
     imagen: 'Imagen a sangre o con márgenes.', cierre: 'Frase de cierre entre dos líneas.',
-    compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.'
+    compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.',
+    step: 'Paso con etiqueta, título, fecha límite y botón.', glance: 'Tres datos clave: dos tarjetas oscuras y una clara.',
+    timeline: 'Hasta cuatro fechas o hitos en columna.', deadlines: 'Dos fechas límite lado a lado.',
+    fotos3: 'Tres fotos en fila (se apilan en móvil).', cta: 'Caja con borde para inscribirse o actuar.',
+    boton: 'Un botón solo, del color principal u oscuro.', important: 'Aviso destacado en caja oscura.',
+    wallet: 'Botones para añadir la entrada al wallet.'
   };
   // dragBlock: { kind: 'move', from } (bloque existente) | { kind: 'new', type } (desde la paleta)
   var dragBlock = null, selectedSection = -1, insertAt = null, pendingInsert = null, previewDoc = null, previewScroll = 0, inlineEditing = false;
@@ -776,7 +781,7 @@
     if (node && scroll) node.getBoundingClientRect && doc.defaultView.scrollTo({ top: Math.max(0, node.getBoundingClientRect().top + doc.defaultView.scrollY - 40), behavior: 'smooth' });
   }
   function hideDropLine() { if (previewDoc && previewDoc.body) { var l = previewDoc.querySelector('.ksa-line'); if (l) l.style.display = 'none'; Array.prototype.forEach.call(previewDoc.querySelectorAll('.ksa-drop'), function (n) { n.remove(); }); } }
-  function cleanLine(s) { return String(s || '').replace(/\*/g, '').replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1').replace(/\s+/g, ' ').trim(); }
+  function cleanLine(s) { return String(s || '').replace(/\*/g, '').replace(/==([^=\n]+?)==/g, '$1').replace(/\+\+([^+\n]+?)\+\+/g, '$1').replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1').replace(/\s+/g, ' ').trim(); }
   function nodeText(n) { return String(n.textContent || '').replace(/\s+/g, ' ').trim(); }
   // Busca el campo de texto (y la línea) que muestra el elemento pulsado.
   function findEditable(target, sec, s) {
@@ -824,6 +829,14 @@
     }
     return null;
   }
+  // Etiqueta destacada (==…==) y subrayado de color (++…++): marcadas por la barra de formato o reconocidas por su estilo en el email.
+  function mdKind(el) {
+    var k = el.getAttribute('data-md'); if (k) return k;
+    var st = (el.getAttribute('style') || '').replace(/\s+/g, '');
+    if (/border-bottom:2pxsolid/.test(st)) return 'under';
+    if (/background-color:/.test(st) && /padding:1px6px/.test(st)) return 'tag';
+    return '';
+  }
   function toMarkdown(node) {
     var out = '';
     Array.prototype.forEach.call(node.childNodes, function (c) {
@@ -833,6 +846,8 @@
       if ((tag === 'strong' || tag === 'b') && inner.trim()) out += '**' + inner + '**';
       else if ((tag === 'em' || tag === 'i') && inner.trim()) out += '*' + inner + '*';
       else if (tag === 'a' && c.getAttribute('href')) out += '[' + inner + '](' + c.getAttribute('href') + ')';
+      else if (tag === 'span' && inner.trim() && mdKind(c) === 'tag') out += '==' + inner + '==';
+      else if (tag === 'span' && inner.trim() && mdKind(c) === 'under') out += '++' + inner + '++';
       else if (tag === 'br') out += ' ';
       else out += inner;
     });
@@ -877,6 +892,14 @@
       if (anc) { anc.setAttribute('href', url); return; }
       var a = doc.createElement('a'); a.setAttribute('href', url); a.appendChild(saved.extractContents()); saved.insertNode(a); selectNode(a);
     }
+    function toggleSpan(kind) {
+      var r = selRange(); if (!r) return;
+      for (var n = r.commonAncestorContainer; n && n !== node; n = n.parentNode) if (n.nodeType === 1 && n.tagName === 'SPAN' && mdKind(n) === kind) { unwrap(n); return; }
+      if (r.collapsed) return;
+      var w = doc.createElement('span'); w.setAttribute('data-md', kind);
+      w.setAttribute('style', kind === 'tag' ? 'background-color:#BEA47A;color:#000;font-weight:bold;padding:1px 6px;border-radius:3px;' : 'font-weight:bold;border-bottom:2px solid currentColor;');
+      w.appendChild(r.extractContents()); r.insertNode(w); selectNode(w);
+    }
     function clear() { node.textContent = node.textContent; }
     function fbtn(label, title, fn, style) {
       var b = doc.createElement('button'); b.type = 'button'; b.innerHTML = label; b.title = title; if (style) b.setAttribute('style', style);
@@ -888,6 +911,8 @@
       fbtn('<b>B</b>', 'Negrita (Ctrl/⌘ + B)', function () { toggle(['STRONG', 'B'], 'strong'); });
       fbtn('<i>I</i>', 'Cursiva (Ctrl/⌘ + I)', function () { toggle(['EM', 'I'], 'em'); });
       fbtn('🔗 Enlace', 'Enlazar la selección (Ctrl/⌘ + K)', link);
+      fbtn('Etiqueta', 'Etiqueta destacada (fondo del color principal)', function () { toggleSpan('tag'); });
+      fbtn('<u>Subrayar</u>', 'Negrita con subrayado del color principal', function () { toggleSpan('under'); });
       fbtn('Quitar formato', 'Quitar negritas, cursivas y enlaces de este texto', clear);
       doc.body.appendChild(fmt);
       var rect = node.getBoundingClientRect(), w = doc.defaultView;
@@ -1206,7 +1231,11 @@
 
   // ---------- Eventos ----------
   function init() {
-    if (K.BrandKitsUI) K.BrandKitsUI.init(function () { K.BrandKitsUI.refreshSelect(state); renderImagePanel(); });
+    // Al guardar un kit se repinta la newsletter abierta: si es el kit de su marca, cambia al momento.
+    if (K.BrandKitsUI) {
+      K.BrandKitsUI.currentTournament = function () { return currentId ? K.tournament(state.tournament).id : ''; };
+      K.BrandKitsUI.init(function () { K.BrandKitsUI.refreshSelect(state); if (currentId) { renderImagePanel(); refresh(); } });
+    }
     fillSettings();
     loadAll(); initHub(); showLobby();
     $('#back').addEventListener('click', function () {

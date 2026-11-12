@@ -518,3 +518,57 @@ Datos recibidos del usuario y cargados en `js/brands.js` (sustituyen los provisi
 - La plantilla incluía «SECCIÓN con diseño distinto: CANADA CAMPS» con los campos vacíos en ambos casos: no se ha creado ningún override. Academy no tiene sección CANADA CAMPS.
 
 Pruebas: `test/brand-kits.test.js` añade, para las cuatro secciones, título, colores sin restos de la paleta KSA, header/footer/alt, contacto, fuentes, formato truetype y ausencia de avisos de diseño pendiente. Pasan todas las suites. Vista previa en el navegador integrado (datos sintéticos, 1440 px): Bayern › CANADA CAMPS y Academy › SHORT SESSIONS con su header, franja, título, caja de contacto y footer; revisión sin errores en ambas. No probado en Cvent ni en clientes de correo.
+
+## Brand kit de RMF World Challenge 2027 (2026-11-12)
+
+El usuario envió el brand kit completo de WCH (blanco y dorado; negro y carbón solo para texto y detalles; nunca rojo). Cargado en la sección `rmf-wc` de `js/brands.js`; deja de ser provisional.
+
+- Datos: nombre en el título y alt del header «Real Madrid Foundation World Challenge»; header `pix/df32a86304cb472599c44c9e4979cf33.png`; banner final «See You in Madrid» `pix/c2955fb129e34300b1277fc35ad7e793.png` (como footer de imagen, siempre antes de la línea de baja); principal y acento `#BEA47A`; Georgia en titulares y cifras y Helvetica/Arial en el resto, sin `@font-face` (mismo mecanismo `families` que Arsenal). Subheader fijo: `franjaLeft` «WORLD CHALLENGE 2027» (por defecto si la newsletter no pone otro; la revisión ya no lo exige) y `franjaRight` «FUNDACIÓN REAL MADRID». La foto WCH a sangre aparece en el panel de imágenes (`t.assets` → `BrandKits.defaults().assets`).
+- Paleta por roles (`modules.js`): nuevos roles `C.title`, `strong`, `link`, `button`, `buttonText`, `franjaText`, `franjaBg`, `line`, `contactBg`, `band`, que antes eran siempre el color principal (o blanco/gris). `t.theme` puede separarlos, y además `body` (texto `#000000`), `grey`, `soft` y `bg` (fondo exterior del email). Se resuelven al final de `K.build`, antes del cambio de principal/acento, y solo si no hay brand kit aplicado. WCH: títulos, negritas y enlaces negros; botón dorado con texto negro; subheader carbón `#1F1F1F` con texto blanco; banda de datos carbón; cajas y contacto `#F8F5EF`; líneas `#EAE5DA`; texto `#2B2B2B`; grises `#9A9A9A`; fondo blanco.
+- Comprobado que el HTML de las otras 18 secciones con las 7 recetas (escritorio y vista previa, 266 combinaciones) es idéntico byte a byte al anterior; solo cambia `rmf-wc`.
+- Campos de Cvent: añadidos a `K.CVENT_FIELDS` los del kit (`{[C-LAST NAME]}`, `{[E-TITLE]}`, fechas/horas con formato, `{[E-TIME ZONE]}`, `{[E-ADDRESS]}`, `{[C-PAYMENTS]}`, `{[C-QRCODE_LINK]}`, wallets y `{[E-RSVP YES LINK]}`). Nueva comprobación para todas las marcas: error si `{[E-RSVP YES LINK]}` o `{[E-MODIFY REG LINK]}` está dentro de otro enlace (HTML, `[texto](…)` o campo de enlace). Ninguna receta existente da falso positivo.
+
+Pendiente o fuera del modelo actual:
+- Contacto de WCH: el kit pide «Contacto + firma» pero no indica email ni custom field; sigue «CONTACTO PENDIENTE» (error en revisión).
+- Componentes del kit que no existen como módulos: caja «Step» con etiqueta de deadline, tarjetas «At a glance» (2 carbón + 1 blanca), timeline, dos cajas de deadline, tres fotos de 182 px, CTA con borde dorado, botón carbón, aviso «Important», etiqueta dorada y subrayado dorado para palabras urgentes, badges de Apple/Google Wallet (sus imágenes están en cvent-assets.com, no en custom.cvent.com). Las cajas de información y contacto existentes ya salen con fondo `#F8F5EF` y borde dorado.
+- Tipografía: tamaños y pesos del kit (H1 Georgia 32/40 bold, intro 15/25…) no se aplican; se mantienen los tamaños del generador y los titulares en mayúsculas, que el kit no pide.
+- No probado en Cvent ni en clientes de correo.
+
+Pruebas: `test/brand-kits.test.js` añade WCH (solo colores de la paleta, título, header, banner, subheader carbón con texto blanco, fondo blanco, sin fuentes web, negrita y enlace negros, sin error de franja, foto en el panel, RSVP dentro de enlace como error y suelto como válido) y actualiza la prueba antigua que esperaba WCH pendiente. Pasan todas las suites; `test/test.js` mantiene la diferencia BASE conocida. Vista previa en el navegador integrado con contenido sintético: header, subheader, título, banda de datos, lista con bullets dorados, caja de información, contacto y banner final.
+
+## Componentes del kit de World Challenge como bloques (2026-11-12)
+
+A petición del usuario se crean los componentes del brand kit WCH que faltaban. Son módulos nuevos de `js/modules.js`, disponibles para todas las marcas (paleta «Añadir bloque», descripciones en `BLOCK_INFO` de `app.js`), con colores por rol: dorado = principal, carbón = `C.band`, fondo suave = `SOFT`, texto oscuro = `C.title`.
+
+- `step` (S): caja suave con borde izquierdo, etiqueta pequeña, título de caja, etiqueta de fecha límite, texto y botón opcional.
+- `glance` (G): «At a glance», tres tarjetas de 180 px (dos oscuras y una clara con borde), esquinas 8 px.
+- `timeline` (T): hasta cuatro hitos; columna oscura de 120 px y cuerpo suave. En móvil sigue en dos columnas.
+- `deadlines` (L): dos cajas de fecha límite con borde de 2 px (277 + 16 + 277 px, no 285 + 285, para dejar separación).
+- `fotos3` (Q): tres fotos de 182 px con esquinas de 6 px; admite placeholder y el panel de imágenes (solo la primera foto recibe el arrastre sobre la vista previa).
+- `cta` (R): caja blanca con borde de 2 px, título, texto, línea con campo de Cvent suelto (p. ej. `{[E-RSVP YES LINK]}`) y botón opcional.
+- `boton` (U): botón suelto de 190 px, estilo principal (dorado) u oscuro (carbón).
+- `important` (V): caja oscura con etiqueta «IMPORTANT» y texto blanco (enlaces y negritas en blanco).
+- `wallet` (W): badges oficiales de Apple/Google Wallet (cvent-assets.com, 48 px de alto) enlazados a `{[C-PASSBOOK_LINK]}` y `{[C-GOOGLEWALLET_LINK]}`.
+- En móvil, las tarjetas, cajas, fotos y badges se apilan (`col2`; la tarjeta va en una tabla interior para conservar su relleno).
+- Texto: `==etiqueta==` (fondo del color principal, texto según `buttonText`, negrita) y `++subrayado++` (negrita con subrayado del color principal), solo fuera de etiquetas y enlaces. Barra de formato de la vista previa con «Etiqueta» y «Subrayar»; `toMarkdown` y `cleanLine` las reconocen para que editar en la vista previa no las pierda. README actualizado.
+- Roles nuevos sin cambio para las demás marcas: `titleCase` (mayúsculas de titulares), `headWeight` (peso de las fuentes de titular) y `btnRadius` (esquinas del botón). WCH: titulares sin mayúsculas, en negrita, y botones con esquinas de 4 px.
+
+Comprobado: el HTML de las 18 secciones no WCH con las 7 recetas sigue idéntico byte a byte. `test/brand-kits.test.js` añade los nueve módulos en WCH y Surf Cup (sin roles sin resolver ni errores salvo el contacto, wallets, solo paleta WCH, Important carbón con etiqueta dorada y enlace blanco, botón de 4 px, títulos sin mayúsculas, Surf Cup con su color) y las marcas de texto (sin tocar enlaces). Pasan todas las suites. En el navegador integrado (datos sintéticos): newsletter WCH con todos los bloques en escritorio y móvil (apilado sin desbordamiento), edición en la vista previa de un bloque Step con la barra (Etiqueta aplicada y guardada) y de un párrafo con `==…==`/`++…++` sin perder las marcas.
+
+Pendiente: contacto de WCH (sin email ni custom field), tamaños exactos de la tipografía del kit (se aplican peso y mayúsculas, no los px), y prueba en Cvent y clientes de correo (en especial alturas iguales de tarjetas y esquinas en Outlook, que no admite `border-radius`).
+
+## Corrección: editar el kit de una marca no se guardaba (2026-11-12)
+
+Problema del usuario: al cambiar un footer en Brand kits y guardar, aparecía «guardado», pero al cerrar el diálogo o volver a la marca seguía el footer anterior.
+
+Causa: las entradas «Copiar un kit de torneo» no eran los kits de las marcas, sino plantillas. Al pulsarlas se rellenaban siempre con el diseño fijo de `brands.js` (`B.defaults`), y «Guardar kit» creaba un kit independiente nuevo en «Tus kits». La marca y sus newsletters («Kit automático del torneo») no cambiaban nunca.
+
+Corrección:
+- `brand-kits.js`: un kit puede tener `base` (id de la marca/sección). Se guarda con id fijo `brand-<id>` (uno por marca), `B.brandKit(id)`, `B.brandDraft(id)` (el editado o, si no hay, el diseño de la app con `base`), `B.custom()` (solo independientes) y `B.remove(id)`. `B.forState(st)`: la copia aplicada a la newsletter manda; si no tiene, usa el kit editado de su marca.
+- `modules.js`: con el kit editado de la propia marca se conserva la paleta por roles (`theme`), así WCH editado mantiene su estilo. La revisión indica «Kit de la marca editado en este navegador».
+- `brand-kits-ui.js`: la barra lateral pasa a «Kits de cada marca» (con «· editado» cuando hay cambios) y «Tus kits independientes». En el kit de una marca: aviso de que se aplica a sus newsletters con el kit automático en este navegador, asociación bloqueada, «Guardar como kit independiente» y «Volver al diseño original». «Gestionar brand kits» desde el editor abre directamente el kit de la marca de esa newsletter. El selector de kit del editor solo lista kits independientes.
+- `app.js`: al guardar o restaurar un kit se repinta la vista previa de la newsletter abierta.
+
+Límites: el kit editado vive en el navegador (`kaptiva-newsletters-brand-kits-v1`); no llega a otros PMs ni cambia `brands.js`. Los kits que el usuario guardó antes desde «Copiar un kit de torneo» siguen como kits independientes y no afectan a la marca: hay que repetir el cambio en «Kits de cada marca». Las newsletters con una copia de kit aplicada (selector «… · copia aplicada») no cambian.
+
+Pruebas: `test/brand-kits.test.js` añade borrador de marca, guardado con id fijo y un solo kit por marca, persistencia tras recargar, footer editado en la newsletter de esa sección y no en otras, prioridad de la copia aplicada, WCH editado con su estilo y restauración al original. Pasan todas las suites y el HTML sin kits editados sigue idéntico. En el navegador integrado: cambiar el footer de Fundación Real Madrid · USA CAMPS, guardar, cerrar, recargar y volver a entrar conserva el cambio («· editado»); la newsletter de esa sección muestra el footer nuevo; «Gestionar brand kits» desde el editor abre ese kit, y «Volver al diseño original» restaura el footer en la vista previa al momento.

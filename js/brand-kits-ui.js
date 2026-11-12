@@ -43,11 +43,27 @@
   }
   function renderForm() {
     var form = $('#kit-fields'); form.innerHTML = '';
+    if (draft.base) {
+      var t = K.tournament(draft.base), saved = !!B.brandKit(draft.base);
+      form.appendChild(node('p', 'Kit de la marca ' + t.name + '. Lo que guardes se aplica a todas sus newsletters con «Kit automático del torneo» en este navegador (no en el de otras personas).' + (saved ? ' Ya está editado.' : ' Ahora mismo muestra el diseño original de la app.'), 'kit-note kit-base-note'));
+      var tools = node('div', '', 'kit-base-tools');
+      tools.appendChild(button('Guardar como kit independiente', function () {
+        if (pending) return; var copy = JSON.parse(JSON.stringify(draft)); delete copy.base; copy.id = ''; copy.name = draft.name + ' (copia)';
+        try { var k = B.save(copy, localStorage); openDraft(k); renderList(); changed(); status('Copia guardada en «Tus kits». El kit de la marca no ha cambiado.'); } catch (e) { status('No se ha guardado: ' + e.message, true); }
+      }));
+      if (saved) tools.appendChild(button('Volver al diseño original', function () {
+        if (pending || !confirm('¿Quitar los cambios del kit de ' + t.name + ' y volver al diseño original de la app?')) return;
+        try { B.remove('brand-' + draft.base, localStorage); openDraft(B.brandDraft(draft.base)); changed(); status('Kit de ' + t.name + ' restaurado al diseño original.'); } catch (e) { status(e.message, true); }
+      }));
+      form.appendChild(tools);
+    }
     form.appendChild(field('Nombre del brand kit', draft.name, function (v) { draft.name = v; }));
     var label = node('label', 'Asociación orientativa'), select = node('select');
     var opt = node('option', 'Marca / proyecto independiente'); opt.value = ''; select.appendChild(opt);
     K.CLIENT.tournaments.forEach(function (t) { var o = node('option', t.name); o.value = t.id; select.appendChild(o); }); select.value = draft.tournament;
-    select.addEventListener('change', function () { draft.tournament = select.value; touch(); }); label.appendChild(select); form.appendChild(label);
+    select.addEventListener('change', function () { draft.tournament = select.value; touch(); }); label.appendChild(select);
+    if (draft.base) select.disabled = true; // el kit de una marca siempre es de esa marca
+    form.appendChild(label);
     form.appendChild(node('h3', 'Colores'));
     [['principal', 'Principal'], ['acento', 'Acento'], ['secundario', 'Secundario (referencia opcional)']].forEach(function (pair) {
       var wrap = field(pair[1], draft.colors[pair[0]], function (v) { draft.colors[pair[0]] = v; if (/^#[a-f\d]{6}$/i.test(v)) color.value = v; });
@@ -67,21 +83,29 @@
       draft.assets.push({ name: '', url: '' }); touch(); renderForm();
       var assets = form.querySelectorAll('.kit-asset'); assets[assets.length - 1].scrollIntoView({ block: 'center' });
     }));
-    $('#kit-editor-title').textContent = draft.id ? 'Editar kit guardado' : 'Crear un brand kit';
+    $('#kit-editor-title').textContent = draft.base ? 'Kit de ' + K.tournament(draft.base).name : draft.id ? 'Editar kit guardado' : 'Crear un brand kit';
   }
-  function openDraft(kit) { draft = JSON.parse(JSON.stringify(kit)); dirty = false; renderForm(); renderList(); status(draft.id ? 'Kit guardado. Sus cambios solo se aplican a newsletters cuando lo vuelvas a elegir.' : 'Punto de partida: edita los campos y guarda tu kit.'); }
+  function openDraft(kit) {
+    draft = JSON.parse(JSON.stringify(kit)); dirty = false; renderForm(); renderList();
+    status(draft.base ? 'Edita y pulsa «Guardar kit»: se aplica a las newsletters de esta marca que usan su kit automático.' : draft.id ? 'Kit guardado. Sus cambios solo se aplican a newsletters cuando lo vuelvas a elegir.' : 'Punto de partida: edita los campos y guarda tu kit.');
+  }
   function renderList() {
-    var list = $('#kit-list'); list.innerHTML = ''; list.appendChild(node('h3', 'Tus kits'));
-    if (!B.all().length) list.appendChild(node('p', 'Todavía no hay kits guardados.', 'kit-note'));
-    B.all().forEach(function (k) { var item = button(k.name, function () { if (canLeave()) openDraft(k); }, 'kit-list-item'); if (draft && k.id === draft.id) item.setAttribute('aria-current', 'true'); list.appendChild(item); });
-    list.appendChild(node('h3', 'Copiar un kit de torneo'));
-    K.CLIENT.tournaments.forEach(function (t) { list.appendChild(button(t.name, function () { if (canLeave()) openDraft(B.defaults(t.id)); }, 'kit-list-item')); });
+    var list = $('#kit-list'); list.innerHTML = '';
+    // Kits de cada marca/sección: se editan en su sitio y se aplican a sus newsletters.
+    list.appendChild(node('h3', 'Kits de cada marca'));
+    K.CLIENT.tournaments.forEach(function (t) {
+      var edited = !!B.brandKit(t.id), item = button(t.name + (edited ? ' · editado' : ''), function () { if (canLeave()) openDraft(B.brandDraft(t.id)); }, 'kit-list-item');
+      if (draft && draft.base === t.id) item.setAttribute('aria-current', 'true'); list.appendChild(item);
+    });
+    list.appendChild(node('h3', 'Tus kits independientes'));
+    if (!B.custom().length) list.appendChild(node('p', 'Todavía no hay kits independientes.', 'kit-note'));
+    B.custom().forEach(function (k) { var item = button(k.name, function () { if (canLeave()) openDraft(k); }, 'kit-list-item'); if (draft && !draft.base && k.id === draft.id) item.setAttribute('aria-current', 'true'); list.appendChild(item); });
   }
   function download(name, value) { var a = node('a'), url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' })); a.href = url; a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000); }
   U.refreshSelect = function (st) {
     var select = $('#brand-kit'); select.innerHTML = ''; var o = node('option', 'Kit automático del torneo'); o.value = ''; select.appendChild(o);
     if (st && st.brandKit) { o = node('option', st.brandKit.name + ' · copia aplicada'); o.value = '@current'; select.appendChild(o); }
-    B.all().forEach(function (k) { var x = node('option', k.name); x.value = k.id; select.appendChild(x); }); select.value = st && st.brandKit ? '@current' : '';
+    B.custom().forEach(function (k) { var x = node('option', k.name); x.value = k.id; select.appendChild(x); }); select.value = st && st.brandKit ? '@current' : '';
   };
   // Imágenes disponibles para una newsletter: primero las del kit aplicado (o el del torneo) y después las de la biblioteca.
   U.images = function (st) {
@@ -111,16 +135,19 @@
     changed = onChanged;
     window.addEventListener('beforeunload', function (event) { if (dirty || pending) { event.preventDefault(); event.returnValue = ''; } });
     try { B.load(localStorage); } catch (e) { $('#kit-load-error').textContent = 'No se pudo cargar la biblioteca de marca: ' + e.message; $('#kit-load-error').hidden = false; }
-    function open() { renderList(); if (!draft) openDraft(B.all()[0] || B.empty()); $('#kits-dialog').showModal(); }
-    $('#brand-kits-open').addEventListener('click', open); $('#brand-kits-editor').addEventListener('click', open);
+    // Desde el editor se abre el kit de la marca de esa newsletter.
+    function open(tid) { renderList(); if (typeof tid === 'string' && tid && !dirty) openDraft(B.brandDraft(tid)); else if (!draft) openDraft(B.custom()[0] || B.empty()); $('#kits-dialog').showModal(); }
+    U.open = open;
+    $('#brand-kits-open').addEventListener('click', function () { open(); });
+    $('#brand-kits-editor').addEventListener('click', function () { open(U.currentTournament ? U.currentTournament() : ''); });
     $('#kit-new').addEventListener('click', function () { if (canLeave()) openDraft(B.empty()); });
-    $('#kit-discard').addEventListener('click', function () { if (pending) return; openDraft((draft.id && B.find(draft.id)) || B.empty()); });
+    $('#kit-discard').addEventListener('click', function () { if (pending) return; openDraft(draft.base ? B.brandDraft(draft.base) : (draft.id && B.find(draft.id)) || B.empty()); });
     $('#kits-close').addEventListener('click', function () { if (canLeave()) $('#kits-dialog').close(); });
     $('#kits-dialog').addEventListener('cancel', function (event) { if (!canLeave()) event.preventDefault(); });
     $('#kit-images-close').addEventListener('click', function () { $('#kit-images-dialog').close(); });
     $('#kit-form').addEventListener('submit', function (event) {
       event.preventDefault(); if (pending) { status('Espera a que termine la carga.', true); return; }
-      try { var saved = B.save(draft, localStorage); openDraft(saved); renderList(); changed(); status('Kit guardado en este navegador. Ya puedes elegirlo en una newsletter.'); }
+      try { var saved = B.save(draft, localStorage); openDraft(saved); renderList(); changed(); status(saved.base ? 'Kit de ' + K.tournament(saved.base).name + ' guardado: ya se aplica a sus newsletters con el kit automático.' : 'Kit guardado en este navegador. Ya puedes elegirlo en una newsletter.'); }
       catch (e) { status('No se ha guardado el kit: ' + e.message, true); }
     });
     $('#kit-export').addEventListener('click', function () {

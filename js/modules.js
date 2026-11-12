@@ -8,14 +8,18 @@
 (function (root) {
   var K = root.KSA = root.KSA || {};
   var P = '#6F4ACC', A = '#91FAFB', GREY = '#A5A0C4', SOFT = '#F7F4FC';
+  // Roles de color que una marca puede separar del color principal (t.theme). Sin theme, cada rol vale lo mismo que antes,
+  // así que el HTML de las demás marcas no cambia. Se resuelven al final de K.build.
+  var C = { title: '%%C:title%%', link: '%%C:link%%', button: '%%C:button%%', buttonText: '%%C:buttonText%%', franjaText: '%%C:franjaText%%', franjaBg: '%%C:franjaBg%%', line: '%%C:line%%', contactBg: '%%C:contactBg%%', band: '%%C:band%%', strong: '%%C:strong%%', titleCase: '%%C:titleCase%%', headWeight: '%%C:headWeight%%', btnRadius: '%%C:btnRadius%%' };
+  var C_DEFAULT = { title: P, link: P, button: P, buttonText: '#FFFFFF', franjaText: P, franjaBg: '#FFFFFF', line: GREY, contactBg: '#FFFFFF', band: P, strong: P, titleCase: 'uppercase', headWeight: '400', btnRadius: '40px' };
 
   var F = {
     reg: "font-family:'DinProRegular', Arial, Helvetica, sans-serif;font-weight:400;",
     med: "font-family:'DinProMedium', Arial, Helvetica, sans-serif;font-weight:400;",
     bold: "font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;",
     black: "font-family:'DinProBlack', Arial, Helvetica, sans-serif;font-weight:900;",
-    ex60: "font-family:'Extenda60', 'Arial Black', Arial, Helvetica, sans-serif;font-weight:400;letter-spacing:0.3px;",
-    ex40: "font-family:'Extenda40', 'Arial Black', Arial, Helvetica, sans-serif;font-weight:400;letter-spacing:0.3px;"
+    ex60: "font-family:'Extenda60', 'Arial Black', Arial, Helvetica, sans-serif;font-weight:" + C.headWeight + ";letter-spacing:0.3px;",
+    ex40: "font-family:'Extenda40', 'Arial Black', Arial, Helvetica, sans-serif;font-weight:" + C.headWeight + ";letter-spacing:0.3px;"
   };
 
   // ---------- Texto ----------
@@ -41,11 +45,18 @@
     h = h.replace(LINK, function (m, t, u) {
       // Un esquema no permitido (javascript:, data:, rutas sin https…) nunca llega a un href; la revisión lo marca.
       if (!/^(https?:\/\/|mailto:)/i.test(u)) return t;
-      return '<a href="' + u.replace(/"/g, '&quot;') + '" target="_blank" style="color:' + P + ';text-decoration:underline;">' + t + '</a>';
+      return '<a href="' + u.replace(/"/g, '&quot;') + '" target="_blank" style="color:' + C.link + ';text-decoration:underline;">' + t + '</a>';
     });
-    h = h.replace(/\*\*(.+?)\*\*/g, '<strong style="' + F.bold + 'color:' + (strongColor || P) + ';">$1</strong>');
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong style="' + F.bold + 'color:' + (strongColor || C.strong) + ';">$1</strong>');
     // *cursiva* (un solo asterisco, después de las negritas)
     h = h.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em style="font-style:italic;">$2</em>');
+    // ==etiqueta== (fondo del color principal, texto en negrita) y ++subrayado++ (negrita con subrayado del color principal).
+    // Solo en el texto, nunca dentro de etiquetas o enlaces ya generados.
+    if (h.indexOf('==') >= 0 || h.indexOf('++') >= 0) h = h.split(/(<[^>]+>)/).map(function (part) {
+      if (part.charAt(0) === '<') return part;
+      return part.replace(/==([^=\n]+?)==/g, '<span style="background-color:' + P + ';color:' + C.buttonText + ';font-weight:bold;padding:1px 6px;border-radius:3px;">$1</span>')
+        .replace(/\+\+([^+\n]+?)\+\+/g, '<span style="font-weight:bold;color:' + (strongColor || C.title) + ';border-bottom:2px solid ' + P + ';">$1</span>');
+    }).join('');
     return h;
   }
   // Extenda no tiene números: si el título lleva cifras, pasa a DinPro Black (algo más pequeño).
@@ -90,12 +101,12 @@
   }
   function button(text, url, block) {
     var a = block
-      ? 'display:block;padding:13px 10px;' + F.bold + 'font-size:13px;line-height:17px;color:#FFFFFF;text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;text-align:center;border-radius:40px;'
-      : 'display:inline-block;padding:14px 30px;' + F.bold + 'font-size:14px;line-height:18px;color:#FFFFFF;text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;border-radius:40px;';
+      ? 'display:block;padding:13px 10px;' + F.bold + 'font-size:13px;line-height:17px;color:' + C.buttonText + ';text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;text-align:center;border-radius:' + C.btnRadius + ';'
+      : 'display:inline-block;padding:14px 30px;' + F.bold + 'font-size:14px;line-height:18px;color:' + C.buttonText + ';text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;border-radius:' + C.btnRadius + ';';
     var t = block
       ? TBL + ' style="border-collapse:separate !important;">'
       : '<table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:22px auto 0 auto;border-collapse:separate !important;">';
-    return t + '<tbody><tr><td align="center" bgcolor="' + P + '" style="background-color:' + P + ';border-radius:40px;"><a href="' + attr(url) + '" target="_blank" style="' + a + '">' + esc(text) + '</a></td></tr></tbody></table>';
+    return t + '<tbody><tr><td align="center" bgcolor="' + C.button + '" style="background-color:' + C.button + ';border-radius:' + C.btnRadius + ';"><a href="' + attr(url) + '" target="_blank" style="' + a + '">' + esc(text) + '</a></td></tr></tbody></table>';
   }
   function softBand(text) {
     var ps = paras(text).map(function (p, i) {
@@ -111,9 +122,9 @@
     if (has(c.label)) h += '<p style="' + F.med + 'font-size:11px;line-height:14px;color:' + GREY + ';letter-spacing:1.5px;text-transform:uppercase;">' + esc(c.label.trim()) + '</p>';
     if (has(c.title)) {
       var st = hasDigits(c.title) ? F.black + 'font-size:20px;line-height:24px;letter-spacing:0.3px;' : F.ex40 + 'font-size:28px;line-height:31px;';
-      h += '<p style="' + st + 'color:' + P + ';text-transform:uppercase;' + (has(c.label) ? 'padding-top:6px;' : '') + 'word-break:break-word;">' + esc(c.title.trim()) + '</p>';
+      h += '<p style="' + st + 'color:' + C.title + ';text-transform:' + C.titleCase + ';' + (has(c.label) ? 'padding-top:6px;' : '') + 'word-break:break-word;">' + esc(c.title.trim()) + '</p>';
     }
-    if (has(c.price)) h += '<p style="' + F.black + 'font-size:26px;line-height:30px;color:' + P + ';padding-top:6px;word-break:break-word;">' + esc(c.price.trim()) + '</p>';
+    if (has(c.price)) h += '<p style="' + F.black + 'font-size:26px;line-height:30px;color:' + C.title + ';padding-top:6px;word-break:break-word;">' + esc(c.price.trim()) + '</p>';
     paras(c.text).forEach(function (p, i) {
       h += '<p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:left;padding-top:' + (i ? 8 : 10) + 'px;word-break:break-word;">' + inline(p) + '</p>';
     });
@@ -149,14 +160,16 @@
   // req: true → si está vacío, la revisión avisa
   // ============================================================
   var M = K.MODULES = {};
-  var TIP = 'Un párrafo por línea. **negrita** · *cursiva* · [texto](enlace)';
+  var TIP = 'Un párrafo por línea. **negrita** · *cursiva* · [texto](enlace) · ==etiqueta destacada== · ++subrayado de color++';
 
   M.franja = {
     letter: 'B', name: 'Franja identificadora', tag: 'FRANJA',
     fields: [{ k: 'left', label: 'Etiqueta izquierda', type: 'text', req: true, ph: 'Media Packages' }],
     build: function (d, t) {
-      var ps = F.med + 'font-size:11px;line-height:14px;color:' + P + ';letter-spacing:3px;text-transform:uppercase;word-break:break-word;';
-      return section(cell('14px 40px', '', TBL + '><tbody><tr><td align="left"><p style="' + ps + '">' + esc((d.left || '').trim()) + '</p></td><td align="right"><p style="' + ps + '">' + esc(t.club ? t.brand : t.name) + '</p></td></tr></tbody></table>') +
+      var ps = F.med + 'font-size:11px;line-height:14px;color:' + C.franjaText + ';letter-spacing:3px;text-transform:uppercase;word-break:break-word;';
+      // Una marca puede fijar las etiquetas (t.franjaLeft por defecto a la izquierda, t.franjaRight a la derecha).
+      var left = has(d.left) ? d.left : (t.franjaLeft || ''), right = t.franjaRight || (t.club ? t.brand : t.name);
+      return section(cell('14px 40px', '', TBL + '><tbody><tr><td align="left"><p style="' + ps + '">' + esc(left.trim()) + '</p></td><td align="right"><p style="' + ps + '">' + esc(right) + '</p></td></tr></tbody></table>', C.franjaBg) +
         '<tr><td height="4" bgcolor="' + A + '" style="height:4px;line-height:4px;font-size:0;background-color:' + A + ';">&nbsp;</td></tr>');
     }
   };
@@ -169,7 +182,7 @@
     ],
     build: function (d) {
       var h = '', first = true;
-      if (has(d.greet)) { h += '<p style="' + F.bold + 'font-size:28px;line-height:34px;color:' + P + ';word-break:break-word;">' + esc(d.greet.trim()) + '</p>'; first = false; }
+      if (has(d.greet)) { h += '<p style="' + F.bold + 'font-size:28px;line-height:34px;color:' + C.title + ';word-break:break-word;">' + esc(d.greet.trim()) + '</p>'; first = false; }
       paras(d.text).forEach(function (p) {
         h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;' + (first ? '' : 'padding-top:14px;') + 'word-break:break-word;">' + inline(p) + '</p>'; first = false;
       });
@@ -187,7 +200,7 @@
     ],
     build: function (d) {
       var ps = paras(d.text), b = has(d.btn);
-      var h = '<p style="' + titleFont(d.title, 'ex60', 38, 42) + 'color:' + P + ';text-transform:uppercase;text-align:center;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' + bar(56, P, 'center', '14px auto 0 auto');
+      var h = '<p style="' + titleFont(d.title, 'ex60', 38, 42) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' + bar(56, P, 'center', '14px auto 0 auto');
       ps.forEach(function (p, i) { h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;text-align:center;padding-top:' + (i ? 8 : 20) + 'px;word-break:break-word;">' + inline(p) + '</p>'; });
       if (b) h += button(d.btn.trim(), String(d.url || '').trim() || '#', false);
       return section(cell(ps.length || b ? '34px 40px 36px 40px' : '34px 40px 6px 40px', 'center', h));
@@ -201,7 +214,7 @@
       { k: 'items', label: 'Puntos', type: 'area', req: true, hint: 'Un punto por línea. **negrita** · [texto](enlace)' }
     ],
     build: function (d) {
-      return section(cell('30px 40px 10px 40px', 'left', '<p style="' + titleFont(d.title, 'ex60', 34, 38) + 'color:' + P + ';text-transform:uppercase;padding-bottom:16px;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' + bullets(d.items)));
+      return section(cell('30px 40px 10px 40px', 'left', '<p style="' + titleFont(d.title, 'ex60', 34, 38) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';padding-bottom:16px;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' + bullets(d.items)));
     }
   };
 
@@ -218,10 +231,10 @@
     build: function (d) {
       var line = d.variant === 'custom' ? (d.line || '').trim() : E_LINES[d.variant || 'compra'];
       var lab = F.med + 'font-size:11px;line-height:14px;color:' + GREY + ';letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding-bottom:4px;';
-      var val = F.bold + 'font-size:18px;line-height:24px;color:' + P + ';text-align:center;word-break:break-word;';
+      var val = F.bold + 'font-size:18px;line-height:24px;color:' + C.title + ';text-align:center;word-break:break-word;';
       function dato(pad, l, v) { return '<tr class="css-vsf5of"><td align="center" style="padding:' + pad + ';text-align:center;word-break:break-word;"><p style="' + lab + '">' + l + '</p><p style="' + val + '">' + v + '</p></td></tr>'; }
       function cta(pad) { return '<tr class="css-vsf5of"><td align="center" style="padding:' + pad + ';' + F.bold + 'font-size:20px;line-height:26px;color:#000000;text-align:center;word-break:break-word;"><span style="color: rgb(0,0,0);"><span style="font-weight: bold;">' + esc(line) + '</span></span></td></tr>'; }
-      var rule = '<tr><td style="padding:14px 40px 6px 40px;">' + TBL + '><tbody><tr><td style="border-top:1px solid ' + GREY + ';font-size:0;line-height:0;">&nbsp;</td></tr></tbody></table></td></tr>';
+      var rule = '<tr><td style="padding:14px 40px 6px 40px;">' + TBL + '><tbody><tr><td style="border-top:1px solid ' + C.line + ';font-size:0;line-height:0;">&nbsp;</td></tr></tbody></table></td></tr>';
       var rows;
       if (d.layout === 'bottom') {
         rows = (has(d.info) ? '<tr class="css-vsf5of"><td align="center" style="padding:26px 16px 6px 16px;text-align:center;word-break:break-word;"><p style="' + F.bold + 'font-size:16px;line-height:24px;color:#000000;text-align:center;word-break:break-word;">' + esc(d.info.trim()) + '</p></td></tr>' : '') +
@@ -238,8 +251,8 @@
     fields: [], note: 'Texto fijo con el email de contacto y el teléfono del evento.',
     build: function (d, t) {
       var mail = t && t.club ? String(t.contact || '').trim() : K.CLIENT.contactEmail;
-      var link = mail ? '<a href="mailto:' + attr(mail) + '" style="color:' + P + ';text-decoration:underline;"><span style="' + F.bold + '">' + esc(mail) + '</span></a>' : '<span style="' + F.bold + '">CONTACTO PENDIENTE</span>';
-      return section(cell('16px 40px 32px 40px', 'center', TBL + ' style="background-color:#FFFFFF;border:1px solid ' + GREY + ';border-left:4px solid ' + P + ';"><tbody><tr><td align="center" style="padding:22px 24px;text-align:center;"><p style="' + F.ex60 + 'font-size:34px;line-height:38px;color:' + P + ';text-transform:uppercase;text-align:center;padding-bottom:10px;">Get in Touch</p><p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:center;word-break:break-word;">If you have any questions, please feel free to contact us at ' + link + '</p><p style="' + F.bold + 'font-size:15px;line-height:23px;color:' + P + ';text-align:center;padding-top:8px;word-break:break-word;"><span style="color: ' + P + ';"><span style="font-weight: bold;">For any questions, please contact us at: {[E-CUSTOM:Event Phone Number]}</span></span></p></td></tr></tbody></table>'));
+      var link = mail ? '<a href="mailto:' + attr(mail) + '" style="color:' + C.link + ';text-decoration:underline;"><span style="' + F.bold + '">' + esc(mail) + '</span></a>' : '<span style="' + F.bold + '">CONTACTO PENDIENTE</span>';
+      return section(cell('16px 40px 32px 40px', 'center', TBL + ' style="background-color:' + C.contactBg + ';border:1px solid ' + C.line + ';border-left:4px solid ' + P + ';"><tbody><tr><td align="center" style="padding:22px 24px;text-align:center;"><p style="' + F.ex60 + 'font-size:34px;line-height:38px;color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;padding-bottom:10px;">Get in Touch</p><p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:center;word-break:break-word;">If you have any questions, please feel free to contact us at ' + link + '</p><p style="' + F.bold + 'font-size:15px;line-height:23px;color:' + P + ';text-align:center;padding-top:8px;word-break:break-word;"><span style="color: ' + C.title + ';"><span style="font-weight: bold;">For any questions, please contact us at: {[E-CUSTOM:Event Phone Number]}</span></span></p></td></tr></tbody></table>'));
     }
   };
 
@@ -266,7 +279,7 @@
         }).join('') + '</tr></tbody></table>';
       }
       paras(d.text).forEach(function (p, i) { h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#FFFFFF;text-align:center;padding-top:' + (i ? 10 : 26) + 'px;word-break:break-word;">' + inline(p, '#FFFFFF') + '</p>'; });
-      return section(cell('38px 40px 38px 40px', 'center', h, P), P);
+      return section(cell('38px 40px 38px 40px', 'center', h, C.band), C.band);
     }
   };
 
@@ -293,7 +306,7 @@
     fields: [{ k: 'title', label: 'Titular', type: 'text', req: true }, { k: 'text', label: 'Texto (opcional)', type: 'area', hint: TIP }],
     build: function (d) {
       var ps = paras(d.text);
-      var h = bar(80, A, 'center', '0 auto') + '<p style="' + titleFont(d.title, 'ex60', 36, 40) + 'color:' + P + ';text-transform:uppercase;text-align:center;padding-top:18px;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' + bar(80, A, 'center', '18px auto 0 auto');
+      var h = bar(80, A, 'center', '0 auto') + '<p style="' + titleFont(d.title, 'ex60', 36, 40) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;padding-top:18px;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' + bar(80, A, 'center', '18px auto 0 auto');
       ps.forEach(function (p, i) { h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;text-align:center;padding-top:' + (i ? 8 : 20) + 'px;word-break:break-word;">' + inline(p) + '</p>'; });
       return section(cell(ps.length ? '30px 40px 14px 40px' : '30px 40px 30px 40px', 'center', h));
     }
@@ -303,7 +316,7 @@
     letter: 'N', name: 'Banda informativa (fondo suave)', tag: 'BANDA INFORMATIVA',
     fields: [{ k: 'title', label: 'Título fuera de la banda (opcional)', type: 'text' }, { k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }],
     build: function (d) {
-      var h = has(d.title) ? '<p style="' + titleFont(d.title, 'ex60', 34, 38) + 'color:' + P + ';text-transform:uppercase;word-break:break-word;padding-bottom:16px;">' + esc(d.title.trim()) + '</p>' : '';
+      var h = has(d.title) ? '<p style="' + titleFont(d.title, 'ex60', 34, 38) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;padding-bottom:16px;">' + esc(d.title.trim()) + '</p>' : '';
       return section(cell(has(d.title) ? '30px 40px 30px 40px' : '10px 40px 30px 40px', 'left', h + softBand(d.text)));
     }
   };
@@ -329,10 +342,10 @@
       { k: 'note', label: 'Aviso en banda suave', type: 'area', hint: TIP }
     ],
     build: function (d) {
-      var sub16 = F.bold + 'font-size:16px;line-height:25px;color:' + P + ';';
-      var h = TBL + '><tbody><tr><td valign="middle" style="padding:0 16px 0 0;"><p style="' + titleFont(d.title, 'ex60', 38, 42) + 'color:' + P + ';text-transform:uppercase;text-align:left;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' +
-        (has(d.sub) ? '<p style="' + F.bold + 'font-size:16px;line-height:22px;color:' + P + ';letter-spacing:1px;text-transform:uppercase;text-align:left;padding-top:4px;word-break:break-word;">' + esc(d.sub.trim()) + '</p>' : '') + '</td>' +
-        (has(d.price) ? '<td valign="middle" align="right" style="padding:0;white-space:nowrap;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" align="right" style="border-collapse:separate !important;"><tbody><tr><td align="center" style="border:2px solid ' + P + ';border-radius:40px;padding:8px 18px;white-space:nowrap;"><p style="' + F.black + 'font-size:22px;line-height:26px;color:' + P + ';text-align:center;">' + esc(d.price.trim()) + '</p></td></tr></tbody></table></td>' : '') +
+      var sub16 = F.bold + 'font-size:16px;line-height:25px;color:' + C.title + ';';
+      var h = TBL + '><tbody><tr><td valign="middle" style="padding:0 16px 0 0;"><p style="' + titleFont(d.title, 'ex60', 38, 42) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:left;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' +
+        (has(d.sub) ? '<p style="' + F.bold + 'font-size:16px;line-height:22px;color:' + C.title + ';letter-spacing:1px;text-transform:uppercase;text-align:left;padding-top:4px;word-break:break-word;">' + esc(d.sub.trim()) + '</p>' : '') + '</td>' +
+        (has(d.price) ? '<td valign="middle" align="right" style="padding:0;white-space:nowrap;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" align="right" style="border-collapse:separate !important;"><tbody><tr><td align="center" style="border:2px solid ' + P + ';border-radius:40px;padding:8px 18px;white-space:nowrap;"><p style="' + F.black + 'font-size:22px;line-height:26px;color:' + C.title + ';text-align:center;">' + esc(d.price.trim()) + '</p></td></tr></tbody></table></td>' : '') +
         '</tr></tbody></table>' + bar(56, P, 'left', '14px 0 0 0') + '<div style="clear:both;height:0;line-height:0;font-size:0;">&nbsp;</div>';
       var withImg = has(d.img), body = '', first = true;
       if (has(d.lead)) { body += '<p style="' + sub16 + 'text-align:left;padding-top:' + (withImg ? 0 : 18) + 'px;word-break:break-word;">' + esc(d.lead.trim()) + '</p>'; first = false; }
@@ -380,7 +393,182 @@
     }
   };
 
-  K.MODULE_ORDER = ['intro', 'titulo', 'lista', 'datos', 'tarjetas', 'info', 'producto', 'separador', 'imagen', 'cierre', 'compra', 'contacto'];
+  // ============================================================
+  // COMPONENTES DEL BRAND KIT DE RMF WORLD CHALLENGE (sirven para cualquier marca).
+  // Colores por rol: dorado = principal (P), carbón = C.band, suave = SOFT, texto oscuro = C.title.
+  // Ancho útil 570 px (650 − 2 × 40). En móvil, las columnas «col2» se apilan.
+  // ============================================================
+  var SANS = "font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;";
+  function eyebrow(text, color, extra) {
+    return '<p style="' + SANS + 'font-size:11px;line-height:14px;color:' + color + ';letter-spacing:2px;text-transform:uppercase;word-break:break-word;' + (extra || '') + '">' + esc(String(text).trim()) + '</p>';
+  }
+  function boxTitle(text, size, lh, color, extra) {
+    return '<p style="' + F.ex40 + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:' + (color || C.title) + ';word-break:break-word;' + (extra || '') + '">' + esc(String(text).trim()) + '</p>';
+  }
+  function bodyText(text, size, lh, color, align, first) {
+    return paras(text).map(function (p, i) {
+      return '<p style="' + F.reg + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:' + (color || '#000000') + ';text-align:' + (align || 'left') + ';word-break:break-word;padding-top:' + (i ? 8 : (first == null ? 10 : first)) + 'px;">' + inline(p, color && color !== '#000000' ? color : null) + '</p>';
+    }).join('');
+  }
+  // Etiqueta de fecha/dato clave: fondo dorado y texto oscuro en negrita.
+  function tag(text, top) {
+    return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top:' + (top == null ? 10 : top) + 'px;border-collapse:separate !important;"><tbody><tr><td bgcolor="' + P + '" style="background-color:' + P + ';padding:5px 10px;border-radius:3px;"><p style="' + SANS + 'font-size:12px;line-height:15px;color:' + C.buttonText + ';letter-spacing:1px;text-transform:uppercase;">' + esc(String(text).trim()) + '</p></td></tr></tbody></table>';
+  }
+  // Botón de 190 px: «gold» (color principal, texto según la marca) u «dark» (carbón, texto blanco).
+  function btn190(text, url, style, align) {
+    var bg = style === 'dark' ? C.band : C.button, color = style === 'dark' ? '#FFFFFF' : C.buttonText;
+    return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="190" align="' + (align || 'center') + '" style="width:190px;margin:' + (align === 'left' ? '18px 0 0 0' : '22px auto 0 auto') + ';border-collapse:separate !important;" class="mobile-button"><tbody><tr><td align="center" bgcolor="' + bg + '" style="background-color:' + bg + ';border:1px solid ' + bg + ';border-radius:' + C.btnRadius + ';"><a href="' + attr(url) + '" target="_blank" style="display:block;padding:13px 10px;' + SANS + 'font-size:11px;line-height:15px;color:' + color + ';text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;text-align:center;">' + esc(text) + '</a></td></tr></tbody></table>';
+  }
+  function optBtn(d, align) { return has(d.btn) ? btn190(d.btn.trim(), String(d.url || '').trim() || '#', d.btnStyle, align) : ''; }
+  var BTN_FIELDS = [
+    { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true },
+    { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']] }
+  ];
+  function sectionTitle(text) {
+    return has(text) ? '<p style="' + titleFont(text, 'ex60', 22, 28) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;word-break:break-word;">' + esc(text.trim()) + '</p>' + bar(40, P, 'center', '12px auto 22px auto') : '';
+  }
+  // Columnas iguales en escritorio que se apilan en móvil. cells: [{ html, bg, border }], ancho total 570.
+  function columns(cells, width, gapW) {
+    var sp = '<td class="desk-only" width="' + gapW + '" style="width:' + gapW + 'px;font-size:0;line-height:0;">&nbsp;</td>';
+    // La tarjeta va en una tabla interior: en móvil «col2» quita el relleno de la celda y deja 16 px de separación.
+    return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody><tr>' + cells.map(function (c) {
+      var bg = c.bg || '#FFFFFF';
+      return '<td class="col2" width="' + width + '" valign="top" height="100%" style="width:' + width + 'px;height:100%;">' +
+        TBL + ' height="100%" bgcolor="' + bg + '" style="height:100%;background-color:' + bg + ';' + (c.border ? 'border:2px solid ' + c.border + ';' : '') + 'border-radius:8px;border-collapse:separate !important;"><tbody><tr><td valign="top" height="100%" style="height:100%;padding:20px 18px;">' + c.html + '</td></tr></tbody></table></td>';
+    }).join(sp) + '</tr></tbody></table>';
+  }
+
+  M.step = {
+    letter: 'S', name: 'Caja «Step» con fecha límite', tag: 'STEP',
+    fields: [
+      { k: 'label', label: 'Etiqueta pequeña', type: 'text', half: true, ph: 'Step 1' }, { k: 'deadline', label: 'Fecha límite (etiqueta dorada)', type: 'text', half: true, ph: 'Deadline: May 1' },
+      { k: 'title', label: 'Título de la caja', type: 'text', req: true },
+      { k: 'text', label: 'Texto', type: 'area', hint: TIP }
+    ].concat(BTN_FIELDS),
+    defaults: { btnStyle: 'gold' },
+    build: function (d) {
+      var h = (has(d.label) ? eyebrow(d.label, P, 'padding-bottom:6px;') : '') + boxTitle(d.title || '', 20, 26) + (has(d.deadline) ? tag(d.deadline) : '') + bodyText(d.text, 14, 22, '#000000', 'left', 12) + optBtn(d, 'left');
+      return section(cell('12px 40px', 'left', TBL + ' bgcolor="' + SOFT + '" style="background-color:' + SOFT + ';border-left:4px solid ' + P + ';"><tbody><tr><td bgcolor="' + SOFT + '" style="padding:22px 24px;background-color:' + SOFT + ';">' + h + '</td></tr></tbody></table>'));
+    }
+  };
+
+  M.glance = {
+    letter: 'G', name: 'Tarjetas «At a glance» (3 datos)', tag: 'AT A GLANCE',
+    fields: [
+      { k: 'title', label: 'Título de sección (opcional)', type: 'text' },
+      { type: 'head', label: 'Tarjeta 1 (oscura)' }, { k: 'l1', label: 'Etiqueta', type: 'text', half: true, ph: 'Dates' }, { k: 'v1', label: 'Dato', type: 'text', half: true, req: true }, { k: 't1', label: 'Nota (opcional)', type: 'text' },
+      { type: 'head', label: 'Tarjeta 2 (oscura)' }, { k: 'l2', label: 'Etiqueta', type: 'text', half: true }, { k: 'v2', label: 'Dato', type: 'text', half: true, req: true }, { k: 't2', label: 'Nota (opcional)', type: 'text' },
+      { type: 'head', label: 'Tarjeta 3 (clara con borde)' }, { k: 'l3', label: 'Etiqueta', type: 'text', half: true }, { k: 'v3', label: 'Dato', type: 'text', half: true, req: true }, { k: 't3', label: 'Nota (opcional)', type: 'text' }
+    ],
+    build: function (d) {
+      var cards = [1, 2, 3].map(function (n) {
+        var dark = n < 3, fg = dark ? '#FFFFFF' : C.title;
+        var html = (has(d['l' + n]) ? eyebrow(d['l' + n], dark ? A : P, 'padding-bottom:8px;') : '') + boxTitle(d['v' + n] || '', 22, 28, fg) + (has(d['t' + n]) ? bodyText(d['t' + n], 13, 20, dark ? '#FFFFFF' : '#000000', 'left', 8) : '');
+        return { html: html, bg: dark ? C.band : '#FFFFFF', border: dark ? '' : P };
+      });
+      return section(cell('22px 40px 12px 40px', 'left', sectionTitle(d.title) + columns(cards, 180, 15)));
+    }
+  };
+
+  M.timeline = {
+    letter: 'T', name: 'Timeline (fechas e hitos)', tag: 'TIMELINE',
+    fields: [{ k: 'title', label: 'Título de sección (opcional)', type: 'text' }].concat([1, 2, 3, 4].reduce(function (all, n) {
+      return all.concat([{ type: 'head', label: 'Hito ' + n + (n > 1 ? ' (opcional)' : '') }, { k: 'd' + n, label: 'Fecha o momento', type: 'text', half: true, req: n === 1, ph: 'Day 1' }, { k: 'h' + n, label: 'Título', type: 'text', half: true, req: n === 1 }, { k: 't' + n, label: 'Texto', type: 'area', hint: TIP }]);
+    }, [])),
+    build: function (d) {
+      var rows = [1, 2, 3, 4].filter(function (n) { return has(d['d' + n]) || has(d['h' + n]) || has(d['t' + n]); }).map(function (n, i) {
+        var sep = i ? 'border-top:2px solid #FFFFFF;' : '';
+        return '<tr><td width="120" valign="top" bgcolor="' + C.band + '" style="width:120px;padding:16px 14px;background-color:' + C.band + ';' + sep + '">' + boxTitle(d['d' + n] || '', 16, 20, '#FFFFFF') + '</td>' +
+          '<td valign="top" bgcolor="' + SOFT + '" style="padding:16px 20px;background-color:' + SOFT + ';' + sep + '">' + (has(d['h' + n]) ? boxTitle(d['h' + n], 17, 22) : '') + bodyText(d['t' + n], 14, 22, '#000000', 'left', has(d['h' + n]) ? 6 : 0) + '</td></tr>';
+      }).join('');
+      return section(cell('22px 40px 12px 40px', 'left', sectionTitle(d.title) + TBL + ' style="border-collapse:collapse;"><tbody>' + rows + '</tbody></table>'));
+    }
+  };
+
+  M.deadlines = {
+    letter: 'L', name: 'Dos fechas límite', tag: 'DEADLINES',
+    fields: [
+      { k: 'title', label: 'Título de sección (opcional)', type: 'text' },
+      { type: 'head', label: 'Fecha 1' }, { k: 'l1', label: 'Etiqueta', type: 'text', half: true, ph: 'Payment' }, { k: 'd1', label: 'Fecha', type: 'text', half: true, req: true, ph: 'May 1, 2027' }, { k: 't1', label: 'Texto (opcional)', type: 'area', hint: TIP },
+      { type: 'head', label: 'Fecha 2' }, { k: 'l2', label: 'Etiqueta', type: 'text', half: true }, { k: 'd2', label: 'Fecha', type: 'text', half: true, req: true }, { k: 't2', label: 'Texto (opcional)', type: 'area', hint: TIP }
+    ],
+    build: function (d) {
+      var boxes = [1, 2].map(function (n) {
+        return { html: (has(d['l' + n]) ? eyebrow(d['l' + n], P, 'padding-bottom:8px;') : '') + boxTitle(d['d' + n] || '', 19, 24) + bodyText(d['t' + n], 13, 21, '#000000', 'left', 8), border: P };
+      });
+      return section(cell('22px 40px 12px 40px', 'left', sectionTitle(d.title) + columns(boxes, 277, 16)));
+    }
+  };
+
+  M.fotos3 = {
+    letter: 'Q', name: 'Tres fotos en fila', tag: 'TRES FOTOS',
+    fields: [1, 2, 3].reduce(function (all, n) {
+      return all.concat([{ k: 'src' + n, label: 'Foto ' + n + ' · custom link de Cvent', type: 'url', req: true, img: true }, { k: 'alt' + n, label: 'Foto ' + n + ' · descripción (alt)', type: 'text', req: true }]);
+    }, []),
+    build: function (d) {
+      var cells = [1, 2, 3].map(function (n) {
+        var src = String(d['src' + n] || '').trim();
+        var img = isPh(src) ? phBlock(182, 182) : '<img src="' + attr(src) + '" alt="' + attr(d['alt' + n]) + '" title="' + attr(d['alt' + n]) + '" border="0" width="182" style="width:182px;max-width:100%;height:auto;display:block;border-radius:6px;" class="img-max" />';
+        return '<td class="col2" width="182" valign="top" style="width:182px;">' + img + '</td>';
+      });
+      var sp = '<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>';
+      return section(cell('12px 40px', 'center', TBL + '><tbody><tr>' + cells.join(sp) + '</tr></tbody></table>'));
+    }
+  };
+
+  M.cta = {
+    letter: 'R', name: 'Llamada a la acción (caja con borde)', tag: 'CTA',
+    fields: [
+      { k: 'title', label: 'Título', type: 'text', req: true },
+      { k: 'text', label: 'Texto (opcional)', type: 'area', hint: TIP },
+      { k: 'line', label: 'Línea con enlace de Cvent (opcional)', type: 'text', ph: 'Register here: {[E-RSVP YES LINK]}', hint: 'Escribe el campo de Cvent suelto: genera su propio enlace.' }
+    ].concat(BTN_FIELDS),
+    defaults: { btnStyle: 'gold' },
+    build: function (d) {
+      var h = boxTitle(d.title || '', 20, 26, C.title, 'text-align:center;') + bodyText(d.text, 14, 22, '#000000', 'center', 10) +
+        (has(d.line) ? '<p style="' + SANS + 'font-size:14px;line-height:22px;color:' + C.title + ';text-align:center;padding-top:12px;word-break:break-word;">' + inline(d.line) + '</p>' : '') + optBtn(d);
+      return section(cell('16px 40px', 'center', TBL + ' style="background-color:#FFFFFF;border:2px solid ' + P + ';border-radius:8px;border-collapse:separate !important;"><tbody><tr><td align="center" style="padding:24px 26px;">' + h + '</td></tr></tbody></table>'));
+    }
+  };
+
+  M.boton = {
+    letter: 'U', name: 'Botón suelto', tag: 'BOTON',
+    fields: [
+      { k: 'btn', label: 'Texto del botón', type: 'text', req: true, half: true }, { k: 'url', label: 'Enlace', type: 'url', req: true, half: true },
+      { k: 'btnStyle', label: 'Estilo', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']] }
+    ],
+    defaults: { btnStyle: 'gold' },
+    build: function (d) { return section(cell('6px 40px 16px 40px', 'center', btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle))); }
+  };
+
+  M.important = {
+    letter: 'V', name: 'Aviso «Important» (caja oscura)', tag: 'IMPORTANT',
+    fields: [{ k: 'label', label: 'Etiqueta', type: 'text', ph: 'IMPORTANT' }, { k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }],
+    defaults: { label: 'IMPORTANT' },
+    build: function (d) {
+      // Sobre carbón, los enlaces y negritas van en blanco.
+      var h = tag(has(d.label) ? d.label : 'IMPORTANT', 0) + bodyText(d.text, 14, 22, '#FFFFFF', 'left', 12).split(C.link).join('#FFFFFF');
+      return section(cell('12px 40px', 'left', TBL + ' bgcolor="' + C.band + '" style="background-color:' + C.band + ';border-radius:8px;border-collapse:separate !important;"><tbody><tr><td bgcolor="' + C.band + '" style="padding:22px 24px;background-color:' + C.band + ';border-radius:8px;">' + h + '</td></tr></tbody></table>'));
+    }
+  };
+
+  // Badges oficiales de Cvent (cvent-assets.com) enlazados con los campos de wallet de cada inscrito.
+  var WALLET_APPLE = 'https://www.cvent-assets.com/event-email-editor/assets/images/US-UK_Add_to_Apple_Wallet_RGB_101421__d018a8bb15e6d1b46780.png';
+  var WALLET_GOOGLE = 'https://www.cvent-assets.com/event-email-editor/assets/images/enUS_add_to_google_wallet_add-wallet-badge__b79d999246ba9434bcd9.png';
+  M.wallet = {
+    letter: 'W', name: 'Añadir a Apple / Google Wallet', tag: 'WALLET',
+    fields: [{ k: 'title', label: 'Título (opcional)', type: 'text' }, { k: 'text', label: 'Texto (opcional)', type: 'area', hint: TIP }],
+    build: function (d) {
+      // Mismo alto (48 px) para los dos badges: Apple 250×79 y Google 199×55 en origen.
+      var badge = function (href, src, alt, w) { return '<td class="col2" align="center" valign="middle" style="padding:6px 8px;"><a href="' + href + '" target="_blank"><img src="' + src + '" alt="' + alt + '" title="' + alt + '" border="0" width="' + w + '" height="48" style="width:' + w + 'px;height:48px;display:block;margin:0 auto;" /></a></td>'; };
+      var h = (has(d.title) ? boxTitle(d.title, 20, 26, C.title, 'text-align:center;') : '') + bodyText(d.text, 14, 22, '#000000', 'center', 8) +
+        '<table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:16px auto 0 auto;"><tbody><tr>' +
+        badge('{[C-PASSBOOK_LINK]}', WALLET_APPLE, 'Add to Apple Wallet', 152) + badge('{[C-GOOGLEWALLET_LINK]}', WALLET_GOOGLE, 'Add to Google Wallet', 174) + '</tr></tbody></table>';
+      return section(cell('16px 40px', 'center', h));
+    }
+  };
+
+  K.MODULE_ORDER = ['intro', 'titulo', 'lista', 'datos', 'tarjetas', 'info', 'producto', 'separador', 'imagen', 'cierre', 'compra', 'contacto', 'step', 'glance', 'timeline', 'deadlines', 'fotos3', 'cta', 'boton', 'important', 'wallet'];
 
   // ============================================================
   // MONTAJE
@@ -412,6 +600,16 @@
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
     var title = (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name) + (has(st.name) ? ' – ' + st.name.trim() : '');
     var html = K.HEAD.replace('%%TITLE%%', function () { return esc(title); }) + ' ' + K.BODY_OPEN + parts.join('\n') + '\n' + K.BODY_CLOSE + '\n';
+    // Paleta por roles (t.theme, solo sin kit aplicado): texto, grises, fondos suaves y roles separados del principal.
+    // El kit editado de la propia marca (kit.base) conserva su paleta por roles; un kit aplicado aparte no.
+    var theme = ((!kit || kit.base) && t.theme) || {};
+    if (theme.body) html = html.replace(/color:#000000;/g, 'color:' + theme.body + ';');
+    if (theme.grey) html = html.replace(/#A5A0C4/gi, theme.grey);
+    if (theme.soft) html = html.replace(/#F7F4FC/gi, theme.soft);
+    html = html.replace(/%%C:(\w+)%%/g, function (m, k) { return theme[k] || C_DEFAULT[k]; });
+    var bodyAt = html.indexOf('<body');
+    if (theme.link) html = html.slice(0, bodyAt).replace(/color: #6F4ACC;/g, 'color: ' + theme.link + ';') + html.slice(bodyAt);
+    if (theme.bg) html = html.replace('bgcolor="#6F4ACC" style="background-color:#6F4ACC">', 'bgcolor="' + theme.bg + '" style="background-color:' + theme.bg + '">');
     // Colores del torneo: una sola pasada
     html = html.replace(/#6F4ACC|#91FAFB/gi, function (m) { return m.toUpperCase() === P ? t.principal : t.acento; });
     // Fuentes: las del kit aplicado o, si no hay kit, las de la sección del club. Sin enlace se elimina su @font-face.
@@ -450,7 +648,15 @@
     if (!t.footer && !off0.footer) W('Footer de imagen de ' + (kit ? kit.name : t.name) + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
     if (!secs.length) W('La newsletter no tiene módulos todavía.');
     var off = st.off || {};
-    if (!off.franja && !has(st.franjaLeft)) E('Falta la etiqueta izquierda de la franja identificadora.');
+    if (!off.franja && !has(st.franjaLeft) && !has(t.franjaLeft)) E('Falta la etiqueta izquierda de la franja identificadora.');
+    // {[E-RSVP YES LINK]} y {[E-MODIFY REG LINK]} generan su propio enlace: nunca dentro de otro enlace.
+    var selfLink = /\{\[E-(RSVP YES|MODIFY REG) LINK\]\}/, inLink = /<a\b[^>]*\{\[E-(RSVP YES|MODIFY REG) LINK\]\}|<a\b[^>]*>(?:(?!<\/a>)[\s\S])*\{\[E-(RSVP YES|MODIFY REG) LINK\]\}/.test(html.slice(html.indexOf('<body')));
+    // También en el texto escrito: dentro de [texto](…) o en un campo de enlace.
+    secs.forEach(function (s) { var m = M[s.type]; if (!m) return; m.fields.forEach(function (f) {
+      var v = String((s.d || {})[f.k] || '');
+      if ((f.type === 'url' && selfLink.test(v)) || /\]\([^)]*\{\[E-(RSVP YES|MODIFY REG) LINK\]\}/.test(v) || /\[[^\]]*\{\[E-(RSVP YES|MODIFY REG) LINK\]\}[^\]]*\]\(/.test(v)) inLink = true;
+    }); });
+    if (inLink) E('{[E-RSVP YES LINK]} o {[E-MODIFY REG LINK]} está dentro de otro enlace: Cvent ya genera su propio enlace. Ponlo como texto suelto.');
     if (off.header) W('Header del torneo desactivado manualmente.');
     if (off.franja) W('Franja identificadora desactivada manualmente.');
     if (off.footer && t.footer) W('Footer de imagen desactivado manualmente.');
@@ -511,7 +717,7 @@
     if (/(^|[^{])\[(C|E|P)-[A-Z][^\]]*\](?!\})/.test(body) || /\{\[[^\]]*$/m.test(body.replace(/\{\[[^\]]*\]\}/g, ''))) E('Hay un campo de Cvent mal cerrado (debe ser {[...]}).');
     if (!bad.length) OK('Campos de Cvent correctos (' + found.length + ').');
     OK('Footer legal con baja ({[EMAIL OPT OUT]}) incluido.');
-    if (kit) OK('Brand kit «' + kit.name + '»: copia guardada con la newsletter.');
+    if (kit) OK(kit.base ? 'Kit de la marca editado en este navegador («' + kit.name + '»).' : 'Brand kit «' + kit.name + '»: copia guardada con la newsletter.');
     else OK((off0.header ? 'Paleta' : 'Header de ' + t.name + ' y paleta') + ' del torneo aplicados.');
 
     // Textos

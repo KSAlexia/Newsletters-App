@@ -8,7 +8,7 @@ App interna para montar newsletters de Cvent con piezas fijas. Sin IA y sin cost
 3. Rellena los módulos. La vista previa se actualiza sola.
 4. Mira la pestaña **Revisión** y descarga el `.txt` para pegarlo en Cvent.
 
-- Texto: un párrafo por línea. `**negrita**` y `[texto](enlace)`.
+- Texto: un párrafo por línea. `**negrita**`, `*cursiva*`, `[texto](enlace)`, `==etiqueta destacada==` y `++subrayado de color++`.
 - Imágenes: siempre el custom link de Cvent.
 - Los proyectos se guardan en el navegador de cada persona. «Exportar proyecto» descarga un `.json` para pasarlo a otra persona (lo abre con «Abrir archivo de proyecto»).
 - «Importar» usa ChatGPT para repartir una newsletter antigua o un guion en módulos.
@@ -49,7 +49,7 @@ Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los c
 - **＋ en la vista previa**: entre cada bloque (y al principio y al final) hay un botón **+**. Al pulsarlo aparece un **«Bloque nuevo»** en ese sitio y se abre la paleta del panel para elegir de qué tipo es. Si cierras la paleta sin elegir, desaparece. El bloque nuevo solo existe en la vista previa: nunca llega al email.
 - **En la vista previa**: al pasar el ratón por un bloque aparece su barra (⠿ Mover para arrastrarlo, ↑ ↓, ＋ añadir debajo, ⧉ duplicar, ✕ eliminar). Pulsar un bloque lo selecciona y lo abre en el panel.
 - **Editar texto en la vista previa**: pulsa un texto, escribe y pulsa **Enter** para guardar (**Esc** cancela). En los párrafos aparece una barra con **B** (negrita), **I** (cursiva), **🔗 Enlace** y **Quitar formato**; también Ctrl/⌘ + B, I y K. Lo pegado entra sin formato. Los textos de una línea (títulos, etiquetas, precios) no admiten formato, como en el email.
-- Formato en el panel: `**negrita**`, `*cursiva*` y `[texto](https://…)`. No hay tamaños de letra libres: los fija cada bloque para que el diseño sea coherente en móvil y Outlook. Los textos compuestos de varios campos, las imágenes y las opciones se editan en el panel. Para añadir un párrafo nuevo, usa el panel.
+- Formato en el panel: `**negrita**`, `*cursiva*`, `[texto](https://…)`, `==etiqueta destacada==` y `++subrayado de color++` (también con los botones «Etiqueta» y «Subrayar» de la barra de la vista previa). No hay tamaños de letra libres: los fija cada bloque para que el diseño sea coherente en móvil y Outlook. Los textos compuestos de varios campos, las imágenes y las opciones se editan en el panel. Para añadir un párrafo nuevo, usa el panel.
 - **＋ Texto/botón** (en la barra del bloque) lista los textos y botones opcionales que le faltan a ese bloque (etiqueta, precio, texto, botón de cada tarjeta…). Un texto se añade como «PENDIENTE: …» para escribirlo encima; un botón pide su enlace (puedes dejarlo vacío) y luego se edita su texto pulsándolo. Si ya hay botón, permite añadir o cambiar su enlace, o quitarlo.
 - Un botón se ve en la newsletter en cuanto tiene texto, aunque aún no tenga enlace; la revisión marca como error «el botón … no tiene enlace» (y al revés, un enlace sin texto de botón).
 - También puedes arrastrar las tarjetas del panel para reordenarlas y soltar imágenes del brand kit sobre un bloque con imagen en la vista previa.

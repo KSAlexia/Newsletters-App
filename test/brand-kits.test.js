@@ -79,7 +79,8 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   const [, psgHtml] = make('psg-canada');
   assert.ok(psgHtml.includes('f7af6f3c0aeb49dd880cd60fe6a07804.otf') && psgHtml.includes("format('opentype')") && psgHtml.includes('#004070'));
   const [wc, wcHtml] = make('rmf-wc'), wcChecks = K.check(wc, wcHtml);
-  assert.ok(wcChecks.some(x => /Header de .*PENDIENTE/.test(x.msg)) && wcChecks.some(x => /provisionales/.test(x.msg)));
+  // Desde el 12/11/2026 World Challenge tiene diseño propio: ya no hay header pendiente ni colores provisionales.
+  assert.ok(!wcChecks.some(x => /Header de .*PENDIENTE/.test(x.msg)) && !wcChecks.some(x => /provisionales/.test(x.msg)));
   assert.equal(K.CLIENT.tournaments.filter(t => t.club === 'bayern').map(t => t.section).join(), 'CANADA CAMPS,EXPERIENCES');
   console.log('OK: clubs con nombre, fuentes, colores, contacto y pendientes por sección.');
 }
@@ -153,4 +154,117 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   }
   assert.match(K.build(K.fromRecipe('media', 'academy-short')), /4f15fb5051684e46873120016ed52f5a\.ttf'\) format\('truetype'\)/, 'Flatory .ttf como truetype');
   console.log('OK: Bayern y Kaptiva Sports Academy con header, footer, colores, fuentes y contacto.');
+}
+
+// RMF World Challenge 2027: blanco y dorado, negro/carbón para texto, Georgia/Helvetica sin fuentes web y nunca la paleta KSA.
+{
+  const st = K.fromRecipe('blank', 'rmf-wc');
+  st.name = 'Welcome'; st.franjaLeft = '';
+  st.sections = [
+    { id: 'a', type: 'titulo', d: { title: 'Welcome', text: 'Hi **there**, see [the site](https://www.example.com).' } },
+    { id: 'b', type: 'datos', d: { pre: 'Key dates', title: 'Madrid', l1: 'Arrival', v1: 'July 4' } },
+    { id: 'c', type: 'info', d: { title: 'Payments', text: 'Due soon.' } },
+    { id: 'd', type: 'contacto', d: {} }
+  ];
+  const out = K.build(st), body = out.slice(out.indexOf('<body')), msgs = K.check(st, out);
+  const allowed = ['#FFFFFF', '#BEA47A', '#F8F5EF', '#EAE5DA', '#000000', '#1F1F1F', '#2B2B2B', '#6B6B6B', '#9A9A9A'];
+  const used = [...new Set((out.match(/#[0-9A-Fa-f]{6}\b/g) || []).map(c => c.toUpperCase()))];
+  assert.deepEqual(used.filter(c => !allowed.includes(c)), [], 'Solo colores de la paleta WCH');
+  assert.ok(out.includes('<title>Real Madrid Foundation World Challenge – Welcome'));
+  assert.ok(out.includes('df32a86304cb472599c44c9e4979cf33.png') && out.includes('alt="Real Madrid Foundation World Challenge"'), 'Header WCH');
+  assert.ok(out.includes('c2955fb129e34300b1277fc35ad7e793.png') && out.includes('alt="See You in Madrid"'), 'Banner See You in Madrid');
+  assert.ok(body.includes('>WORLD CHALLENGE 2027<') && body.includes('>FUNDACIÓN REAL MADRID<'), 'Subheader fijo');
+  assert.match(body, /bgcolor="#1F1F1F"[^>]*><table[^>]*><tbody><tr><td align="left"><p style="[^"]*color:#FFFFFF/, 'Subheader carbón con texto blanco');
+  assert.ok(out.includes('bgcolor="#FFFFFF" style="background-color:#FFFFFF">'), 'Fondo del email blanco');
+  assert.equal((out.match(/@font-face/g) || []).length, 0, 'Sin fuentes web');
+  assert.ok(/Georgia/.test(body) && /Helvetica/.test(body));
+  assert.match(body, /<strong style="[^"]*color:#000000;">there<\/strong>/, 'Negrita negra');
+  assert.match(body, /<a href="https:\/\/www\.example\.com"[^>]*color:#000000/, 'Enlace negro');
+  assert.ok(!msgs.some(m => /franja/.test(m.msg) && m.level === 'error'), 'La etiqueta izquierda viene fijada por la marca');
+  assert.ok(!msgs.some(m => /provisional|header/i.test(m.msg) && m.level !== 'ok'));
+  assert.ok(K.BrandKits.defaults('rmf-wc').assets.some(a => a.url.includes('a13a3c67f33046eb8dc29f11262c117f.jpg')), 'Foto WCH disponible en el panel de imágenes');
+  // Enlaces de Cvent que generan su propio enlace: nunca dentro de otro enlace.
+  st.sections = [{ id: 'x', type: 'intro', d: { text: '[Register here](https://x.com/{[E-RSVP YES LINK]})' } }];
+  const bad = K.build(st);
+  assert.ok(K.check(st, bad).some(m => m.level === 'error' && /dentro de otro enlace/.test(m.msg)));
+  st.sections = [{ id: 'x', type: 'intro', d: { text: 'Register here: {[E-RSVP YES LINK]}' } }];
+  const good = K.build(st);
+  assert.ok(!K.check(st, good).some(m => /dentro de otro enlace|no reconocido/.test(m.msg)), 'RSVP suelto y reconocido');
+  console.log('OK: RMF World Challenge (paleta por roles, subheader fijo, Georgia/Helvetica, banner final y enlaces de Cvent).');
+}
+
+// Componentes del kit de WCH como módulos nuevos (válidos para cualquier marca) y marcas ==etiqueta== / ++subrayado++.
+{
+  const NEW = ['step', 'glance', 'timeline', 'deadlines', 'fotos3', 'cta', 'boton', 'important', 'wallet'];
+  NEW.forEach(type => assert.ok(K.MODULE_ORDER.includes(type) && K.MODULES[type], 'Módulo ' + type));
+  const letters = K.MODULE_ORDER.map(t => K.MODULES[t].letter); assert.equal(new Set(letters).size, letters.length, 'Letras únicas');
+  const photo = 'https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/a13a3c67f33046eb8dc29f11262c117f.jpg?d=650';
+  const data = {
+    step: { label: 'Step 1', title: 'Profile', deadline: 'Deadline: May 1', text: 'Upload **docs**.', btn: 'Go', url: 'https://www.example.com', btnStyle: 'gold' },
+    glance: { title: 'At a glance', l1: 'Dates', v1: 'July', l2: 'Venue', v2: 'Madrid', l3: 'Players', v3: 'U12' },
+    timeline: { d1: 'Day 1', h1: 'Arrival', t1: 'Check-in.', d2: 'Day 2', h2: 'Training' },
+    deadlines: { l1: 'Payment', d1: 'May 1', l2: 'Travel', d2: 'June 1' },
+    fotos3: { src1: photo, alt1: 'a', src2: photo, alt2: 'b', src3: photo, alt3: 'c' },
+    cta: { title: 'Register', line: 'Register here: {[E-RSVP YES LINK]}' },
+    boton: { btn: 'View', url: 'https://www.example.com', btnStyle: 'dark' },
+    important: { label: 'IMPORTANT', text: 'Bring a **passport**. See [guide](https://www.example.com).' },
+    wallet: { title: 'Your ticket' }
+  };
+  const allowed = ['#FFFFFF', '#BEA47A', '#F8F5EF', '#EAE5DA', '#000000', '#1F1F1F', '#2B2B2B', '#6B6B6B', '#9A9A9A'];
+  for (const tid of ['rmf-wc', 'surfcup']) {
+    const st = K.fromRecipe('blank', tid); st.name = 'Prueba'; st.franjaLeft = 'Prueba';
+    st.sections = NEW.map((type, i) => ({ id: 'n' + i, type, d: Object.assign({}, K.MODULES[type].defaults || {}, data[type]) }));
+    const out = K.build(st), msgs = K.check(st, out);
+    assert.ok(!/%%C:/.test(out), tid + ': sin roles sin resolver');
+    assert.ok(!msgs.some(m => m.level === 'error' && !/contacto/i.test(m.msg)), tid + ': sin errores — ' + msgs.filter(m => m.level === 'error').map(m => m.msg).join(' | '));
+    assert.ok(out.includes('href="{[C-PASSBOOK_LINK]}"') && out.includes('href="{[C-GOOGLEWALLET_LINK]}"'), tid + ': wallets');
+    if (tid === 'rmf-wc') {
+      const used = [...new Set((out.match(/#[0-9A-Fa-f]{6}\b/g) || []).map(c => c.toUpperCase()))];
+      assert.deepEqual(used.filter(c => !allowed.includes(c)), [], 'WCH: solo colores de su paleta');
+      assert.match(out, /background-color:#1F1F1F;[^"]*"><tbody><tr><td[^>]*><table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top:0px;[^"]*"><tbody><tr><td bgcolor="#BEA47A"/, 'Important: caja carbón con etiqueta dorada');
+      assert.match(out, /<a href="https:\/\/www\.example\.com" target="_blank" style="color:#FFFFFF;/, 'Important: enlace blanco sobre carbón');
+      assert.match(out, /border-radius:4px;"><a href="https:\/\/www\.example\.com"/, 'Botón con esquinas de 4 px');
+      assert.ok(!/text-transform:uppercase;text-align:center;word-break:break-word;">At a glance/.test(out) && out.includes('>At a glance<'), 'Títulos sin mayúsculas');
+    } else {
+      assert.ok(out.includes('#6F4ACC') && !out.includes('#BEA47A'), 'Surf Cup usa su color principal');
+    }
+  }
+  // Marcas de texto
+  const st = K.fromRecipe('blank', 'rmf-wc'); st.sections = [{ id: 'x', type: 'intro', d: { text: 'Pay before ==May 1==, it is ++mandatory++. See [a==b](https://x.com/?q=a==b).' } }];
+  const out = K.build(st);
+  assert.match(out, /<span style="background-color:#BEA47A;color:#000000;font-weight:bold;padding:1px 6px;border-radius:3px;">May 1<\/span>/);
+  assert.match(out, /<span style="font-weight:bold;color:#000000;border-bottom:2px solid #BEA47A;">mandatory<\/span>/);
+  assert.ok(out.includes('href="https://x.com/?q=a==b"'), 'Las marcas no tocan los enlaces');
+  console.log('OK: componentes WCH (step, at a glance, timeline, deadlines, tres fotos, CTA, botón, Important, wallets) y marcas de etiqueta/subrayado.');
+}
+
+// Editar el kit de una marca: se guarda, se vuelve a abrir con los cambios y se aplica a sus newsletters con el kit automático.
+{
+  const mem = {}, st2 = { getItem: k => mem[k] || null, setItem: (k, v) => { mem[k] = v; } };
+  B.load(st2);
+  const NEW_FOOTER = 'https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.png';
+  const draft = B.brandDraft('rmf-usa'); assert.equal(draft.base, 'rmf-usa'); assert.ok(draft.footer.url.includes('db9333ea4c694dcd954c90570f8d30f4'));
+  draft.footer.url = NEW_FOOTER; draft.footer.name = 'Nuevo footer';
+  const saved = B.save(draft, st2);
+  assert.equal(saved.id, 'brand-rmf-usa');
+  B.save(Object.assign(B.brandDraft('rmf-usa'), { name: 'Otra vez' }), st2);
+  assert.equal(B.all().filter(k => k.base === 'rmf-usa').length, 1, 'Un único kit editado por marca');
+  assert.equal(B.custom().length, 0, 'No aparece como kit independiente');
+  B.load(st2);
+  assert.equal(B.brandDraft('rmf-usa').footer.url, NEW_FOOTER, 'Al volver a abrir conserva el footer nuevo');
+  const nl = K.fromRecipe('blank', 'rmf-usa'); nl.franjaLeft = 'x';
+  const html = K.build(nl);
+  assert.ok(html.includes(NEW_FOOTER) && html.includes('alt="Nuevo footer"') && !html.includes('db9333ea4c694dcd954c90570f8d30f4'), 'La newsletter usa el footer editado');
+  assert.ok(!K.build(Object.assign(K.fromRecipe('blank', 'rmf-canada'), { franjaLeft: 'x' })).includes(NEW_FOOTER), 'Las demás secciones no cambian');
+  // Una copia aplicada a la newsletter manda sobre el kit de la marca.
+  const own = Object.assign(K.fromRecipe('blank', 'rmf-usa'), { franjaLeft: 'x', brandKit: B.snapshot(B.defaults('rmf-usa')) });
+  assert.ok(!K.build(own).includes(NEW_FOOTER));
+  // WCH editado conserva su paleta por roles (títulos negros, fondo blanco).
+  const wch = B.brandDraft('rmf-wc'); wch.footer.url = NEW_FOOTER; B.save(wch, st2);
+  const w = K.build(Object.assign(K.fromRecipe('blank', 'rmf-wc'), { sections: [{ id: 'a', type: 'titulo', d: { title: 'Hola' } }] }));
+  assert.ok(w.includes(NEW_FOOTER) && w.includes('bgcolor="#FFFFFF" style="background-color:#FFFFFF">') && /color:#000000;text-transform:none/.test(w), 'WCH editado mantiene su estilo');
+  B.remove('brand-rmf-usa', st2); B.load(st2);
+  assert.equal(B.brandKit('rmf-usa'), null); assert.ok(K.build(nl).includes('db9333ea4c694dcd954c90570f8d30f4'), 'Volver al original');
+  B.remove('brand-rmf-wc', st2); B.load(st2);
+  console.log('OK: kit de cada marca editable, persistente y aplicado a sus newsletters (y restaurable).');
 }

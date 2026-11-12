@@ -441,3 +441,5 @@ button:focus-visible, summary:focus-visible { outline: none; box-shadow: var(--r
 #hub-controls input, #hub-controls select, #move-destination { padding: 7px 10px; border-radius: var(--r); }
 #hub-controls #hub-clear { align-self: end; }
 .lobby-bar h1 { font-size: 26px; letter-spacing: -.2px; }
+.kit-base-note { grid-column: 1 / -1; background: var(--soft); border-left: 3px solid var(--brand); border-radius: var(--r); padding: 8px 12px; color: var(--brand-dark); }
+.kit-base-tools { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }

@@ -26,6 +26,9 @@
   B.normalize = function (raw, refs) {
     if (!raw || typeof raw !== 'object') throw Error('El archivo no contiene un brand kit válido.');
     var out = { id: str(raw.id), name: str(raw.name), tournament: str(raw.tournament), colors: {}, fonts: {}, assets: [] };
+    // base: este kit sustituye al diseño de esa marca/sección para sus newsletters con «Kit automático del torneo».
+    var base = str(raw.base);
+    if (base) { if (!K.CLIENT.tournaments.some(function (t) { return t.id === base; })) throw Error('El kit de marca apunta a una sección que no existe.'); out.base = base; out.tournament = base; }
     if (!out.name) throw Error('Escribe un nombre para el kit.');
     if (out.name.length > 150) throw Error('El nombre del kit admite hasta 150 caracteres.');
     ['principal', 'acento', 'secundario'].forEach(function (key) {
@@ -43,7 +46,17 @@
     return out;
   };
   B.snapshot = function (kit) { return B.normalize(kit, false); };
-  B.forState = function (st) { try { return st.brandKit ? B.snapshot(st.brandKit) : null; } catch (e) { return null; } };
+  // Kit que usa una newsletter: el que se le aplicó (copia guardada con ella) o, si no tiene, el kit de su marca editado en este navegador.
+  B.forState = function (st) {
+    try {
+      if (st.brandKit) return B.snapshot(st.brandKit);
+      var own = B.brandKit(K.tournament(st.tournament).id); return own ? B.snapshot(own) : null;
+    } catch (e) { return null; }
+  };
+  B.brandKit = function (tid) { return copy(kits.filter(function (k) { return k.base === tid; })[0] || null); };
+  B.custom = function () { return B.all().filter(function (k) { return !k.base; }); };
+  // Borrador para editar el kit de una marca: el guardado si existe; si no, el diseño de la app.
+  B.brandDraft = function (tid) { var own = B.brandKit(tid); if (own) return own; var d = B.defaults(tid); d.base = tid; return d; };
   B.defaults = function (id) {
     var t = K.tournament(id), fonts = {};
     B.roles.forEach(function (r) {
@@ -51,7 +64,7 @@
       var face = (K.HEAD.match(/@font-face\s*\{[^}]*\}/g) || []).filter(function (x) { return x.indexOf("font-family: '" + r[0] + "'") >= 0; })[0] || '';
       var url = face.match(/src: url\('([^']+)'\)/); fonts[r[0]] = url ? url[1] : '';
     });
-    return { id: '', name: t.name, tournament: t.id, colors: { principal: t.principal, acento: t.acento, secundario: t.secundario || '' }, header: { name: t.club ? t.brand : K.CLIENT.name + ' · ' + t.name, url: t.header || '' }, footer: { name: t.footerAlt || '', url: t.footer || '' }, mediaBanner: { name: 'Media Packages', url: t.club ? (t.mediaBanner || '') : K.CLIENT.mediaBanner }, fonts: fonts, assets: [] };
+    return { id: '', name: t.name, tournament: t.id, colors: { principal: t.principal, acento: t.acento, secundario: t.secundario || '' }, header: { name: t.club ? t.brand : K.CLIENT.name + ' · ' + t.name, url: t.header || '' }, footer: { name: t.footerAlt || '', url: t.footer || '' }, mediaBanner: { name: 'Media Packages', url: t.club ? (t.mediaBanner || '') : K.CLIENT.mediaBanner }, fonts: fonts, assets: (t.assets || []).map(function (a) { return { name: a.name, url: a.url }; }) };
   };
   B.empty = function () { var k = B.defaults(); k.name = 'Nuevo brand kit'; k.tournament = ''; ['header', 'footer', 'mediaBanner'].forEach(function (x) { k[x] = { name: '', url: '' }; }); B.roles.forEach(function (r) { k.fonts[r[0]] = ''; }); return k; };
   B.load = function (storage) {
@@ -67,11 +80,17 @@
   B.save = function (raw, storage) {
     if (!loaded) throw Error('La biblioteca no se ha cargado correctamente. No se sobrescribirán los datos.');
     var kit = B.normalize(raw, true);
+    if (kit.base) kit.id = 'brand-' + kit.base; // un único kit editado por marca/sección
     if (!kit.id) kit.id = 'kit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
     var list = B.all(), index = list.findIndex(function (k) { return k.id === kit.id; });
     if (index < 0) list.push(kit); else list[index] = kit;
     // La memoria solo cambia después de guardar correctamente.
     storage.setItem(B.KEY, JSON.stringify({ version: 1, kits: list })); kits = list; return copy(kit);
+  };
+  B.remove = function (id, storage) {
+    if (!loaded) throw Error('La biblioteca no se ha cargado correctamente. No se sobrescribirán los datos.');
+    var list = B.all().filter(function (k) { return k.id !== id; });
+    storage.setItem(B.KEY, JSON.stringify({ version: 1, kits: list })); kits = list;
   };
   B.effectiveTournament = function (st) {
     var t = K.tournament(st.tournament), kit = B.forState(st);

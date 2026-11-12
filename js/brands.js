@@ -71,8 +71,17 @@
         { id: 'rmf-usa', section: 'USA CAMPS', footer: PIX + 'db9333ea4c694dcd954c90570f8d30f4.png', footerAlt: 'See You At Camp' },
         { id: 'rmf-canada', section: 'CANADA CAMPS', footer: PIX + 'db9333ea4c694dcd954c90570f8d30f4.png', footerAlt: 'See You At Camp' },
         { id: 'rmf-exp', section: 'EXPERIENCES', footer: PIX + '6ca9b3ea03a54f20b3e76a29e1bbb500.png', footerAlt: 'Real Madrid Foundation' },
-        // Diseño propio todavía no recibido: header y footer pendientes, colores del club como provisionales.
-        { id: 'rmf-wc', section: 'RMF WORLD CHALLENGE', header: null, footer: null, footerAlt: '', provisional: true }
+        // World Challenge 2027 (WCH): blanco y dorado; negro/carbón solo para texto y detalles; nunca rojo.
+        // Georgia en titulares y cifras, Helvetica en el resto, sin fuentes web. Paleta por roles en «theme».
+        { id: 'rmf-wc', section: 'RMF WORLD CHALLENGE', brand: 'Real Madrid Foundation World Challenge',
+          header: PIX + 'df32a86304cb472599c44c9e4979cf33.png', footer: PIX + 'c2955fb129e34300b1277fc35ad7e793.png', footerAlt: 'See You in Madrid',
+          principal: '#BEA47A', acento: '#BEA47A', secundario: null, fonts: {},
+          families: { Extenda60: SERIF, Extenda40: SERIF, DinProBlack: SERIF, DinProBold: SANS, DinProMedium: SANS, DinProLight: SANS, DinProRegular: SANS },
+          franjaLeft: 'WORLD CHALLENGE 2027', franjaRight: 'FUNDACIÓN REAL MADRID',
+          theme: { title: '#000000', strong: '#000000', link: '#000000', button: '#BEA47A', buttonText: '#000000', franjaText: '#FFFFFF', franjaBg: '#1F1F1F',
+            line: '#EAE5DA', contactBg: '#F8F5EF', band: '#1F1F1F', body: '#2B2B2B', grey: '#9A9A9A', soft: '#F8F5EF', bg: '#FFFFFF',
+            titleCase: 'none', headWeight: 'bold', btnRadius: '4px' },
+          assets: [{ name: 'Foto World Challenge (a sangre)', url: PIX + 'a13a3c67f33046eb8dc29f11262c117f.jpg?d=650' }] }
       ] },
     { id: 'psg', name: 'Paris Saint-Germain Academy', filePrefix: 'psg',
       base: { brand: 'Paris Saint-Germain', principal: '#004070', acento: '#E30613', secundario: null, header: PIX + '2c5043ece01d4a9a8ae79d29943bad1a.png', footer: PIX + '1abe18827cfe4f5e9e62da2599c16442.png', footerAlt: 'Paris Saint-Germain', fonts: PSG_FONTS, contact: '' },
@@ -114,7 +123,10 @@
   // Campos dinámicos de Cvent permitidos (no se modifican nunca)
   K.CVENT_FIELDS = [
     '{[C-FIRST NAME]}', '{[C-FIRST NAME:TC]}', '{[E-MODIFY REG LINK]}', '{[C-CONFIRMATION NUM]}',
-    '{[C-EMAIL]}', '{[E-CUSTOM:Event Phone Number]}', '{[P-FIRST NAME]}', '{[P-LAST NAME]}', '{[EMAIL OPT OUT]}'
+    '{[C-EMAIL]}', '{[E-CUSTOM:Event Phone Number]}', '{[P-FIRST NAME]}', '{[P-LAST NAME]}', '{[EMAIL OPT OUT]}',
+    // Añadidos con el brand kit de RMF World Challenge (12/11/2026).
+    '{[C-LAST NAME]}', '{[E-TITLE]}', '{[E-START DATE:WCMMSD1C4]}', '{[E-END DATE:WCMMSD1C4]}', '{[E-START TIME:UA]}', '{[E-END TIME:UA]}',
+    '{[E-TIME ZONE]}', '{[E-ADDRESS]}', '{[C-PAYMENTS]}', '{[C-QRCODE_LINK]}', '{[C-PASSBOOK_LINK]}', '{[C-GOOGLEWALLET_LINK]}', '{[E-RSVP YES LINK]}'
   ];
 
   K.tournament = function (id) {
