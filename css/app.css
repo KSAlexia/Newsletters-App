@@ -279,3 +279,22 @@ button:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .script-steps label { color: var(--ink); font-size: 13px; }
 .script-steps select, .script-steps textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
 .script-steps textarea { font: 12px/1.5 ui-monospace, Menlo, Consolas, monospace; }
+
+/* Montar por bloques: paleta, selección y arrastre en el panel. */
+.add-toggle { width: 100%; padding: 10px; border: 1px dashed var(--brand); border-radius: 12px; background: var(--soft); color: var(--brand); font-weight: 600; cursor: pointer; }
+.palette { margin-top: 8px; padding: 10px 12px 12px; }
+.palette[hidden] { display: none; }
+.palette-head { display: flex; align-items: center; justify-content: space-between; }
+.palette-target { margin: 2px 0 8px; font-size: 12px; color: var(--muted); }
+.palette-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(190px, 100%), 1fr)); gap: 6px; }
+.palette-card { display: flex; gap: 8px; align-items: flex-start; text-align: left; padding: 8px; border: 1px solid var(--line); border-radius: 8px; background: #fff; cursor: grab; min-width: 0; }
+.palette-card:hover, .palette-card:focus-visible { border-color: var(--brand); background: var(--soft); }
+.palette-text { display: grid; gap: 1px; min-width: 0; }
+.palette-text strong { font-size: 12px; }
+.palette-text small { font-size: 11px; }
+.blocks-empty { margin: 0 0 10px; padding: 14px; border: 1px dashed var(--line); border-radius: 12px; color: var(--muted); font-size: 12px; text-align: center; background: var(--card); }
+.mod summary[draggable="true"] { cursor: grab; }
+.mod.is-selected { border-color: var(--brand); box-shadow: 0 0 0 2px rgba(111,74,204,.2); }
+.mod.drop-before { box-shadow: 0 -4px 0 0 var(--brand); }
+.mod.drop-after { box-shadow: 0 4px 0 0 var(--brand); }
+.palette, .mod { scroll-margin-top: 200px; }

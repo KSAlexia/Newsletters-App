@@ -41,6 +41,15 @@ App interna para montar newsletters de Cvent con piezas fijas. Sin IA y sin cost
 ## Continuar el desarrollo con Codex o Claude
 Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los cambios implementados, las decisiones de producto, las pruebas y los pendientes. `AGENTS.md` y `CLAUDE.md` remiten a ese documento compartido.
 
+## Montar por bloques
+
+- **＋ Añadir bloque** abre una paleta con todos los bloques y una descripción corta. Pulsa uno para añadirlo al final, o **arrástralo a la vista previa** (o entre las tarjetas del panel) para colocarlo donde quieras. Una newsletter vacía muestra la paleta y una zona «Arrastra aquí un bloque» en la vista previa.
+- Los textos obligatorios de un bloque nuevo salen como **«PENDIENTE: …»**: púlsalos en la vista previa y escribe encima. La revisión los marca como error hasta que los cambies.
+- **En la vista previa**: al pasar el ratón por un bloque aparece su barra (⠿ Mover para arrastrarlo, ↑ ↓, ＋ añadir debajo, ⧉ duplicar, ✕ eliminar). Pulsar un bloque lo selecciona y lo abre en el panel.
+- **Editar texto en la vista previa**: pulsa un texto, escribe y pulsa **Enter** para guardar (**Esc** cancela). Se conservan negritas y enlaces. Los textos compuestos de varios campos, las imágenes y las opciones se editan en el panel. Para añadir un párrafo nuevo, usa el panel.
+- También puedes arrastrar las tarjetas del panel para reordenarlas y soltar imágenes del brand kit sobre un bloque con imagen en la vista previa.
+- Con código editado a mano, la vista previa no es interactiva.
+
 ## Nueva newsletter desde un guion
 
 1. En el hub, pulsa **＋ Desde un guion** (se propone el torneo o sección en el que estás).

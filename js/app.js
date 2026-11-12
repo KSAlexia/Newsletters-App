@@ -308,12 +308,12 @@
     fillTournaments($('#tournament')); fillTournaments($('#script-tournament'));
     $('#recipe').innerHTML = ''; $('#recipe').appendChild(el('option', { value: '', text: 'Nueva desde receta…' }));
     K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); });
-    $('#add').innerHTML = ''; $('#add').appendChild(el('option', { value: '', text: '＋ Añadir módulo…' }));
-    K.MODULE_ORDER.forEach(function (id) { $('#add').appendChild(el('option', { value: id, text: K.MODULES[id].letter + ' · ' + K.MODULES[id].name })); });
+    renderPalette();
   }
   function syncSettings() {
     if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
     editingCode = false; renderImagePanel(); renderCompareSelect(); renderCompare();
+    selectedSection = -1; previewScroll = 0; if (state.sections.length) closePalette(); else openPalette(null);
     $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || '';
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
@@ -466,6 +466,261 @@
     $('#image-panel-empty').hidden = images.some(function (a) { return a.url; });
   }
 
+  // ---------- Montar por bloques: paleta, arrastrar y editar en la vista previa ----------
+  var BLOCK_INFO = {
+    intro: 'Saludo y párrafos de texto.', titulo: 'Título grande centrado, con texto y botón opcionales.',
+    lista: 'Título con una lista de puntos.', datos: 'Banda de color con fecha, hora, lugar…',
+    tarjetas: 'Dos opciones lado a lado, con botón.', info: 'Aviso o instrucciones sobre fondo suave.',
+    producto: 'Servicio con precio, imagen y opciones.', separador: 'Línea fina entre dos productos.',
+    imagen: 'Imagen a sangre o con márgenes.', cierre: 'Frase de cierre entre dos líneas.',
+    compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.'
+  };
+  // dragBlock: { kind: 'move', from } (bloque existente) | { kind: 'new', type } (desde la paleta)
+  var dragBlock = null, selectedSection = -1, insertAt = null, previewDoc = null, previewScroll = 0, inlineEditing = false;
+  function blockName(i) { var s = state.sections[i]; return s && K.MODULES[s.type] ? K.MODULES[s.type].name : ''; }
+  // Un bloque nuevo trae sus textos obligatorios como «PENDIENTE: …» para poder pulsarlos y escribir en la vista previa.
+  // La revisión los marca como error hasta que se sustituyan.
+  function newSection(type) {
+    var m = K.MODULES[type], d = {}, def = m.defaults || {}, k; for (k in def) d[k] = def[k];
+    m.fields.forEach(function (f) { if (f.req && (f.type === 'text' || f.type === 'area') && !d[f.k]) d[f.k] = 'PENDIENTE: ' + f.label; });
+    return { id: 's' + Date.now() + Math.floor(Math.random() * 1000), type: type, d: d, open: true };
+  }
+  function insertBlock(type, at) {
+    if (at == null || at > state.sections.length) at = state.sections.length;
+    state.sections.splice(at, 0, newSection(type)); closePalette();
+    selectSection(at); update();
+  }
+  function moveTo(from, to) {
+    if (to > from) to--; if (to === from) return;
+    var x = state.sections.splice(from, 1)[0]; state.sections.splice(to, 0, x);
+    selectedSection = to; renderSections(); update();
+  }
+  function removeBlock(i) {
+    if (!confirm('¿Eliminar «' + blockName(i) + '»?')) return;
+    state.sections.splice(i, 1); selectedSection = -1; renderSections(); update();
+  }
+  function duplicateBlock(i) {
+    var c = JSON.parse(JSON.stringify(state.sections[i])); c.id = 's' + Date.now(); state.sections.splice(i + 1, 0, c);
+    selectedSection = i + 1; renderSections(); update();
+  }
+  // Selecciona un bloque: lo abre y lo muestra en el panel, y lo marca en la vista previa.
+  function selectSection(i, scrollPreview) {
+    selectedSection = i; if (state.sections[i]) state.sections[i].open = true;
+    renderSections();
+    var cards = $('#sections').querySelectorAll ? $('#sections').querySelectorAll('details') : [];
+    if (cards[i] && cards[i].scrollIntoView) cards[i].scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    markPreview(scrollPreview);
+  }
+  function renderPalette() {
+    var box = $('#palette-list'); box.innerHTML = '';
+    K.MODULE_ORDER.forEach(function (id) {
+      var m = K.MODULES[id], card = el('button', { type: 'button', class: 'palette-card', draggable: 'true', title: 'Pulsa para añadirlo o arrástralo a la vista previa', onclick: function () { insertBlock(id, insertAt); } }, [
+        el('span', { class: 'letter', text: m.letter }), el('span', { class: 'palette-text' }, [el('strong', { text: m.name }), el('small', { text: BLOCK_INFO[id] || '' })])
+      ]);
+      card.addEventListener('dragstart', function (event) { dragBlock = { kind: 'new', type: id }; event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('text/plain', m.name); });
+      card.addEventListener('dragend', endBlockDrag);
+      box.appendChild(card);
+    });
+  }
+  function openPalette(at) {
+    insertAt = at == null ? null : at;
+    $('#palette-target').textContent = insertAt == null || insertAt >= state.sections.length ? 'Se añade al final. También puedes arrastrarlo a la vista previa o entre los bloques.' : 'Se añade debajo de «' + blockName(insertAt - 1) + '».';
+    $('#palette').hidden = false; $('#add-toggle').setAttribute('aria-expanded', 'true');
+    if ($('#palette').scrollIntoView) $('#palette').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }
+  function closePalette() { insertAt = null; $('#palette').hidden = true; $('#add-toggle').setAttribute('aria-expanded', 'false'); }
+  function endBlockDrag() {
+    dragBlock = null; hideDropLine();
+    Array.prototype.forEach.call(document.querySelectorAll('.drop-before, .drop-after'), function (n) { n.classList.remove('drop-before', 'drop-after'); });
+  }
+  // Arrastrar tarjetas del panel para reordenar (o soltar un bloque nuevo entre ellas).
+  function cardDrop(det, summary, i) {
+    summary.setAttribute('draggable', 'true');
+    summary.addEventListener('dragstart', function (event) { if (dragImage) return; dragBlock = { kind: 'move', from: i }; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', blockName(i)); });
+    summary.addEventListener('dragend', endBlockDrag);
+    function where(event) { var r = det.getBoundingClientRect(); return event.clientY < r.top + Math.min(r.height, 60) / 2 ? i : i + 1; }
+    det.addEventListener('dragover', function (event) {
+      if (!dragBlock) return; event.preventDefault();
+      var at = where(event); det.classList.toggle('drop-before', at === i); det.classList.toggle('drop-after', at !== i);
+    });
+    det.addEventListener('dragleave', function (event) { if (!event.relatedTarget || !det.contains(event.relatedTarget)) det.classList.remove('drop-before', 'drop-after'); });
+    det.addEventListener('drop', function (event) {
+      if (!dragBlock) return; event.preventDefault();
+      var drag = dragBlock, at = where(event); endBlockDrag();
+      if (drag.kind === 'move') moveTo(drag.from, at); else insertBlock(drag.type, at);
+    });
+  }
+
+  // Vista previa interactiva: solo con el HTML generado (no con código editado a mano).
+  var PREVIEW_CSS = '[data-ksa-section],[data-ksa-empty]{cursor:pointer}' +
+    '.ksa-box{position:absolute;z-index:8;pointer-events:none;border-radius:3px}' +
+    '.ksa-hover{border:2px dashed rgba(111,74,204,.6)}.ksa-sel{border:2px solid #6F4ACC;box-shadow:0 0 0 3px rgba(111,74,204,.18)}' +
+    '.ksa-bar{position:absolute;z-index:10;display:flex;gap:2px;background:#1b1630;border-radius:8px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.3);font:12px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif}' +
+    '.ksa-bar button{border:0;background:none;color:#fff;cursor:pointer;padding:5px 7px;border-radius:5px;font:inherit;white-space:nowrap}' +
+    '.ksa-bar button:hover{background:#6F4ACC}.ksa-bar .ksa-handle{cursor:grab}' +
+    '.ksa-line{position:absolute;z-index:9;height:4px;margin-top:-2px;background:#6F4ACC;border-radius:2px;pointer-events:none;box-shadow:0 0 0 2px #fff}' +
+    '.ksa-drop{border:3px solid #91FAFB;background:rgba(145,250,251,.12)}' +
+    '[contenteditable=true]{outline:2px solid #6F4ACC !important;outline-offset:3px;cursor:text;background:rgba(145,250,251,.18)}' +
+    '.ksa-tip{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:11;background:#1b1630;color:#fff;font:12px -apple-system,"Segoe UI",sans-serif;padding:6px 10px;border-radius:7px;pointer-events:none}';
+  function setPreview(markup) {
+    var f = $('#frame');
+    try { if (f.contentWindow && f.contentDocument && f.contentDocument.body) previewScroll = f.contentWindow.scrollY; } catch (e) {}
+    f.srcdoc = markup;
+  }
+  function overlay(doc, cls) { var n = doc.querySelector('.' + cls); if (!n) { n = doc.createElement('div'); n.className = 'ksa-box ' + cls; doc.body.appendChild(n); } return n; }
+  function placeBox(doc, node, target) {
+    if (!target) { node.style.display = 'none'; return; }
+    var r = target.getBoundingClientRect(), w = doc.defaultView;
+    node.style.display = 'block'; node.style.left = (r.left + w.scrollX) + 'px'; node.style.top = (r.top + w.scrollY) + 'px';
+    node.style.width = r.width + 'px'; node.style.height = r.height + 'px';
+  }
+  function sectionNode(doc, i) { return doc.querySelector('[data-ksa-section="' + i + '"]'); }
+  function markPreview(scroll) {
+    var doc = previewDoc; if (!doc || !doc.body) return;
+    var node = selectedSection >= 0 ? sectionNode(doc, selectedSection) : null;
+    placeBox(doc, overlay(doc, 'ksa-sel'), node);
+    if (node && scroll) node.getBoundingClientRect && doc.defaultView.scrollTo({ top: Math.max(0, node.getBoundingClientRect().top + doc.defaultView.scrollY - 40), behavior: 'smooth' });
+  }
+  function hideDropLine() { if (previewDoc && previewDoc.body) { var l = previewDoc.querySelector('.ksa-line'); if (l) l.style.display = 'none'; Array.prototype.forEach.call(previewDoc.querySelectorAll('.ksa-drop'), function (n) { n.remove(); }); } }
+  function cleanLine(s) { return String(s || '').replace(/\*\*/g, '').replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, '$1').replace(/\s+/g, ' ').trim(); }
+  function nodeText(n) { return String(n.textContent || '').replace(/\s+/g, ' ').trim(); }
+  // Busca el campo de texto (y la línea) que muestra el elemento pulsado.
+  function findEditable(target, sec, s) {
+    var lines = [];
+    K.MODULES[s.type].fields.forEach(function (f) {
+      if (f.type !== 'text' && f.type !== 'area') return;
+      String(s.d[f.k] || '').split('\n').forEach(function (line, j) { var c = cleanLine(line); if (c) lines.push({ k: f.k, j: j, c: c }); });
+    });
+    for (var n = target; n && n !== sec; n = n.parentNode) {
+      if (n.nodeType !== 1) continue;
+      var t = nodeText(n), hit = lines.filter(function (l) { return l.c === t; })[0];
+      if (hit) {
+        // El elemento más grande con el mismo texto, para no perder negritas o enlaces que lo envuelven.
+        while (n.parentNode && n.parentNode !== sec && n.parentNode.nodeType === 1 && nodeText(n.parentNode) === t && !/^(TD|TR|TABLE|TBODY)$/.test(n.parentNode.tagName)) n = n.parentNode;
+        return { el: n, hit: hit };
+      }
+      if (t.length > 3000) break;
+    }
+    return null;
+  }
+  function toMarkdown(node) {
+    var out = '';
+    Array.prototype.forEach.call(node.childNodes, function (c) {
+      if (c.nodeType === 3) { out += c.nodeValue; return; }
+      if (c.nodeType !== 1) return;
+      var tag = c.tagName.toLowerCase(), inner = toMarkdown(c);
+      if ((tag === 'strong' || tag === 'b') && inner.trim()) out += '**' + inner + '**';
+      else if (tag === 'a' && c.getAttribute('href')) out += '[' + inner + '](' + c.getAttribute('href') + ')';
+      else if (tag === 'br') out += ' ';
+      else out += inner;
+    });
+    return out;
+  }
+  function startEdit(doc, found, s) {
+    var node = found.el, original = node.innerHTML, cancelled = false, hit = found.hit;
+    inlineEditing = true; node.setAttribute('contenteditable', 'true'); node.focus();
+    // Texto pendiente: se selecciona entero para escribir encima.
+    if (/^\s*PENDIENTE:/i.test(String(s.d[hit.k] || '').split('\n')[hit.j] || '')) {
+      var range = doc.createRange(), sel = doc.defaultView.getSelection(); range.selectNodeContents(node); sel.removeAllRanges(); sel.addRange(range);
+    }
+    var tip = doc.createElement('div'); tip.className = 'ksa-tip'; tip.textContent = 'Enter guarda · Esc cancela'; doc.body.appendChild(tip);
+    function key(event) {
+      if (event.key === 'Enter') { event.preventDefault(); node.blur(); }
+      if (event.key === 'Escape') { event.preventDefault(); cancelled = true; node.innerHTML = original; node.blur(); }
+    }
+    node.addEventListener('keydown', key);
+    node.addEventListener('blur', function done() {
+      node.removeEventListener('blur', done); node.removeEventListener('keydown', key);
+      node.removeAttribute('contenteditable'); tip.remove(); inlineEditing = false;
+      if (cancelled) { refresh(); return; }
+      var md = toMarkdown(node).replace(/\s+/g, ' ').trim(), lines = String(s.d[hit.k] || '').split('\n');
+      if (md === lines[hit.j].trim()) { refresh(); return; }
+      lines[hit.j] = md; s.d[hit.k] = lines.join('\n');
+      renderSections(); refresh();
+    });
+  }
+  function enhancePreview(doc) {
+    previewDoc = doc; if (!doc || !doc.body) return;
+    var style = doc.createElement('style'); style.textContent = PREVIEW_CSS; doc.head.appendChild(style);
+    var bar = doc.createElement('div'), barFor = -1, line = doc.createElement('div'); bar.className = 'ksa-bar'; bar.style.display = 'none'; line.className = 'ksa-line'; line.style.display = 'none';
+    doc.body.appendChild(bar); doc.body.appendChild(line);
+    function btn(label, title, fn, cls) { var b = doc.createElement('button'); b.type = 'button'; b.textContent = label; b.title = title; if (cls) b.className = cls; b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); fn(barFor); }); bar.appendChild(b); return b; }
+    var handle = btn('⠿ Mover', 'Arrastra para mover el bloque', function () {}, 'ksa-handle'); handle.draggable = true;
+    btn('↑', 'Subir', function (i) { if (i > 0) { selectedSection = i - 1; move(i, -1); } });
+    btn('↓', 'Bajar', function (i) { if (i < state.sections.length - 1) { selectedSection = i + 1; move(i, 1); } });
+    btn('＋', 'Añadir un bloque debajo', function (i) { openPalette(i + 1); });
+    btn('⧉', 'Duplicar', duplicateBlock);
+    btn('✕', 'Eliminar', removeBlock);
+    handle.addEventListener('dragstart', function (event) { dragBlock = { kind: 'move', from: barFor }; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', blockName(barFor)); bar.style.display = 'none'; });
+    handle.addEventListener('dragend', endBlockDrag);
+    var hover = overlay(doc, 'ksa-hover');
+    function secAt(target) { return target && target.closest ? target.closest('[data-ksa-section]') : null; }
+    function showBar(sec) {
+      barFor = +sec.getAttribute('data-ksa-section');
+      var r = sec.getBoundingClientRect(), w = doc.defaultView;
+      bar.style.display = 'flex'; bar.style.top = (r.top + w.scrollY + 6) + 'px';
+      bar.style.left = Math.max(4, Math.min(r.right, w.innerWidth) + w.scrollX - bar.offsetWidth - 6) + 'px';
+    }
+    doc.addEventListener('mousemove', function (event) {
+      if (dragBlock || inlineEditing) return;
+      if (bar.contains(event.target)) return;
+      var sec = secAt(event.target);
+      placeBox(doc, hover, sec); if (sec) showBar(sec); else bar.style.display = 'none';
+    });
+    doc.addEventListener('mouseleave', function () { if (!dragBlock) { hover.style.display = 'none'; bar.style.display = 'none'; } });
+    doc.addEventListener('click', function (event) {
+      if (bar.contains(event.target) || (event.target.closest && event.target.closest('[contenteditable]'))) return;
+      if (event.target.closest && event.target.closest('a')) event.preventDefault();
+      if (event.target.closest && event.target.closest('[data-ksa-empty]')) { openPalette(null); return; }
+      var sec = secAt(event.target); if (!sec) return;
+      var i = +sec.getAttribute('data-ksa-section'), s = state.sections[i]; if (!s) return;
+      var found = findEditable(event.target, sec, s);
+      selectSection(i);
+      if (found) startEdit(doc, found, s);
+    });
+    // Soltar: bloques (mover o nuevos) entre bloques; imágenes del brand kit sobre un bloque con imagen.
+    function dropIndex(event) {
+      var secs = doc.querySelectorAll('[data-ksa-section]'), sec = secAt(doc.elementFromPoint(event.clientX, event.clientY));
+      if (!secs.length) return { at: 0, node: doc.querySelector('[data-ksa-empty]'), before: true };
+      if (!sec) {
+        var first = secs[0].getBoundingClientRect(), last = secs[secs.length - 1];
+        return event.clientY < first.top ? { at: 0, node: secs[0], before: true } : { at: state.sections.length, node: last, before: false };
+      }
+      var r = sec.getBoundingClientRect(), before = event.clientY < r.top + r.height / 2, i = +sec.getAttribute('data-ksa-section');
+      return { at: before ? i : i + 1, node: sec, before: before };
+    }
+    doc.addEventListener('dragover', function (event) {
+      if (dragImage) {
+        var target = secAt(doc.elementFromPoint(event.clientX, event.clientY)), s = target && state.sections[+target.getAttribute('data-ksa-section')];
+        hideDropLine();
+        if (!s || !imageFieldOf(K.MODULES[s.type])) return;
+        event.preventDefault(); event.dataTransfer.dropEffect = 'copy';
+        var box = doc.createElement('div'); box.className = 'ksa-box ksa-drop'; doc.body.appendChild(box); placeBox(doc, box, target);
+        return;
+      }
+      if (!dragBlock) return;
+      event.preventDefault(); event.dataTransfer.dropEffect = dragBlock.kind === 'move' ? 'move' : 'copy';
+      var d = dropIndex(event), w = doc.defaultView;
+      if (!d.node) { line.style.display = 'none'; return; }
+      var r = d.node.getBoundingClientRect();
+      line.style.display = 'block'; line.style.left = (r.left + w.scrollX) + 'px'; line.style.width = r.width + 'px';
+      line.style.top = ((d.before ? r.top : r.bottom) + w.scrollY) + 'px';
+    });
+    doc.addEventListener('dragleave', function (event) { if (!event.relatedTarget) hideDropLine(); });
+    doc.addEventListener('drop', function (event) {
+      if (dragImage) {
+        var target = secAt(doc.elementFromPoint(event.clientX, event.clientY)), i = target ? +target.getAttribute('data-ksa-section') : -1, s = state.sections[i], f = s && imageFieldOf(K.MODULES[s.type]);
+        var drag = dragImage; clearDragImage(); hideDropLine();
+        if (!f) return; event.preventDefault(); selectedSection = i; s.open = true; setImage(s, f.k, drag); return;
+      }
+      if (!dragBlock) return; event.preventDefault();
+      var dragged = dragBlock, at = dropIndex(event).at; endBlockDrag();
+      if (dragged.kind === 'move') moveTo(dragged.from, at); else insertBlock(dragged.type, at);
+    });
+    doc.defaultView.addEventListener('resize', function () { markPreview(false); });
+    markPreview(false);
+  }
+
   // ---------- Editor de módulos ----------
   function snippet(s) {
     var m = K.MODULES[s.type], d = s.d || {}, v = d.title || d.left || d.a_title || d.greet || d.text || d.alt || '';
@@ -473,10 +728,11 @@
   }
   function renderSections() {
     var box = $('#sections'); box.innerHTML = '';
+    if (!state.sections.length) box.appendChild(el('p', { class: 'blocks-empty', text: 'Todavía no hay bloques. Elige uno en «＋ Añadir bloque» o arrástralo a la vista previa.' }));
     state.sections.forEach(function (s, i) {
       var m = K.MODULES[s.type]; if (!m) return;
       var snip = el('span', { class: 'snip', text: snippet(s) });
-      var det = el('details', { class: 'card mod' });
+      var det = el('details', { class: 'card mod' + (i === selectedSection ? ' is-selected' : '') });
       if (s.open) det.open = true;
       det.addEventListener('toggle', function () { s.open = det.open; persist(); });
       function tool(txt, title, fn, dis) { var b = el('button', { class: 'tool', title: title, text: txt, onclick: function (e) { e.preventDefault(); e.stopPropagation(); fn(); } }); if (dis) b.disabled = true; return b; }
@@ -485,10 +741,18 @@
         el('span', { class: 'tools' }, [
           tool('↑', 'Subir', function () { move(i, -1); }, i === 0),
           tool('↓', 'Bajar', function () { move(i, 1); }, i === state.sections.length - 1),
-          tool('⧉', 'Duplicar', function () { var c = JSON.parse(JSON.stringify(s)); c.id = 's' + Date.now(); state.sections.splice(i + 1, 0, c); renderSections(); update(); }),
-          tool('✕', 'Eliminar', function () { if (confirm('¿Eliminar «' + m.name + '»?')) { state.sections.splice(i, 1); renderSections(); update(); } })
+          tool('⧉', 'Duplicar', function () { duplicateBlock(i); }),
+          tool('✕', 'Eliminar', function () { removeBlock(i); })
         ])
       ]));
+      summary.setAttribute('title', 'Arrastra para mover el bloque');
+      cardDrop(det, summary, i);
+      summary.addEventListener('click', function () {
+        if (det.open) return; // se está cerrando
+        selectedSection = i;
+        Array.prototype.forEach.call(box.querySelectorAll('details'), function (d, j) { d.classList.toggle('is-selected', j === i); });
+        markPreview(true);
+      });
       var imgField = imageFieldOf(m);
       if (imgField) dropTarget(summary, function (drag) { s.open = true; setImage(s, imgField.k, drag); });
       var body = el('div', { class: 'fields' });
@@ -554,7 +818,8 @@
     html = custom ? state.customHtml : generated; checks = K.check(state, html);
     if (custom) checks.unshift({ level: 'warn', msg: 'Código editado a mano: la revisión de módulos se basa en sus campos y puede no reflejar lo cambiado en el código.' + (generated !== state.customBase ? ' Hay cambios en módulos o ajustes que no están en el código editado.' : '') });
     persist();
-    $('#frame').srcdoc = html; if (!editingCode) $('#code').value = html;
+    if (!inlineEditing) setPreview(custom ? html : K.build(state, { preview: true }));
+    if (!editingCode) $('#code').value = html;
     codeUI(generated);
     $('#filename').textContent = K.fileBase(state) + '_COPIAR_Y_PEGAR.txt';
     var ul = $('#checks'); ul.innerHTML = '';
@@ -671,11 +936,15 @@
       if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
       var appliedKit = state.brandKit; state = K.fromRecipe(id, state.tournament); if (appliedKit) state.brandKit = appliedKit; persist(); syncSettings(); renderSections(); refresh();
     });
-    $('#add').addEventListener('change', function () {
-      var id = this.value; this.value = ''; if (!id) return;
-      var d = {}, def = K.MODULES[id].defaults || {}, k; for (k in def) d[k] = def[k];
-      state.sections.push({ id: 's' + Date.now(), type: id, d: d, open: true }); renderSections(); update();
-      var all = document.querySelectorAll('#sections details'); all[all.length - 1].scrollIntoView({ behavior: 'smooth', block: 'center' });
+    $('#add-toggle').addEventListener('click', function () { if ($('#palette').hidden) openPalette(null); else closePalette(); });
+    $('#palette-close').addEventListener('click', closePalette);
+    // Vista previa interactiva: se prepara cada vez que se carga y conserva la posición de scroll.
+    $('#frame').addEventListener('load', function () {
+      var doc = null; previewDoc = null;
+      try { doc = this.contentDocument; } catch (e) {}
+      if (!doc || !doc.body) return;
+      try { this.contentWindow.scrollTo(0, previewScroll); } catch (e) {}
+      if (!hasCustomCode()) enhancePreview(doc);
     });
 
     $('#dl-txt').addEventListener('click', function () { if (okToExport()) download(K.fileBase(state) + '_COPIAR_Y_PEGAR.txt', html); });

@@ -205,7 +205,7 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.equal(stored().customHtml, edited); assert.equal(ui2.nodes['#code'].value, edited);
   // Volver al generado elimina la versión manual.
   ui2.nodes['#code-reset'].click();
-  assert.equal(stored().customHtml, undefined); assert.equal(ui2.nodes['#frame'].srcdoc, generated);
+  assert.equal(stored().customHtml, undefined); assert.equal(ui2.nodes['#code'].value, generated); assert.ok(ui2.nodes['#frame'].srcdoc.includes('data-ksa-empty'), 'La vista previa vuelve a ser la interactiva');
   console.log('OK: editar código, aplicar, cancelar, guardar con el proyecto y volver al código generado.');
 }
 
@@ -269,3 +269,16 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.ok(/Texto que ChatGPT olvidó/.test(msg) && /se usa el elegido/.test(msg));
   console.log('OK: nueva newsletter desde guion en la sección del hub, con aviso de textos que faltan.');
 }
+
+// Paleta de bloques: añadir un bloque con sus textos obligatorios como PENDIENTE (error en revisión hasta cambiarlos).
+(async () => {
+  const st = {}, ui5 = boot(st), walk = n => [n, ...n.children.flatMap(walk)];
+  ui5.clickText('📁 Surf Cup 2026'); ui5.nodes['#new'].click();
+  assert.equal(ui5.nodes['#palette'].hidden, false, 'Una newsletter vacía abre la paleta');
+  const card = walk(ui5.nodes['#palette-list']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent === 'Título centrado con barra'));
+  card.click(); await new Promise(r => setTimeout(r, 260));
+  const saved = Object.values(JSON.parse(st[PROJ]))[0].state;
+  assert.equal(saved.sections.length, 1); assert.equal(saved.sections[0].type, 'titulo');
+  assert.equal(saved.sections[0].d.title, 'PENDIENTE: Título'); assert.equal(ui5.nodes['#palette'].hidden, true);
+  console.log('OK: paleta de bloques (añadir con textos PENDIENTE y cerrar).');
+})().catch(e => { console.error(e); process.exit(1); });

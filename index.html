@@ -77,7 +77,12 @@
     </details>
     <div id="sections"></div>
     <div class="add">
-      <select id="add"></select>
+      <button id="add-toggle" type="button" class="add-toggle" aria-expanded="false" aria-controls="palette">＋ Añadir bloque</button>
+      <div id="palette" class="card palette" hidden>
+        <div class="palette-head"><strong>Elige un bloque</strong><button id="palette-close" type="button" class="tool" aria-label="Cerrar">✕</button></div>
+        <p id="palette-target" class="palette-target"></p>
+        <div id="palette-list" class="palette-list"></div>
+      </div>
     </div>
   </section>
 

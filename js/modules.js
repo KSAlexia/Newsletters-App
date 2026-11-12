@@ -383,7 +383,9 @@
   // Fijo y automático: header del torneo, banner Media Packages (si se marca),
   // footer de imagen del torneo (si existe) y footer legal con la baja.
   // ============================================================
-  K.build = function (st) {
+  // opts.preview: solo para la vista previa del editor. Cada módulo va en su propio <tbody data-ksa-section="i">
+  // para poder seleccionarlo, arrastrarlo y editar su texto. Nunca se usa en lo que se copia o descarga.
+  K.build = function (st, opts) {
     var t = K.BrandKits ? K.BrandKits.effectiveTournament(st) : K.tournament(st.tournament), kit = K.BrandKits ? K.BrandKits.forState(st) : null, parts = [], n = 0;
     function add(tag, html) { parts.push('<!-- [' + (n++) + '] ' + tag + ' -->\n' + html); }
     var off = st.off || {};
@@ -391,7 +393,13 @@
     var banner = kit ? kit.mediaBanner.url : (t.club ? t.mediaBanner : K.CLIENT.mediaBanner);
     if (st.mediaPackages && banner) add('BANNER', imgFull(banner, 'Media Packages - ' + t.name));
     if (!off.franja) add('FRANJA', M.franja.build({ left: st.franjaLeft }, t));
-    (st.sections || []).forEach(function (s) { var m = M[s.type]; if (m) add(m.tag, m.build(s.d || {}, t)); });
+    var preview = !!(opts && opts.preview);
+    (st.sections || []).forEach(function (s, i) {
+      var m = M[s.type]; if (!m) return;
+      var part = m.build(s.d || {}, t);
+      add(m.tag, preview ? '</tbody><tbody data-ksa-section="' + i + '">' + part + '</tbody><tbody>' : part);
+    });
+    if (preview && !(st.sections || []).length) add('VACÍO', '</tbody><tbody data-ksa-empty="1"><tr><td align="center" style="padding:48px 24px;background:#F7F4FC;border:2px dashed #A5A0C4;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#48237E;">Arrastra aquí un bloque desde «＋ Añadir bloque»<br />o haz clic para elegir uno</td></tr></tbody><tbody>');
     if (t.footer && !off.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
     var title = (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name) + (has(st.name) ? ' – ' + st.name.trim() : '');
@@ -480,7 +488,7 @@
     // Contenido marcado como pendiente al crear desde un guion
     secs.forEach(function (s, i) {
       var m = M[s.type]; if (!m) return;
-      m.fields.forEach(function (f) { if (/^\s*PENDIENTE:/i.test(String((s.d || {})[f.k] || ''))) W('Módulo ' + (i + 1) + ' (' + m.name + '), «' + f.label + '»: contenido PENDIENTE de redactar.'); });
+      m.fields.forEach(function (f) { if (/^\s*PENDIENTE:/i.test(String((s.d || {})[f.k] || ''))) E('Módulo ' + (i + 1) + ' (' + m.name + '), «' + f.label + '»: contenido PENDIENTE de redactar.'); });
     });
 
     // Campos Cvent

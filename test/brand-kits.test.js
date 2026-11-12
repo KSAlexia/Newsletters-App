@@ -97,3 +97,13 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   assert.ok(checks.some(x => /PENDIENTE de redactar/.test(x.msg)) && checks.some(x => /placeholder/.test(x.msg)));
   console.log('OK: guion → instrucciones, comprobación de textos, placeholders y contenido pendiente.');
 }
+
+// Vista previa por bloques: marcas solo en la vista previa, nunca en lo exportado.
+{
+  const st = K.fromRecipe('ref1'), preview = K.build(st, { preview: true }), out = K.build(st);
+  assert.equal((preview.match(/data-ksa-section="\d+"/g) || []).length, st.sections.length);
+  assert.ok(!out.includes('data-ksa'), 'El HTML que se copia o descarga no lleva marcas del editor');
+  const empty = { ...K.fromRecipe('blank'), franjaLeft: 'x' };
+  assert.ok(K.build(empty, { preview: true }).includes('data-ksa-empty') && !K.build(empty).includes('data-ksa-empty'));
+  console.log('OK: vista previa con bloques marcados y zona vacía, sin afectar al HTML exportado.');
+}
