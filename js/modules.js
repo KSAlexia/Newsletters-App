@@ -54,7 +54,15 @@
     bg = bg || '#FFFFFF';
     return '<tr><td bgcolor="' + bg + '"' + (align ? ' align="' + align + '"' : '') + ' style="padding:' + padding + ';background-color:' + bg + ';" class="mobile-pad">' + content + '</td></tr>';
   }
+  // Placeholder de imagen: hueco gris de la medida del bloque. No es un asset y la revisión lo marca como error.
+  K.IMG_PH = 'PLACEHOLDER';
+  function isPh(v) { return String(v == null ? '' : v).trim() === K.IMG_PH; }
+  K.isImagePlaceholder = isPh;
+  function phBlock(w, h) {
+    return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="' + w + '" align="center" style="width:' + w + 'px;max-width:100%;margin:0 auto;"><tbody><tr><td height="' + h + '" align="center" valign="middle" bgcolor="#E3E1E8" style="height:' + h + 'px;background-color:#E3E1E8;border:2px dashed #8A8698;' + F.bold + 'font-size:14px;line-height:20px;color:#55526A;text-align:center;letter-spacing:1px;">IMAGEN PENDIENTE · ' + w + ' px</td></tr></tbody></table>';
+  }
   function imgFull(src, alt) {
+    if (isPh(src)) return section('<tr><td style="padding:0;">' + phBlock(650, 260) + '</td></tr>');
     return section('<tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="' + attr(src) + '" alt="' + attr(alt) + '" title="' + attr(alt) + '" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr>');
   }
   function bar(w, color, align, margin) {
@@ -316,7 +324,7 @@
         body += '<p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:left;padding-top:' + pt + 'px;word-break:break-word;">' + inline(p) + '</p>';
       });
       if (withImg) {
-        h += TBL + ' style="margin-top:22px;"><tbody><tr><td class="col2" width="290" valign="top" style="padding:0 20px 0 0;">' + body + '</td><td class="col2" width="280" valign="top" style="padding:0;"><img src="' + attr(d.img.trim()) + '" alt="' + attr(d.alt) + '" title="' + attr(d.alt) + '" border="0" width="280" style="width:280px;max-width:100%;height:auto;display:block;" class="img-max" /></td></tr></tbody></table>';
+        h += TBL + ' style="margin-top:22px;"><tbody><tr><td class="col2" width="290" valign="top" style="padding:0 20px 0 0;">' + body + '</td><td class="col2" width="280" valign="top" style="padding:0;">' + (isPh(d.img) ? phBlock(280, 200) : '<img src="' + attr(d.img.trim()) + '" alt="' + attr(d.alt) + '" title="' + attr(d.alt) + '" border="0" width="280" style="width:280px;max-width:100%;height:auto;display:block;" class="img-max" />') + '</td></tr></tbody></table>';
       } else h += body;
       var endsList = false;
       if (has(d.items)) {
@@ -349,6 +357,7 @@
     ],
     defaults: { size: 'full' },
     build: function (d) {
+      if (d.size === 'inset' && isPh(d.src)) return section(cell('0 40px 8px 40px', 'center', phBlock(570, 220)));
       if (d.size === 'inset') return section(cell('0 40px 8px 40px', 'center', '<img src="' + attr((d.src || '').trim()) + '" alt="' + attr(d.alt) + '" title="' + attr(d.alt) + '" border="0" width="570" style="width:570px;max-width:100%;height:auto;display:block;margin:0 auto;" class="img-max" />'));
       return imgFull((d.src || '').trim(), d.alt || '');
     }
@@ -362,11 +371,12 @@
   // footer de imagen del torneo (si existe) y footer legal con la baja.
   // ============================================================
   K.build = function (st) {
-    var t = K.tournament(st.tournament), parts = [], n = 0;
+    var t = K.BrandKits ? K.BrandKits.effectiveTournament(st) : K.tournament(st.tournament), kit = K.BrandKits ? K.BrandKits.forState(st) : null, parts = [], n = 0;
     function add(tag, html) { parts.push('<!-- [' + (n++) + '] ' + tag + ' -->\n' + html); }
     var off = st.off || {};
-    if (!off.header) add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : K.CLIENT.name + ' · ' + t.name));
-    if (st.mediaPackages) add('BANNER', imgFull(K.CLIENT.mediaBanner, 'Media Packages - ' + t.name));
+    if (!off.header && t.header) add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : (kit ? (kit.header.name || kit.name) : K.CLIENT.name + ' · ' + t.name)));
+    var banner = kit ? kit.mediaBanner.url : K.CLIENT.mediaBanner;
+    if (st.mediaPackages && banner) add('BANNER', imgFull(banner, 'Media Packages - ' + t.name));
     if (!off.franja) add('FRANJA', M.franja.build({ left: st.franjaLeft }, t));
     (st.sections || []).forEach(function (s) { var m = M[s.type]; if (m) add(m.tag, m.build(s.d || {}, t)); });
     if (t.footer && !off.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
@@ -374,7 +384,8 @@
     var title = K.CLIENT.name + ' · ' + t.name + (has(st.name) ? ' – ' + st.name.trim() : '');
     var html = K.HEAD.replace('%%TITLE%%', function () { return esc(title); }) + ' ' + K.BODY_OPEN + parts.join('\n') + '\n' + K.BODY_CLOSE + '\n';
     // Colores del torneo: una sola pasada
-    return html.replace(/#6F4ACC|#91FAFB/gi, function (m) { return m.toUpperCase() === P ? t.principal : t.acento; });
+    html = html.replace(/#6F4ACC|#91FAFB/gi, function (m) { return m.toUpperCase() === P ? t.principal : t.acento; });
+    return K.BrandKits ? K.BrandKits.fontHtml(html, kit) : html;
   };
 
   K.fileBase = function (st) {
@@ -387,12 +398,15 @@
   // REVISIÓN AUTOMÁTICA (checklist)
   // ============================================================
   K.check = function (st, html) {
-    var t = K.tournament(st.tournament), out = [], off0 = st.off || {};
+    var t = K.BrandKits ? K.BrandKits.effectiveTournament(st) : K.tournament(st.tournament), kit = K.BrandKits ? K.BrandKits.forState(st) : null, out = [], off0 = st.off || {};
     function E(m) { out.push({ level: 'error', msg: m }); } function W(m) { out.push({ level: 'warn', msg: m }); } function OK(m) { out.push({ level: 'ok', msg: m }); }
     var secs = st.sections || [];
+    if (st.brandKit && K.BrandKits) { try { K.BrandKits.snapshot(st.brandKit); } catch (e) { E('Brand kit inválido: ' + e.message); } }
+    if (kit && !t.header && !off0.header) W('El kit no tiene custom link de header; el email sale sin esa imagen.');
+    if (kit && st.mediaPackages && !kit.mediaBanner.url) W('El kit no tiene custom link para el banner de Media Packages.');
 
     if (!has(st.name)) W('Falta el nombre de la newsletter (título interno y nombre de archivo).');
-    if (!t.footer && !off0.footer) W('Footer de imagen de ' + t.name + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
+    if (!t.footer && !off0.footer) W('Footer de imagen de ' + (kit ? kit.name : t.name) + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
     if (!secs.length) W('La newsletter no tiene módulos todavía.');
     var off = st.off || {};
     if (!off.franja && !has(st.franjaLeft)) E('Falta la etiqueta izquierda de la franja identificadora.');
@@ -408,7 +422,12 @@
         var v = (s.d || {})[f.k];
         if (f.type === 'url' && has(v)) {
           var isImg = f.img || f.k === 'img';
-          if (isImg && v.trim().indexOf(K.CLIENT.imageBase) !== 0) E('Módulo ' + (i + 1) + ' (' + m.name + '): la imagen no es un custom link de Cvent.');
+          if (isImg && isPh(v)) E('Módulo ' + (i + 1) + ' (' + m.name + '): la imagen es un placeholder. Sustitúyelo por el custom link de Cvent antes de exportar.');
+          else if (isImg) {
+            var validImage = v.trim().indexOf(K.CLIENT.imageBase) === 0;
+            if (K.BrandKits) { try { K.BrandKits.url(v, true); validImage = true; } catch (e) { validImage = false; } }
+            if (!validImage) E('Módulo ' + (i + 1) + ' (' + m.name + '): la imagen no es un custom link de Cvent válido.');
+          }
           if (!isImg && !/^(https?:\/\/|mailto:)/i.test(v.trim())) E('Módulo ' + (i + 1) + ' (' + m.name + '): el enlace debe empezar por https:// o mailto:.');
         }
       });
@@ -417,7 +436,7 @@
       if (s.type === 'tarjetas') ['a', 'b'].forEach(function (x) { if (has(d[x + '_btn']) !== has(d[x + '_url'])) E('Módulo ' + (i + 1) + ' (Tarjetas): un botón necesita texto y enlace.'); });
       if (s.type === 'titulo' && has(d.btn) !== has(d.url)) E('Módulo ' + (i + 1) + ' (Título): el botón necesita texto y enlace.');
       if (s.type === 'producto' && has(d.p1_title) !== has(d.p2_title)) W('Módulo ' + (i + 1) + ' (Producto): las opciones con precio van de dos en dos.');
-      if (s.type === 'producto' && has(d.img) && !has(d.alt)) E('Módulo ' + (i + 1) + ' (Producto): falta la descripción de la imagen.');
+      if (s.type === 'producto' && has(d.img) && !isPh(d.img) && !has(d.alt)) E('Módulo ' + (i + 1) + ' (Producto): falta la descripción de la imagen.');
       if (i && secs[i - 1].type === s.type && (s.type === 'datos' || s.type === 'info')) W('Módulos ' + i + ' y ' + (i + 1) + ': el mismo recurso dos veces seguidas.');
     });
 
@@ -429,7 +448,8 @@
     if (/(^|[^{])\[(C|E|P)-[A-Z][^\]]*\](?!\})/.test(body) || /\{\[[^\]]*$/m.test(body.replace(/\{\[[^\]]*\]\}/g, ''))) E('Hay un campo de Cvent mal cerrado (debe ser {[...]}).');
     if (!bad.length) OK('Campos de Cvent correctos (' + found.length + ').');
     OK('Footer legal con baja ({[EMAIL OPT OUT]}) incluido.');
-    OK((off0.header ? 'Paleta' : 'Header de ' + t.name + ' y paleta') + ' del torneo aplicados.');
+    if (kit) OK('Brand kit «' + kit.name + '»: copia guardada con la newsletter.');
+    else OK((off0.header ? 'Paleta' : 'Header de ' + t.name + ' y paleta') + ' del torneo aplicados.');
 
     // Textos
     var txt = secs.map(function (s) { return Object.keys(s.d || {}).map(function (k) { return s.d[k]; }).join('\n'); }).join('\n');
@@ -439,9 +459,9 @@
       if (o.id !== t.id && new RegExp(o.short.replace(/ /g, '\\s+'), 'i').test(txt) && !(t.id === 'usacup' && o.id === 'surfcup' && false))
         W('El texto menciona «' + o.short + '» pero el torneo elegido es ' + t.name + '.');
     });
-    if (st.mediaPackages) OK('Banner de Media Packages bajo el header.');
+    if (st.mediaPackages && (!kit || kit.mediaBanner.url)) OK('Banner de Media Packages bajo el header.');
     if (secs.some(function (s) { var d = s.d || {}; return ['title', 'a_title', 'b_title'].some(function (k) { return hasDigits(d[k]); }); }))
-      OK('Títulos con números: se muestran en DinPro (Extenda no tiene números).');
+      OK(kit ? 'Títulos con números: usan la fuente asignada a cifras en el kit.' : 'Títulos con números: se muestran en DinPro (Extenda no tiene números).');
     return out;
   };
 

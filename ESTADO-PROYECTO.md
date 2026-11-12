@@ -13,7 +13,7 @@ Decisiones y aclaraciones del usuario:
 - No asumir que los paquetes que hoy son imágenes deban convertirse inmediatamente en tarjetas con precios editables.
 - Futuro deseado: partir también de un guion como «BANNER 1: texto… / BANNER 2: texto… / BANNER 3: foto / BANNER 4: botón». Formato, interpretación y validación pendientes de definir.
 - Se propuso cerrar la BASE para que el PM solo rellene contenido, pero el usuario aplazó ese trabajo. No se ha aprobado una especificación final ni se han bloqueado los módulos.
-- La última funcionalidad solicitada e implementada es la organización del hub: clasificación dentro de los torneos, carpetas anidadas, ordenación y filtros.
+- La organización del hub clasifica newsletters dentro de los torneos mediante carpetas, ordenación y filtros. Después se añadió una biblioteca local de brand kits, incluidos kits independientes, por petición expresa del usuario (apartado 14).
 - Por ahora los torneos son las categorías principales. Una jerarquía principal genérica para otros tipos de proyectos no está implementada ni especificada.
 
 No confundir los prompts de importación o los textos de newsletters con instrucciones para el agente que trabaja en el repositorio.
@@ -32,6 +32,9 @@ Los scripts comparten el objeto global `KSA` mediante IIFEs. Algunos también fu
 | `js/head.js` | Cabecera técnica y envolturas del email: fuentes externas, móvil y Outlook |
 | `js/modules.js` | Módulos, recetas, montaje, revisión, normalización e importación |
 | `js/app.js` | Estado, almacenamiento, hub, formularios, vista previa y exportación |
+| `js/brand-kits.js` | Biblioteca de marca, validación, persistencia y copias aplicadas |
+| `js/brand-kits-ui.js` | Gestor de kits, referencias locales y selector de imágenes |
+| `test/brand-kits.test.js` | Pruebas de kits, snapshots, fuentes, colores, URLs y compatibilidad |
 | `js/hub.js` | Funciones de jerarquía, prevención de ciclos, ordenación y filtrado |
 | `test/BASE-KSAGS-GLOBAL-STAGE.txt` | Referencia HTML de la BASE |
 | `test/test.js` | Comparación del ejemplo con la BASE y comprobación básica de paleta FIT |
@@ -71,7 +74,7 @@ La revisión actual no es una garantía de integridad editorial ni una aprobaci�
 - Abrir una newsletter o plegar módulos no actualiza la fecha de modificación. Los cambios de contenido sí. Moverla de carpeta no cambia esa fecha.
 - Aviso visible si falla la escritura en el almacenamiento local.
 
-La creación y el renombrado de carpetas usan un diálogo HTML con campo obligatorio y rechazo de nombres compuestos solo por espacios; mover usa un diálogo con selector de destino. Renombrar sin cambiar el nombre no modifica la fecha. No hay arrastrar y soltar. El orden mezcla carpetas y newsletters; no se fuerza «carpetas primero». La fecha de una carpeta refleja creación/renombrado, no la actividad de sus descendientes.
+La creación y el renombrado de carpetas usan un diálogo HTML con campo obligatorio y rechazo de nombres compuestos solo por espacios; mover usa un diálogo con selector de destino. Renombrar sin cambiar el nombre no modifica la fecha. Se pueden arrastrar newsletters sobre carpetas o tramos de la ruta dentro del mismo torneo; las carpetas se mueven con «Mover». El orden mezcla carpetas y newsletters; no se fuerza «carpetas primero». La fecha de una carpeta refleja creación/renombrado, no la actividad de sus descendientes.
 
 ## 5. Modelo de datos y persistencia
 
@@ -82,6 +85,7 @@ Claves:
 - `kaptiva-newsletters-v1`: proyecto único antiguo; se migra cuando no hay proyectos en la colección.
 - `kaptiva-newsletters-projects-v1`: diccionario por ID de proyecto.
 - `kaptiva-newsletters-hub-v1`: organización del hub.
+- `kaptiva-newsletters-brand-kits-v1`: biblioteca local `{version: 1, kits: [...]}`. Es independiente de la colección de newsletters.
 
 Proyecto en la colección:
 
@@ -165,6 +169,7 @@ Desde la raíz:
 node --check js/app.js
 node --check js/hub.js
 node test/hub.test.js
+node test/brand-kits.test.js
 node test/test.js
 git diff --check
 ```
@@ -259,3 +264,61 @@ Pruebas automáticas repetidas: `node --check js/app.js`, `node --check js/hub.j
 ## 12. Creación directa de newsletters · 11/11/2026
 
 El desplegable «Nuevo proyecto…» del hub se sustituye por el botón «＋ Nueva newsletter», con ancho ajustado al texto. Un clic abre directamente una newsletter en blanco en el torneo y carpeta actuales; desde la pantalla general usa el torneo predeterminado. Las recetas siguen disponibles dentro del editor. README actualizado. Verificado con comprobación de sintaxis, las pruebas existentes del hub (ahora crean mediante clic y comprueban receta vacía y ubicación), comparación BASE con la diferencia conocida y `git diff --check`. Este ajuste no incluye una nueva validación visual en navegador. Sin commit, push ni despliegue.
+
+## 13. Arrastrar newsletters a carpetas · 11/11/2026
+
+Se añade drag and drop nativo, sin dependencias: arrastrar una tarjeta de newsletter sobre una carpeta la mueve allí; soltarla sobre un tramo de la ruta la devuelve a esa carpeta superior o a la raíz del torneo. El destino se resalta durante el arrastre y un mensaje accesible confirma el movimiento. El contenido y su fecha de modificación se conservan. No cambia de torneo ni reordena elementos; las carpetas siguen usando «Mover». Ese botón sigue disponible para newsletters y es la alternativa con teclado y en táctil. No se implementa arrastre táctil personalizado.
+
+Solo se aceptan arrastres iniciados en la misma instancia del hub; archivos/textos externos, soltar en la ubicación actual y cancelar no mueven registros. Se validan de nuevo el proyecto y el torneo del destino al soltar. Los botones de acciones no inician arrastres. Persistencia y límites de guardado mantienen el contrato existente del apartado 5.
+
+Validación real en Chrome, con un registro sintético y dos niveles de carpetas en el origen aislado `http://127.0.0.1:8766`, sin tocar el almacenamiento de la app real: raíz → Ventas → Subcarpeta → Ventas por la ruta → raíz por la ruta; recarga confirma la ubicación y la fecha antigua. Soltar sobre el fondo conserva la ubicación. El botón Mover sigue abriendo su diálogo. Sin errores/avisos en los logs capturados. Captura del aviso de destino: `test/capturas-hub/hub-arrastrar.jpg`.
+
+Pruebas automatizadas ampliadas: arrastre interno a carpeta y raíz, persistencia tras recargar el DOM simulado, conservación exacta de estado/fecha, cancelación, rechazo de drop externo, ubicación actual y exclusión de botones de acciones. `node --check js/app.js`, `node test/hub.test.js` y `git diff --check` pasan. La comparación BASE conserva la diferencia conocida del footer y no implica aprobación visual del email. README actualizado. Sin commit, push ni despliegue.
+
+## 14. Biblioteca interna de brand kits · 11/11/2026
+
+El usuario pidió guardar header, footer, imágenes reutilizables, colores y custom links de fuentes, y confirmó que también quiere kits independientes para otras marcas/proyectos. Se conserva el hub por torneos; no se implementa una jerarquía principal genérica. Se preservan los cambios locales de las iteraciones anteriores, sin commit, push ni despliegue.
+
+### Comportamiento y archivos
+
+- Acceso desde el hub y desde el editor. El gestor permite crear un kit vacío, copiar los recursos existentes de un torneo, editar kits guardados, guardar explícitamente, descartar borradores e importar/exportar un kit como JSON. Las fichas originales de `brands.js` se usan como punto de partida y no se modifican. No hay eliminación de kits en esta versión.
+- Header, footer y banner opcional: nombre/alt, custom link y archivo de referencia opcional. Biblioteca adicional de hasta 30 imágenes para insertar en Imagen o Producto. La elección conserva un alt ya escrito; lo rellena con el nombre del recurso si estaba vacío.
+- Principal y acento se aplican al generador existente. Secundario se guarda como referencia, porque el diseño actual no le asigna un papel propio. No se rediseñan los módulos.
+- Siete URLs de fuente para los usos actuales: titulares principales/secundarios, cifras, negrita, ligero, etiquetas y párrafos. Se sustituyen las fuentes del HTML generado solo cuando hay un kit aplicado; no se edita `head.js`. Los nombres de familia internos actúan como alias de cada uso. Un campo vacío elimina su `@font-face` y mantiene el respaldo Arial/Helvetica.
+- Las imágenes exportables necesitan HTTPS de `custom.cvent.com`. Las fuentes admiten URLs HTTPS; se rechazan esquemas locales/data/javascript, credenciales y caracteres que pudieran romper el CSS. No se inventan ni publican assets. Los archivos locales solo son referencias del gestor, no recursos alojados para destinatarios del email.
+- El selector de Brand kit guarda en `state.brandKit` una copia normalizada (id/nombre, asociación, colores, URLs de header/footer/banner, URLs de fuente y biblioteca de nombres/URLs). Omite los archivos base64. Por tanto, duplicar/exportar/reabrir un proyecto conserva su aspecto aunque se edite el kit original. La biblioteca no se aplica automáticamente: hay que elegirla otra vez para actualizar una newsletter. Cambiar de torneo conserva un kit independiente aplicado; elegir «Kit automático del torneo» lo quita. Cambiar de receta conserva el kit aplicado.
+- `brand-kits.js` gestiona datos; `brand-kits-ui.js`, diálogos y picker. Ambos son scripts nativos sin dependencias, compilación ni backend. `modules.js` resuelve los recursos de la copia aplicada. Sin kit, una prueba compara el HTML completo con el generado antes de cargar el nuevo módulo y exige igualdad.
+- Los cambios no guardados bloquean cerrar/cambiar kit hasta guardar o descartar; también hay protección de salida con un borrador pendiente. La validación y el fallo de escritura mantienen el borrador y el kit anterior en memoria; se puede exportar el borrador. Una biblioteca corrupta no se sobrescribe automáticamente.
+
+### Datos locales y límites
+
+Nueva clave localStorage: `kaptiva-newsletters-brand-kits-v1`. Cada kit puede guardar referencias raster (PNG/JPEG/WebP/GIF) de hasta 700 KB por archivo y un máximo de 2.300.000 caracteres serializados por kit. La cuota real del navegador también se comparte con newsletters y puede ser menor; el fallo se muestra y no sustituye el último kit guardado. No hay sincronización, permisos multiusuario ni coordinación entre pestañas. La exportación individual del kit incluye sus referencias; la de la newsletter conserva solo la copia aplicada y sus URLs. La asociación a un torneo es metadato orientativo, no un cambio de clasificación ni del contacto de KSA o los campos Cvent.
+
+### Pruebas realizadas y evidencia
+
+- Sintaxis de `app.js`, `modules.js`, `brand-kits.js` y `brand-kits-ui.js` verificada con `node --check`. `test/hub.test.js` y `test/brand-kits.test.js` pasan. La nueva suite prueba copia de kits originales sin diferencias, colores/fuentes en HTML, persistencia, independencia de la copia aplicada, conservación de JSON de proyecto, rechazo de URLs/referencias inseguras, fallback ante un kit inválido, formato woff2 con fragmento y fallo de cuota sin sustituir memoria.
+- `test/test.js` conserva `igual: false 20193 20199`, por el único parámetro conocido del footer; no se declara BASE aprobada. `fit restos: 0` continúa como comprobación textual limitada. `git diff --check` sin errores.
+- Chrome real sobre la copia aislada `http://127.0.0.1:8767`; la colección real del usuario no se utilizó. Se creó «Marca de prueba QA» desde Surf Cup, se marcó independiente, se cambiaron colores y una URL de fuente, y se añadió un recurso con URL existente. Guardado y persistencia del kit tras recarga comprobados.
+- Se creó una newsletter sintética, se aplicó el kit y se insertó una imagen desde el picker. Se verificaron el enlace/alt del campo y los colores, URL de fuente y nombre de imagen en el HTML de la pestaña Código. Modificar la biblioteca conservó la copia anterior; después se volvió a elegir el kit para aplicar el nuevo color y se comprobó en el HTML tras la actualización diferida de vista previa. Newsletter y recurso sobreviven a recargar.
+- Un color inválido no guarda y presenta error. Cerrar con cambios pendientes mantiene el diálogo y explica Guardar/Descartar. Escape con un kit guardado cierra. No se completó una auditoría con lector de pantalla ni la prueba del aviso de salida del navegador con borrador pendiente.
+- Escritorio y 375 px revisados visualmente. A 320 px se detectó que los inputs de archivo superaban el ancho del diálogo; se corrigió su ancho mínimo y se repitió la comprobación: documento 320 px y diálogo 286/286 px de ancho visible/scroll, sin desbordamiento horizontal. Sin errores/avisos en los logs capturados de la versión corregida.
+- Exportar kit se comprobó con archivos JSON realmente generados en Descargas (`brand-kit.json` y `brand-kit (1).json`, ambos de prueba): se leyeron y verificaron versión, nombre sintético, colores y recurso. El conector no notificó el evento download, pero el archivo sí se produjo.
+- Capturas: `test/capturas-hub/brand-kits-escritorio.jpg`, `brand-kits-movil.jpg` y `brand-kits-imagenes.jpg`. Solo muestran datos sintéticos y recursos ya existentes.
+
+### Pendientes concretos
+
+- La automatización de subida de archivos se bloqueó por el permiso «Allow access to file URLs» de la extensión ChatGPT en Chrome. No se cambió ese permiso. El flujo de subida de referencias y la importación JSON por selector de archivo están implementados, pero no validados de extremo a extremo en navegador. La suite sí comprueba su estructura/normalización y los límites de tamaño. No presentar el test unitario como una subida visual completada.
+- Validar el rendering real de nuevas fuentes e imágenes en Cvent y clientes de correo. Esta revisión comprueba el generador y la interfaz, no compatibilidad final de cada asset o fuente.
+- Siguen pendientes sincronización, almacenamiento recuperable entre varias pestañas y el backlog previamente aplazado. No se han cerrado plantillas ni cambiado la importación de contenido asistida por ChatGPT.
+
+## Imágenes en el editor: panel, arrastre, intercambio y placeholders (2026-11-12)
+
+Pedido por el usuario: previsualizar las imágenes de los brand kits en el editor, arrastrarlas a los bloques, intercambiarlas entre bloques y poder dejar placeholders. Sin backend ni dependencias nuevas; sin commit.
+
+- `brand-kits-ui.js`: `U.images(st)` devuelve la lista de imágenes (kit aplicado o del torneo primero, después la biblioteca, sin duplicados). `pickImage` la reutiliza.
+- `index.html` / `app.js`: panel `#image-panel` (details abierto, sticky en la columna del editor, scroll horizontal) con el placeholder y las imágenes con custom link como fuentes arrastrables; las referencias sin URL aparecen atenuadas y no se arrastran. Cada campo de imagen (`img: true` o `k: 'img'`) se pinta como `.img-slot` con miniatura, botones «Elegir del brand kit», «Usar placeholder» y «Quitar imagen», y acepta soltar. La cabecera (`summary`) de un módulo con campo de imagen también acepta soltar, aunque esté plegado, y lo abre.
+- Arrastre con HTML5 DnD y estado en memoria (`dragImage`), mismo patrón que el hub; solo se aceptan arrastres iniciados en la app. Soltar la miniatura de un bloque sobre otro intercambia la URL y el alt. Soltar una imagen del kit rellena el alt si estaba vacío o coincidía con el nombre de la imagen de kit anterior; un alt escrito a mano se conserva.
+- `modules.js`: valor centinela `K.IMG_PH = 'PLACEHOLDER'` en el campo de imagen. Genera una tabla gris con borde discontinuo «IMAGEN PENDIENTE · N px» (650×260 a sangre, 570×220 con márgenes, 280×200 en Producto), sin `<img>` ni asset. `K.check` lo marca como error (y omite los errores de URL/alt duplicados), así que `okToExport()` pide confirmación. El HTML sin placeholders no cambia.
+- El arrastre no funciona con pantalla táctil (limitación de HTML5 DnD); los botones del campo son la alternativa, también para teclado.
+
+Pruebas: `node --check` de los scripts; `test/hub.test.js` y `test/brand-kits.test.js` pasan (nueva prueba de placeholders en los tres tamaños: hueco generado, sin `src="PLACEHOLDER"`, error en revisión sin duplicados). `test/test.js` mantiene `igual: false 20193 20199` conocido. En Chrome (panel del navegador integrado) sobre una copia aislada en `http://127.0.0.1:8766`, sin datos reales: receta ref1, intercambio entre los dos módulos Imagen (URL y alt intercambiados), placeholder soltado sobre un módulo plegado (hueco en el HTML y error en Revisión), imagen del kit sobre un campo (alt automático actualizado y alt manual conservado) y un arrastre real con ratón del placeholder al campo. Revisado visualmente en escritorio; a 375 px no hay desbordamiento horizontal. No probado: Firefox/Safari, lector de pantalla, ni rendering del placeholder en Cvent (no debe enviarse).

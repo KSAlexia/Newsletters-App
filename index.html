@@ -23,11 +23,12 @@
   <div class="lobby-bar">
     <h1>Proyectos</h1>
     <span class="spacer"></span>
+    <button id="brand-kits-open" class="btn ghost2">Brand kits</button>
     <button id="new-folder" class="btn ghost2" hidden>＋ Nueva carpeta</button>
     <button id="new" type="button" class="btn">＋ Nueva newsletter</button>
     <button id="open" class="btn ghost2">Abrir archivo de proyecto</button>
   </div>
-  <p class="muted lobby-note">Organiza tus newsletters en carpetas dentro de cada torneo. Se guardan en este navegador. Para pasárselo a otra persona, usa «Exportar proyecto» dentro del proyecto.</p>
+  <p class="muted lobby-note">Organiza tus newsletters en carpetas dentro de cada torneo. Arrastra una newsletter sobre una carpeta o sobre la ruta para moverla; también puedes usar «Mover». Se guardan en este navegador. Para pasárselo a otra persona, usa «Exportar proyecto» dentro del proyecto.</p>
   <nav id="hub-path" aria-label="Ubicación actual"></nav>
   <div id="hub-controls" hidden>
     <label>Buscar en esta carpeta<input id="hub-search" type="search" placeholder="Nombre…"></label>
@@ -40,27 +41,38 @@
     <button id="hub-clear" class="btn ghost2">Limpiar filtros</button>
   </div>
   <p id="hub-count" class="muted" aria-live="polite"></p>
+  <p id="hub-feedback" class="hub-feedback" role="status"></p>
   <div id="folders"></div>
 </section>
 
+<p id="kit-load-error" role="alert" hidden></p>
 <p id="storage-error" role="alert" hidden>No se han podido guardar los últimos cambios en este navegador. No cierres la app; exporta las newsletters que hayas editado para conservar su contenido.</p>
 <main>
   <section class="editor">
     <div class="card settings">
       <label>Torneo<select id="tournament"></select></label>
+      <label>Brand kit<select id="brand-kit"></select></label>
+      <small>El kit aplicado se guarda con esta newsletter. Editar la biblioteca no modifica esta copia.</small>
+      <button id="brand-kits-editor" type="button" class="btn ghost2">Gestionar brand kits</button>
       <label>Nombre de la newsletter<input id="name" type="text" placeholder="Media Packages"></label>
       <label>Nombre de archivo<input id="desc" type="text" placeholder="media_packages"><small id="filename"></small></label>
-      <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner común bajo el header)</label>
+      <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner del kit bajo el header)</label>
       <label>Franja identificadora · etiqueta izquierda *<input id="franja" type="text" placeholder="Media Packages"></label>
-      <p class="fixed">Fijo y automático: header del torneo, franja identificadora, footer de imagen y footer legal con la baja.</p>
+      <p class="fixed">Automático: header y footer del kit elegido, franja identificadora y footer legal con la baja.</p>
       <details class="more">
         <summary>Más opciones</summary>
-        <label class="check"><input id="on-header" type="checkbox"> Mostrar el header del torneo</label>
+        <label class="check"><input id="on-header" type="checkbox"> Mostrar el header del kit</label>
         <label class="check"><input id="on-franja" type="checkbox"> Mostrar la franja identificadora</label>
         <label class="check"><input id="on-footer" type="checkbox"> Mostrar el footer de imagen</label>
         <small>Solo para casos puntuales: se aplica a este proyecto y la revisión lo avisa. El footer legal con la baja no se puede quitar.</small>
       </details>
     </div>
+    <details id="image-panel" class="card image-panel" open>
+      <summary>Imágenes del brand kit</summary>
+      <p class="image-panel-note">Arrastra una imagen o el placeholder hasta un bloque (abierto o plegado). Arrastra la miniatura de un bloque a otro para intercambiar sus imágenes.</p>
+      <div id="image-panel-list" class="image-panel-list"></div>
+      <p id="image-panel-empty" class="image-panel-note" hidden>Este kit todavía no tiene imágenes con custom link. Añádelas en «Gestionar brand kits».</p>
+    </details>
     <div id="sections"></div>
     <div class="add">
       <select id="add"></select>
@@ -112,10 +124,32 @@
   <label>Carpeta de destino<select id="move-destination"></select></label>
   <div class="dlg-actions"><button id="move-cancel" class="btn ghost2">Cancelar</button><button id="move-confirm" class="btn">Mover aquí</button></div>
 </dialog>
+<dialog id="kits-dialog" aria-labelledby="kits-title">
+  <div class="kits-heading"><div><h2 id="kits-title">Brand kits</h2><p class="muted">Tu biblioteca de marca · guardada en este navegador</p></div><button id="kits-close" type="button" class="btn ghost2">Cerrar</button></div>
+  <div class="kits-layout">
+    <aside class="kit-sidebar" aria-label="Biblioteca de kits">
+      <button id="kit-new" type="button" class="btn">＋ Kit independiente</button>
+      <div class="kit-transfer"><button id="kit-import" type="button" class="btn ghost2">Importar kit</button><button id="kit-export" type="button" class="btn ghost2">Exportar borrador</button></div>
+      <input id="kit-file" type="file" accept=".json,application/json" hidden>
+      <nav id="kit-list" aria-label="Elegir kit"></nav>
+    </aside>
+    <form id="kit-form" class="kit-form">
+      <h3 id="kit-editor-title">Crear un brand kit</h3>
+      <div id="kit-fields" class="kit-fields"></div>
+      <div class="kit-savebar"><p id="kit-status" role="status" class="kit-status"></p><div class="dlg-actions"><button id="kit-discard" type="button" class="btn ghost2">Descartar cambios</button><button type="submit" class="btn">Guardar kit</button></div></div>
+    </form>
+  </div>
+</dialog>
+<dialog id="kit-images-dialog" aria-labelledby="kit-images-title">
+  <div class="kits-heading"><h2 id="kit-images-title">Imágenes de los brand kits</h2><button id="kit-images-close" type="button" class="btn ghost2">Cerrar</button></div>
+  <div id="kit-image-list"></div>
+</dialog>
 <script src="js/hub.js"></script>
 <script src="js/head.js"></script>
 <script src="js/brands.js"></script>
+<script src="js/brand-kits.js"></script>
 <script src="js/modules.js"></script>
+<script src="js/brand-kits-ui.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

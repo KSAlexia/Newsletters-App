@@ -4,7 +4,7 @@
 (function () {
   var K = window.KSA, $ = function (s) { return document.querySelector(s); };
   var STORE = 'kaptiva-newsletters-v1', PROJ = 'kaptiva-newsletters-projects-v1', state, html = '', checks = [], timer, projects = {}, currentId = null;
-  var HUB = 'kaptiva-newsletters-hub-v1', organization = { folders: {}, sorts: {}, orders: {} }, hubTournament = '', hubFolder = '', savedContent = '';
+  var HUB = 'kaptiva-newsletters-hub-v1', organization = { folders: {}, sorts: {}, orders: {} }, hubTournament = '', hubFolder = '', savedContent = '', draggedProject = '';
 
   // ---------- Guardado automático en este navegador ----------
   function load() { try { var s = JSON.parse(localStorage.getItem(STORE)); if (s && s.sections) return s; } catch (e) {} return null; }
@@ -96,6 +96,46 @@
     };
     dialog.showModal();
   }
+  // Solo se aceptan arrastres iniciados en esta misma instancia del hub.
+  function clearDrag() {
+    draggedProject = '';
+    Array.prototype.forEach.call(document.querySelectorAll('.drop-ready, .dragging'), function (node) { node.classList.remove('drop-ready', 'dragging'); });
+  }
+  function dropDestination(node, destination) {
+    function allowed() {
+      var p = projects[draggedProject], folder = organization.folders[destination];
+      return !!p && K.tournament(p.state.tournament).id === hubTournament &&
+        (!destination || (folder && folder.tournament === hubTournament)) && (p.folder || '') !== destination;
+    }
+    function over(event) {
+      if (!allowed()) return;
+      event.preventDefault(); event.dataTransfer.dropEffect = 'move'; node.classList.add('drop-ready');
+    }
+    node.addEventListener('dragenter', over);
+    node.addEventListener('dragover', over);
+    node.addEventListener('dragleave', function (event) {
+      if (!event.relatedTarget || !node.contains(event.relatedTarget)) node.classList.remove('drop-ready');
+    });
+    node.addEventListener('drop', function (event) {
+      if (!allowed()) return;
+      event.preventDefault(); event.stopPropagation();
+      var p = projects[draggedProject], name = p.state.name || 'Sin nombre';
+      p.folder = destination; clearDrag(); saveAll(); showLobby();
+      $('#hub-feedback').textContent = '«' + name + '» movida a «' + (destination ? folderPath(destination) : K.tournament(hubTournament).name) + '».';
+    });
+    return node;
+  }
+  function dragNewsletter(card, id) {
+    card.setAttribute('draggable', 'true');
+    card.addEventListener('dragstart', function (event) {
+      if (event.target.closest('.proj-actions')) { event.preventDefault(); return; }
+      draggedProject = id;
+      event.dataTransfer.effectAllowed = 'move';
+      event.dataTransfer.setData('application/x-kaptiva-newsletter', id);
+      card.classList.add('dragging');
+    });
+    card.addEventListener('dragend', clearDrag);
+  }
   function currentItems() {
     var items = [];
     Object.keys(organization.folders).forEach(function (id) {
@@ -112,6 +152,7 @@
     clearTimeout(timer); if (currentId) persist(); currentId = null;
     document.body.classList.add('in-lobby');
     if (hubFolder && !organization.folders[hubFolder]) hubFolder = '';
+    $('#hub-feedback').textContent = '';
     var box = $('#folders'); box.innerHTML = '';
     var crumbs = $('#hub-path'); crumbs.innerHTML = '';
     crumbs.appendChild(el('button', { class: 'crumb', text: 'Todos los torneos', onclick: function () { navigate('', ''); } }));
@@ -126,12 +167,12 @@
       box.appendChild(grid); return;
     }
     crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
-    crumbs.appendChild(el('button', { class: 'crumb', text: K.tournament(hubTournament).name, onclick: function () { navigate(hubTournament, ''); } }));
+    crumbs.appendChild(dropDestination(el('button', { class: 'crumb', text: K.tournament(hubTournament).name, onclick: function () { navigate(hubTournament, ''); } }), ''));
     var path = [], cursor = hubFolder, seen = {};
     while (cursor && organization.folders[cursor] && !seen[cursor]) { seen[cursor] = true; path.unshift(cursor); cursor = organization.folders[cursor].parent; }
     path.forEach(function (id) {
       crumbs.appendChild(el('span', { text: '›', 'aria-hidden': 'true' }));
-      crumbs.appendChild(el('button', { class: 'crumb', text: folderName(id), onclick: function () { navigate(hubTournament, id); } }));
+      crumbs.appendChild(dropDestination(el('button', { class: 'crumb', text: folderName(id), onclick: function () { navigate(hubTournament, id); } }), id));
     });
     var key = locationKey(), mode = organization.sorts[key] || 'newest'; $('#hub-sort').value = mode;
     var all = K.Hub.sort(currentItems(), mode, organization.orders[key]);
@@ -174,6 +215,7 @@
         el('small', { text: isFolder ? 'Carpeta' : (p.state.sections || []).length + ' módulos' }),
         el('small', { text: 'Modificado: ' + new Date(item.updated).toLocaleString('es-ES', { dateStyle: 'short', timeStyle: 'short' }) }), actions
       ]);
+      if (isFolder) dropDestination(card, item.id); else dragNewsletter(card, item.id);
       grid.appendChild(card);
     });
     box.appendChild(grid);
@@ -208,9 +250,86 @@
     K.MODULE_ORDER.forEach(function (id) { $('#add').appendChild(el('option', { value: id, text: K.MODULES[id].letter + ' · ' + K.MODULES[id].name })); });
   }
   function syncSettings() {
+    if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
+    renderImagePanel();
     $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || '';
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
+  }
+
+  // ---------- Imágenes: panel del brand kit, arrastrar, intercambiar y placeholders ----------
+  // dragImage: { kind: 'kit', url, name } | { kind: 'ph' } | { kind: 'field', s, k }
+  var dragImage = null;
+  function filled(v) { return !!(v && String(v).trim()); }
+  function isImageField(f) { return !!(f.img || f.k === 'img'); }
+  function imageFieldOf(m) { return m.fields.filter(isImageField)[0]; }
+  function hasAlt(s) { return K.MODULES[s.type].fields.some(function (f) { return f.k === 'alt'; }); }
+  function setImage(s, k, drag) {
+    if (!drag) return;
+    if (drag.kind === 'kit') {
+      // La descripción se actualiza si estaba vacía o era el nombre de la imagen anterior del kit; un texto escrito a mano se conserva.
+      var prev = K.BrandKitsUI ? K.BrandKitsUI.images(state).filter(function (a) { return a.url && a.url === String(s.d[k] || '').trim(); })[0] : null;
+      var autoAlt = !filled(s.d.alt) || (prev && prev.name === String(s.d.alt).trim());
+      s.d[k] = drag.url; if (autoAlt && drag.name && hasAlt(s)) s.d.alt = drag.name;
+    }
+    else if (drag.kind === 'ph') s.d[k] = K.IMG_PH;
+    else if (drag.kind === 'field') {
+      if (drag.s === s && drag.k === k) return;
+      // Intercambio: la imagen y su descripción viajan juntas.
+      var a = drag.s.d, b = s.d, tmp = a[drag.k]; a[drag.k] = b[k]; b[k] = tmp;
+      if (hasAlt(drag.s) && hasAlt(s)) { tmp = a.alt; a.alt = b.alt; b.alt = tmp; }
+      if (!filled(a[drag.k])) delete a[drag.k];
+    } else return;
+    renderSections(); update();
+  }
+  function clearDragImage() {
+    dragImage = null;
+    Array.prototype.forEach.call(document.querySelectorAll('.drop-ready, .dragging'), function (n) { n.classList.remove('drop-ready', 'dragging'); });
+  }
+  function dragSource(node, payload, label) {
+    node.setAttribute('draggable', 'true');
+    node.addEventListener('dragstart', function (event) {
+      dragImage = payload(); node.classList.add('dragging');
+      event.dataTransfer.effectAllowed = dragImage.kind === 'field' ? 'move' : 'copy';
+      event.dataTransfer.setData('text/plain', label());
+    });
+    node.addEventListener('dragend', clearDragImage);
+    return node;
+  }
+  function dropTarget(node, onDrop) {
+    function over(event) { if (!dragImage) return; event.preventDefault(); event.dataTransfer.dropEffect = dragImage.kind === 'field' ? 'move' : 'copy'; node.classList.add('drop-ready'); }
+    node.addEventListener('dragenter', over);
+    node.addEventListener('dragover', over);
+    node.addEventListener('dragleave', function (event) { if (!event.relatedTarget || !node.contains(event.relatedTarget)) node.classList.remove('drop-ready'); });
+    node.addEventListener('drop', function (event) {
+      if (!dragImage) return; event.preventDefault(); event.stopPropagation();
+      var drag = dragImage; clearDragImage(); onDrop(drag);
+    });
+    return node;
+  }
+  function thumb(value) {
+    var box = el('div', { class: 'img-thumb' });
+    if (K.isImagePlaceholder(value)) { box.classList.add('is-ph'); box.textContent = 'Placeholder · imagen pendiente'; }
+    else if (/^https:\/\//i.test(String(value || '').trim())) { var img = el('img', { alt: '', loading: 'lazy' }); img.referrerPolicy = 'no-referrer'; img.src = String(value).trim(); box.appendChild(img); }
+    else { box.classList.add('is-empty'); box.textContent = filled(value) ? 'Enlace no válido' : 'Suelta aquí una imagen'; }
+    return box;
+  }
+  function renderImagePanel() {
+    var list = $('#image-panel-list'); list.innerHTML = '';
+    if (!state) return;
+    var ph = dragSource(el('div', { class: 'panel-img is-ph', title: 'Arrástralo a un bloque para dejar un hueco de imagen pendiente' }, [el('div', { class: 'img-thumb is-ph', text: 'Imagen pendiente' }), el('strong', { text: 'Placeholder' })]),
+      function () { return { kind: 'ph' }; }, function () { return 'Placeholder'; });
+    list.appendChild(ph);
+    var images = K.BrandKitsUI ? K.BrandKitsUI.images(state) : [];
+    images.forEach(function (a) {
+      var img = el('img', { alt: '', loading: 'lazy' }); img.referrerPolicy = 'no-referrer'; img.src = a.preview;
+      var card = el('div', { class: 'panel-img' + (a.url ? '' : ' is-ref'), title: (a.name || 'Imagen sin nombre') + ' · ' + a.kit + (a.url ? '' : ' · solo referencia, sin custom link') }, [
+        el('div', { class: 'img-thumb' }, [img]), el('strong', { text: a.name || 'Imagen sin nombre' }), el('small', { text: a.kit })
+      ]);
+      if (a.url) dragSource(card, function () { return { kind: 'kit', url: a.url, name: a.name }; }, function () { return a.url; });
+      list.appendChild(card);
+    });
+    $('#image-panel-empty').hidden = images.some(function (a) { return a.url; });
   }
 
   // ---------- Editor de módulos ----------
@@ -227,7 +346,7 @@
       if (s.open) det.open = true;
       det.addEventListener('toggle', function () { s.open = det.open; persist(); });
       function tool(txt, title, fn, dis) { var b = el('button', { class: 'tool', title: title, text: txt, onclick: function (e) { e.preventDefault(); e.stopPropagation(); fn(); } }); if (dis) b.disabled = true; return b; }
-      det.appendChild(el('summary', {}, [
+      var summary = det.appendChild(el('summary', {}, [
         el('span', { class: 'letter', text: m.letter }), el('span', { class: 'mname', text: m.name }), snip,
         el('span', { class: 'tools' }, [
           tool('↑', 'Subir', function () { move(i, -1); }, i === 0),
@@ -236,6 +355,8 @@
           tool('✕', 'Eliminar', function () { if (confirm('¿Eliminar «' + m.name + '»?')) { state.sections.splice(i, 1); renderSections(); update(); } })
         ])
       ]));
+      var imgField = imageFieldOf(m);
+      if (imgField) dropTarget(summary, function (drag) { s.open = true; setImage(s, imgField.k, drag); });
       var body = el('div', { class: 'fields' });
       if (m.note) body.appendChild(el('p', { class: 'note', text: m.note }));
       m.fields.forEach(function (f) {
@@ -255,7 +376,22 @@
           Array.prototype.forEach.call(body.querySelectorAll('label'), function (l) { if (l._f && l._f.showIf) l.hidden = !l._f.showIf(s.d); });
           update();
         });
-        body.appendChild(wrap);
+        if (isImageField(f)) {
+          var value = s.d[f.k], tools = el('div', { class: 'img-tools' });
+          if (K.BrandKitsUI) tools.appendChild(el('button', { type: 'button', class: 'kit-pick', text: 'Elegir del brand kit', onclick: function () {
+            K.BrandKitsUI.pickImage(state, function (asset) { setImage(s, f.k, { kind: 'kit', url: asset.url, name: asset.name }); });
+          } }));
+          tools.appendChild(el('button', { type: 'button', class: 'kit-pick', text: 'Usar placeholder', onclick: function () { setImage(s, f.k, { kind: 'ph' }); } }));
+          if (filled(value)) tools.appendChild(el('button', { type: 'button', class: 'kit-pick', text: 'Quitar imagen', onclick: function () { delete s.d[f.k]; renderSections(); update(); } }));
+          var preview = thumb(value);
+          if (filled(value)) {
+            preview.setAttribute('title', 'Arrastra a otro bloque para intercambiar las imágenes');
+            dragSource(preview, function () { return { kind: 'field', s: s, k: f.k }; }, function () { return String(value); });
+          }
+          var slot = el('div', { class: 'img-slot' + (f.half ? ' half' : '') }, [preview, el('div', { class: 'img-slot-main' }, [wrap, tools])]);
+          dropTarget(slot, function (drag) { setImage(s, f.k, drag); });
+          body.appendChild(slot);
+        } else body.appendChild(wrap);
       });
       det.appendChild(body); box.appendChild(det);
     });
@@ -289,6 +425,7 @@
 
   // ---------- Eventos ----------
   function init() {
+    if (K.BrandKitsUI) K.BrandKitsUI.init(function () { K.BrandKitsUI.refreshSelect(state); renderImagePanel(); });
     fillSettings();
     loadAll(); initHub(); showLobby();
     $('#back').addEventListener('click', function () { var id = currentId; showLobby(); focusHubItem(id); });
@@ -301,7 +438,13 @@
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).addEventListener('change', function () { state.off[k] = !this.checked; update(); }); });
     window.addEventListener('beforeunload', function () { if (currentId) persist(); });
 
-    $('#tournament').addEventListener('change', function () { state.tournament = this.value; update(); });
+    $('#brand-kit').addEventListener('change', function () {
+      if (this.value === '@current' || !K.BrandKits) return;
+      var kit = K.BrandKits.find(this.value);
+      if (kit) state.brandKit = K.BrandKits.snapshot(kit); else delete state.brandKit;
+      update(); K.BrandKitsUI.refreshSelect(state); renderImagePanel();
+    });
+    $('#tournament').addEventListener('change', function () { state.tournament = this.value; update(); renderImagePanel(); });
     $('#name').addEventListener('input', function () { state.name = this.value; update(); });
     $('#desc').addEventListener('input', function () { state.desc = this.value; update(); });
     $('#mp').addEventListener('change', function () { state.mediaPackages = this.checked; update(); });
@@ -309,7 +452,7 @@
     $('#recipe').addEventListener('change', function () {
       var id = this.value; this.value = ''; if (!id) return;
       if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
-      state = K.fromRecipe(id, state.tournament); persist(); syncSettings(); renderSections(); refresh();
+      var appliedKit = state.brandKit; state = K.fromRecipe(id, state.tournament); if (appliedKit) state.brandKit = appliedKit; persist(); syncSettings(); renderSections(); refresh();
     });
     $('#add').addEventListener('change', function () {
       var id = this.value; this.value = ''; if (!id) return;

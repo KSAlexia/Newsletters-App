@@ -43,9 +43,9 @@ function boot(storage) {
   nodes['details.more'] = new Element('details');
   const prompts = [], alerts = [];
   const document = { body: new Element('body'), createElement: tag => new Element(tag), querySelector: key => { if (key.startsWith('[data-hub-id=')) return null; if (!nodes[key]) throw Error('Missing node: ' + key); return nodes[key]; }, querySelectorAll: () => [] };
-  const context = { document, console, Date, setTimeout, clearTimeout, localStorage: { getItem: k => storage[k] || null, setItem: (k,v) => { storage[k] = v; }, removeItem: k => { delete storage[k]; } }, prompt: () => prompts.shift(), confirm: () => true, alert: t => alerts.push(t), addEventListener() {} };
+  const context = { document, console, Date, URL, setTimeout, clearTimeout, localStorage: { getItem: k => storage[k] || null, setItem: (k,v) => { storage[k] = v; }, removeItem: k => { delete storage[k]; } }, prompt: () => prompts.shift(), confirm: () => true, alert: t => alerts.push(t), addEventListener() {} };
   context.window = context; vm.createContext(context);
-  for (const file of ['head','brands','modules','hub','app']) vm.runInContext(fs.readFileSync(__dirname + '/../js/' + file + '.js', 'utf8'), context);
+  for (const file of ['head','brands','brand-kits','modules','hub','app']) vm.runInContext(fs.readFileSync(__dirname + '/../js/' + file + '.js', 'utf8'), context);
   const walk = node => [node, ...node.children.flatMap(walk)];
   const clickText = text => { const button = walk(nodes['#folders']).find(n => n.tag === 'button' && walk(n).some(child => child.textContent === text)); assert.ok(button, 'Button: ' + text); button.click(); };
   return { nodes, prompts, alerts, clickText, change(id, value) { const node = nodes[id]; node.value = value; node.handlers.change.call(node); } };
@@ -126,3 +126,46 @@ ui.clickText('Renombrar'); ui.nodes['#folder-name'].value = 'Padre renombrado';
 ui.nodes['#folder-form'].onsubmit({ preventDefault() {} });
 assert.ok(JSON.parse(guardStorage[HUB]).folders.parent.updated > 123);
 console.log('OK: protección de contenido, destinos sin ciclos/otros torneos y renombrado sin cambios.');
+
+// Arrastrar newsletters: solo arrastres internos, ubicaciones válidas y sin tocar contenido/fecha.
+const dragStorage = { [PROJ]: JSON.stringify({ drag: { id: 'drag', folder: '', updated: 123, state: { tournament: 'surfcup', name: 'Arrastrable', sections: [], off: {} } } }), [HUB]: JSON.stringify({ folders: { target: { id: 'target', name: 'Destino', parent: '', tournament: 'surfcup', updated: 123 } }, sorts: {}, orders: {} }) };
+const walkDrag = node => [node, ...node.children.flatMap(walkDrag)];
+const cardDrag = id => walkDrag(ui.nodes['#folders']).find(n => n['data-hub-id'] === id);
+let prevented = false;
+const transfer = { effectAllowed: '', dropEffect: '', setData() {} };
+const dragEvent = { dataTransfer: transfer, target: { closest() { return null; } }, preventDefault() { prevented = true; }, stopPropagation() {} };
+ui = boot(dragStorage); ui.clickText('📁 Surf Cup 2026');
+const originalDragState = JSON.stringify(JSON.parse(dragStorage[PROJ]).drag.state);
+// Un drop externo no puede mover nada, aunque incluya un ID coincidente.
+cardDrag('target').handlers.drop(dragEvent);
+assert.equal(JSON.parse(dragStorage[PROJ]).drag.folder, '');
+cardDrag('drag').handlers.dragstart(dragEvent);
+assert.equal(transfer.effectAllowed, 'move');
+cardDrag('target').handlers.dragover(dragEvent);
+assert.equal(prevented, true); assert.equal(transfer.dropEffect, 'move');
+cardDrag('target').handlers.drop(dragEvent);
+assert.equal(JSON.parse(dragStorage[PROJ]).drag.folder, 'target');
+assert.equal(JSON.parse(dragStorage[PROJ]).drag.updated, 123);
+assert.equal(JSON.stringify(JSON.parse(dragStorage[PROJ]).drag.state), originalDragState);
+assert.match(ui.nodes['#hub-feedback'].textContent, /Destino/);
+ui = boot(dragStorage); ui.clickText('📁 Surf Cup 2026'); ui.clickText('📁 Destino');
+assert.ok(cardDrag('drag'), 'El movimiento persiste tras recargar');
+// La carpeta actual no es un movimiento; cancelar el arrastre invalida el drop posterior.
+cardDrag('drag').handlers.dragstart(dragEvent); prevented = false;
+ui.nodes['#hub-path'].children.find(n => n.textContent === 'Destino').handlers.drop(dragEvent);
+assert.equal(prevented, false);
+cardDrag('drag').handlers.dragend();
+ui.nodes['#hub-path'].children.find(n => n.textContent === 'Surf Cup 2026').handlers.drop(dragEvent);
+assert.equal(JSON.parse(dragStorage[PROJ]).drag.folder, 'target');
+// Los botones de acciones mantienen su comportamiento y no inician un arrastre.
+prevented = false;
+cardDrag('drag').handlers.dragstart({ ...dragEvent, target: { closest() { return {}; } } });
+assert.equal(prevented, true);
+ui.nodes['#hub-path'].children.find(n => n.textContent === 'Surf Cup 2026').handlers.drop(dragEvent);
+assert.equal(JSON.parse(dragStorage[PROJ]).drag.folder, 'target');
+// Volver a raíz mediante el tramo del torneo.
+cardDrag('drag').handlers.dragstart(dragEvent);
+ui.nodes['#hub-path'].children.find(n => n.textContent === 'Surf Cup 2026').handlers.drop(dragEvent);
+assert.equal(JSON.parse(dragStorage[PROJ]).drag.folder, '');
+assert.equal(JSON.parse(dragStorage[PROJ]).drag.updated, 123);
+console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo externo y conservación de contenido/fechas.');
