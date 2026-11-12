@@ -313,7 +313,7 @@
   function syncSettings() {
     if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
     editingCode = false; renderImagePanel(); renderCompareSelect(); renderCompare();
-    selectedSection = -1; previewScroll = 0; if (state.sections.length) closePalette(); else openPalette(null);
+    selectedSection = -1; previewScroll = 0; pendingInsert = null; if (state.sections.length) closePalette(); else openPalette(null);
     $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || '';
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
@@ -476,16 +476,26 @@
     compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.'
   };
   // dragBlock: { kind: 'move', from } (bloque existente) | { kind: 'new', type } (desde la paleta)
-  var dragBlock = null, selectedSection = -1, insertAt = null, previewDoc = null, previewScroll = 0, inlineEditing = false;
+  var dragBlock = null, selectedSection = -1, insertAt = null, pendingInsert = null, previewDoc = null, previewScroll = 0, inlineEditing = false;
   function blockName(i) { var s = state.sections[i]; return s && K.MODULES[s.type] ? K.MODULES[s.type].name : ''; }
   // Un bloque nuevo trae sus textos obligatorios como «PENDIENTE: …» para poder pulsarlos y escribir en la vista previa.
   // La revisión los marca como error hasta que se sustituyan.
   function newSection(type) {
     var m = K.MODULES[type], d = {}, def = m.defaults || {}, k; for (k in def) d[k] = def[k];
-    m.fields.forEach(function (f) { if (f.req && (f.type === 'text' || f.type === 'area') && !d[f.k]) d[f.k] = 'PENDIENTE: ' + f.label; });
+    var head = '';
+    m.fields.forEach(function (f) {
+      if (f.type === 'head') { head = f.label; return; }
+      if (f.req && (f.type === 'text' || f.type === 'area') && !d[f.k]) d[f.k] = 'PENDIENTE: ' + f.label + (head ? ' (' + head + ')' : '');
+    });
     return { id: 's' + Date.now() + Math.floor(Math.random() * 1000), type: type, d: d, open: true };
   }
+  // «＋» en la vista previa: aparece un «Bloque nuevo» en esa posición y se elige su tipo en la paleta.
+  function startPending(at) {
+    if (at == null || at > state.sections.length) at = state.sections.length;
+    pendingInsert = at; selectedSection = -1; openPalette(at); refresh();
+  }
   function insertBlock(type, at) {
+    pendingInsert = null;
     if (at == null || at > state.sections.length) at = state.sections.length;
     state.sections.splice(at, 0, newSection(type)); closePalette();
     selectSection(at); update();
@@ -514,7 +524,7 @@
   function renderPalette() {
     var box = $('#palette-list'); box.innerHTML = '';
     K.MODULE_ORDER.forEach(function (id) {
-      var m = K.MODULES[id], card = el('button', { type: 'button', class: 'palette-card', draggable: 'true', title: 'Pulsa para añadirlo o arrástralo a la vista previa', onclick: function () { insertBlock(id, insertAt); } }, [
+      var m = K.MODULES[id], card = el('button', { type: 'button', class: 'palette-card', draggable: 'true', title: 'Pulsa para añadirlo o arrástralo a la vista previa', onclick: function () { insertBlock(id, pendingInsert != null ? pendingInsert : insertAt); } }, [
         el('span', { class: 'letter', text: m.letter }), el('span', { class: 'palette-text' }, [el('strong', { text: m.name }), el('small', { text: BLOCK_INFO[id] || '' })])
       ]);
       card.addEventListener('dragstart', function (event) { dragBlock = { kind: 'new', type: id }; event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('text/plain', m.name); });
@@ -524,11 +534,14 @@
   }
   function openPalette(at) {
     insertAt = at == null ? null : at;
-    $('#palette-target').textContent = insertAt == null || insertAt >= state.sections.length ? 'Se añade al final. También puedes arrastrarlo a la vista previa o entre los bloques.' : 'Se añade debajo de «' + blockName(insertAt - 1) + '».';
+    $('#palette-target').textContent = pendingInsert != null ? 'Elige el tipo del bloque nuevo marcado en la vista previa.' : (insertAt == null || insertAt >= state.sections.length ? 'Se añade al final. También puedes arrastrarlo a la vista previa o entre los bloques.' : 'Se añade debajo de «' + blockName(insertAt - 1) + '».');
     $('#palette').hidden = false; $('#add-toggle').setAttribute('aria-expanded', 'true');
-    if ($('#palette').scrollIntoView) $('#palette').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if ($('#palette').scrollIntoView) $('#palette').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
-  function closePalette() { insertAt = null; $('#palette').hidden = true; $('#add-toggle').setAttribute('aria-expanded', 'false'); }
+  function closePalette() {
+    insertAt = null; $('#palette').hidden = true; $('#add-toggle').setAttribute('aria-expanded', 'false');
+    if (pendingInsert != null) { pendingInsert = null; refresh(); }
+  }
   function endBlockDrag() {
     dragBlock = null; hideDropLine();
     Array.prototype.forEach.call(document.querySelectorAll('.drop-before, .drop-after'), function (n) { n.classList.remove('drop-before', 'drop-after'); });
@@ -563,6 +576,11 @@
     '[contenteditable=true]{outline:2px solid #6F4ACC !important;outline-offset:3px;cursor:text;background:rgba(145,250,251,.18)}' +
     '.ksa-fmt{position:absolute;z-index:12;display:flex;gap:2px;background:#fff;border:1px solid #d9d3ea;border-radius:8px;padding:3px;box-shadow:0 6px 18px rgba(27,22,48,.25);font:13px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif}' +
     '.ksa-fmt button{border:0;background:none;color:#1b1630;cursor:pointer;padding:5px 9px;border-radius:5px;font:inherit;white-space:nowrap}.ksa-fmt button:hover{background:#F7F4FC;color:#6F4ACC}' +
+    '.ksa-plus{position:absolute;z-index:9;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:#6F4ACC;color:#fff;font:700 17px/20px -apple-system,"Segoe UI",sans-serif;cursor:pointer;opacity:.45;box-shadow:0 2px 8px rgba(27,22,48,.35);padding:0}' +
+    '.ksa-plus:hover{opacity:1;transform:scale(1.12)}[data-ksa-pending]{cursor:pointer}' +
+    '.ksa-pop{position:absolute;z-index:13;gap:2px;min-width:220px;max-width:300px;background:#fff;border:1px solid #d9d3ea;border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(27,22,48,.28);font:13px/1.3 -apple-system,"Segoe UI",Roboto,sans-serif;color:#1b1630}' +
+    '.ksa-pop strong{font-size:12px;color:#6f6a85;padding:2px 6px 6px}.ksa-pop p{margin:0;padding:4px 6px;color:#6f6a85}' +
+    '.ksa-pop button{border:0;background:none;text-align:left;padding:7px 8px;border-radius:6px;cursor:pointer;font:inherit;color:#1b1630}.ksa-pop button:hover{background:#F7F4FC;color:#6F4ACC}' +
     '.ksa-tip{position:fixed;left:50%;bottom:10px;transform:translateX(-50%);z-index:11;background:#1b1630;color:#fff;font:12px -apple-system,"Segoe UI",sans-serif;padding:6px 10px;border-radius:7px;pointer-events:none}';
   function setPreview(markup) {
     var f = $('#frame');
@@ -593,13 +611,20 @@
       if (f.type !== 'text' && f.type !== 'area') return;
       String(s.d[f.k] || '').split('\n').forEach(function (line, j) { var c = cleanLine(line); if (c) lines.push({ k: f.k, j: j, c: c }); });
     });
+    // El elemento más grande con el mismo texto, para no perder negritas o enlaces que lo envuelven.
+    function widest(n, t) { while (n.parentNode && n.parentNode !== sec && n.parentNode.nodeType === 1 && nodeText(n.parentNode) === t && !/^(TD|TR|TABLE|TBODY)$/.test(n.parentNode.tagName)) n = n.parentNode; return n; }
     for (var n = target; n && n !== sec; n = n.parentNode) {
       if (n.nodeType !== 1) continue;
-      var t = nodeText(n), hit = lines.filter(function (l) { return l.c === t; })[0];
-      if (hit) {
-        // El elemento más grande con el mismo texto, para no perder negritas o enlaces que lo envuelven.
-        while (n.parentNode && n.parentNode !== sec && n.parentNode.nodeType === 1 && nodeText(n.parentNode) === t && !/^(TD|TR|TABLE|TBODY)$/.test(n.parentNode.tagName)) n = n.parentNode;
-        return { el: n, hit: hit };
+      var t = nodeText(n), hits = lines.filter(function (l) { return l.c === t; });
+      if (hits.length) {
+        n = widest(n, t);
+        if (hits.length === 1) return { el: n, hit: hits[0] };
+        // Mismo texto en varios campos (p. ej. las dos tarjetas): se elige por orden de aparición.
+        // Algunos bloques repiten el contenido (versión escritorio y móvil), de ahí el módulo.
+        var seen = [];
+        Array.prototype.forEach.call(sec.querySelectorAll('*'), function (c) { if (nodeText(c) === t) { c = widest(c, t); if (seen.indexOf(c) < 0) seen.push(c); } });
+        var idx = Math.max(0, seen.indexOf(n));
+        return { el: n, hit: hits[idx % hits.length] };
       }
       if (t.length > 3000) break;
     }
@@ -710,9 +735,28 @@
     var handle = btn('⠿ Mover', 'Arrastra para mover el bloque', function () {}, 'ksa-handle'); handle.draggable = true;
     btn('↑', 'Subir', function (i) { if (i > 0) { selectedSection = i - 1; move(i, -1); } });
     btn('↓', 'Bajar', function (i) { if (i < state.sections.length - 1) { selectedSection = i + 1; move(i, 1); } });
-    btn('＋', 'Añadir un bloque debajo', function (i) { openPalette(i + 1); });
+    btn('＋', 'Añadir un bloque debajo', function (i) { startPending(i + 1); });
     btn('⧉', 'Duplicar', duplicateBlock);
+    btn('＋ Texto/botón', 'Añadir textos o botones opcionales a este bloque', function (i) { openPop(i); });
     btn('✕', 'Eliminar', removeBlock);
+    // Menú de textos y botones opcionales del bloque.
+    var pop = doc.createElement('div'); pop.className = 'ksa-pop'; pop.style.display = 'none'; doc.body.appendChild(pop);
+    function closePop() { pop.style.display = 'none'; pop.innerHTML = ''; }
+    function openPop(i) {
+      var s = state.sections[i]; if (!s) return;
+      pop.innerHTML = ''; var title = doc.createElement('strong'); title.textContent = 'Añadir a «' + blockName(i) + '»'; pop.appendChild(title);
+      var items = optionalItems(s);
+      if (!items.length) { var none = doc.createElement('p'); none.textContent = 'Este bloque no tiene más textos ni botones opcionales.'; pop.appendChild(none); }
+      items.forEach(function (item) {
+        var b = doc.createElement('button'); b.type = 'button'; b.textContent = item.label;
+        b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); closePop(); applyOptional(i, item); });
+        pop.appendChild(b);
+      });
+      var w = doc.defaultView, r = bar.getBoundingClientRect();
+      pop.style.display = 'grid'; pop.style.top = (r.bottom + w.scrollY + 4) + 'px';
+      pop.style.left = Math.max(4, Math.min(r.right + w.scrollX - pop.offsetWidth, w.scrollX + w.innerWidth - pop.offsetWidth - 6)) + 'px';
+    }
+    doc.addEventListener('keydown', function (e) { if (e.key === 'Escape') closePop(); });
     handle.addEventListener('dragstart', function (event) { dragBlock = { kind: 'move', from: barFor }; event.dataTransfer.effectAllowed = 'move'; event.dataTransfer.setData('text/plain', blockName(barFor)); bar.style.display = 'none'; });
     handle.addEventListener('dragend', endBlockDrag);
     var hover = overlay(doc, 'ksa-hover');
@@ -731,9 +775,12 @@
     });
     doc.addEventListener('mouseleave', function () { if (!dragBlock) { hover.style.display = 'none'; bar.style.display = 'none'; } });
     doc.addEventListener('click', function (event) {
+      if (pop.contains(event.target)) return;
+      if (pop.style.display !== 'none') { closePop(); if (!bar.contains(event.target)) return; }
       if (bar.contains(event.target) || (event.target.closest && event.target.closest('[contenteditable]'))) return;
       if (event.target.closest && event.target.closest('a')) event.preventDefault();
-      if (event.target.closest && event.target.closest('[data-ksa-empty]')) { openPalette(null); return; }
+      if (event.target.closest && event.target.closest('[data-ksa-empty]')) { startPending(0); return; }
+      if (event.target.closest && event.target.closest('[data-ksa-pending]')) { openPalette(pendingInsert); return; }
       var sec = secAt(event.target); if (!sec) return;
       var i = +sec.getAttribute('data-ksa-section'), s = state.sections[i]; if (!s) return;
       var found = findEditable(event.target, sec, s);
@@ -779,8 +826,66 @@
       var dragged = dragBlock, at = dropIndex(event).at; endBlockDrag();
       if (dragged.kind === 'move') moveTo(dragged.from, at); else insertBlock(dragged.type, at);
     });
-    doc.defaultView.addEventListener('resize', function () { markPreview(false); });
+    // «＋» en cada separación entre bloques (y antes del primero / después del último).
+    var plus = [];
+    function placePlus() {
+      plus.forEach(function (p) { p.remove(); }); plus = [];
+      var secs = doc.querySelectorAll('[data-ksa-section]'), w = doc.defaultView;
+      if (!secs.length || pendingInsert != null) return;
+      for (var k = 0; k <= secs.length; k++) {
+        var r = secs[Math.min(k, secs.length - 1)].getBoundingClientRect(), y = k < secs.length ? r.top : r.bottom;
+        var cx = Math.min(r.left + r.width / 2, w.innerWidth / 2), b = doc.createElement('button');
+        b.type = 'button'; b.className = 'ksa-plus'; b.textContent = '+'; b.title = k === secs.length ? 'Añadir un bloque al final' : (k ? 'Añadir un bloque aquí' : 'Añadir un bloque al principio');
+        b.style.top = (y + w.scrollY - 13) + 'px'; b.style.left = (cx + w.scrollX - 13) + 'px';
+        (function (at) { b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); startPending(at); }); })(k);
+        doc.body.appendChild(b); plus.push(b);
+      }
+    }
+    placePlus();
+    if (doc.defaultView.ResizeObserver) new doc.defaultView.ResizeObserver(function () { placePlus(); markPreview(false); }).observe(doc.body);
+    doc.defaultView.addEventListener('resize', function () { markPreview(false); placePlus(); });
+    var pendingNode = doc.querySelector('[data-ksa-pending]');
+    if (pendingNode) doc.defaultView.scrollTo({ top: Math.max(0, pendingNode.getBoundingClientRect().top + doc.defaultView.scrollY - 120) });
     markPreview(false);
+  }
+
+  // Textos y botones opcionales que le faltan a un bloque, para añadirlos desde la vista previa.
+  function optionalItems(s) {
+    var m = K.MODULES[s.type], head = '', items = [];
+    m.fields.forEach(function (f) {
+      if (f.type === 'head') { head = f.label; return; }
+      if (!f.k || f.req || isImageField(f) || f.k === 'alt' || f.type === 'select' || f.type === 'url') return;
+      if (f.showIf && !f.showIf(s.d)) return;
+      var where = head ? ' (' + head + ')' : '';
+      if (/(^|_)btn$/.test(f.k)) {
+        var urlKey = f.k.replace(/btn$/, 'url');
+        if (!filled(s.d[f.k]) || !filled(s.d[urlKey])) items.push({ label: '＋ Botón' + where, kind: 'btn', k: f.k, url: urlKey });
+        else items.push({ label: 'Cambiar enlace del botón' + where, kind: 'url', k: f.k, url: urlKey }, { label: 'Quitar botón' + where, kind: 'rm', k: f.k, url: urlKey });
+        return;
+      }
+      if (!filled(s.d[f.k])) items.push({ label: '＋ ' + f.label.replace(/\s*\(opcional\)/i, '') + where, name: f.label.replace(/\s*\(opcional\)/i, '') + where, kind: 'text', k: f.k });
+    });
+    return items;
+  }
+  function askUrl(current) {
+    var url = prompt('Enlace del botón (https://… o mailto:…):', current || 'https://');
+    if (url === null) return null;
+    url = url.trim();
+    if (K.linkLevel(url) === 'error') { alert('El enlace no es válido. Usa https://… o mailto:…'); return null; }
+    return url;
+  }
+  function applyOptional(i, item) {
+    var s = state.sections[i]; if (!s) return;
+    if (item.kind === 'text') {
+      var value = 'PENDIENTE: ' + item.name; s.d[item.k] = value;
+      if (K.build(state).indexOf(value.replace(/&/g, '&amp;')) < 0) alert('Este texto solo aparece en el email junto con otros datos del bloque. Complétalo en el panel de la derecha.');
+    } else if (item.kind === 'btn') {
+      var url = askUrl(s.d[item.url]); if (url === null) return;
+      s.d[item.url] = url; if (!filled(s.d[item.k])) s.d[item.k] = 'PENDIENTE: Texto del botón';
+    } else if (item.kind === 'url') {
+      var next = askUrl(s.d[item.url]); if (next === null) return; s.d[item.url] = next;
+    } else if (item.kind === 'rm') { delete s.d[item.k]; delete s.d[item.url]; }
+    selectedSection = i; s.open = true; renderSections(); refresh();
   }
 
   // ---------- Editor de módulos ----------
@@ -880,7 +985,7 @@
     html = custom ? state.customHtml : generated; checks = K.check(state, html);
     if (custom) checks.unshift({ level: 'warn', msg: 'Código editado a mano: la revisión de módulos se basa en sus campos y puede no reflejar lo cambiado en el código.' + (generated !== state.customBase ? ' Hay cambios en módulos o ajustes que no están en el código editado.' : '') });
     persist();
-    if (!inlineEditing) setPreview(custom ? html : K.build(state, { preview: true }));
+    if (!inlineEditing) setPreview(custom ? html : K.build(state, { preview: true, pendingAt: pendingInsert }));
     if (!editingCode) $('#code').value = html;
     codeUI(generated);
     $('#filename').textContent = K.fileBase(state) + '_COPIAR_Y_PEGAR.txt';
@@ -998,7 +1103,7 @@
       if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
       var appliedKit = state.brandKit; state = K.fromRecipe(id, state.tournament); if (appliedKit) state.brandKit = appliedKit; persist(); syncSettings(); renderSections(); refresh();
     });
-    $('#add-toggle').addEventListener('click', function () { if ($('#palette').hidden) openPalette(null); else closePalette(); });
+    $('#add-toggle').addEventListener('click', function () { if ($('#palette').hidden) startPending(state.sections.length); else closePalette(); });
     $('#palette-close').addEventListener('click', closePalette);
     // Vista previa interactiva: se prepara cada vez que se carga y conserva la posición de scroll.
     $('#frame').addEventListener('load', function () {

@@ -45,9 +45,12 @@ Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los c
 
 - **＋ Añadir bloque** abre una paleta con todos los bloques y una descripción corta. Pulsa uno para añadirlo al final, o **arrástralo a la vista previa** (o entre las tarjetas del panel) para colocarlo donde quieras. Una newsletter vacía muestra la paleta y una zona «Arrastra aquí un bloque» en la vista previa.
 - Los textos obligatorios de un bloque nuevo salen como **«PENDIENTE: …»**: púlsalos en la vista previa y escribe encima. La revisión los marca como error hasta que los cambies.
+- El panel de edición está a la **derecha** y la vista previa a la izquierda.
+- **＋ en la vista previa**: entre cada bloque (y al principio y al final) hay un botón **+**. Al pulsarlo aparece un **«Bloque nuevo»** en ese sitio y se abre la paleta del panel para elegir de qué tipo es. Si cierras la paleta sin elegir, desaparece. El bloque nuevo solo existe en la vista previa: nunca llega al email.
 - **En la vista previa**: al pasar el ratón por un bloque aparece su barra (⠿ Mover para arrastrarlo, ↑ ↓, ＋ añadir debajo, ⧉ duplicar, ✕ eliminar). Pulsar un bloque lo selecciona y lo abre en el panel.
 - **Editar texto en la vista previa**: pulsa un texto, escribe y pulsa **Enter** para guardar (**Esc** cancela). En los párrafos aparece una barra con **B** (negrita), **I** (cursiva), **🔗 Enlace** y **Quitar formato**; también Ctrl/⌘ + B, I y K. Lo pegado entra sin formato. Los textos de una línea (títulos, etiquetas, precios) no admiten formato, como en el email.
 - Formato en el panel: `**negrita**`, `*cursiva*` y `[texto](https://…)`. No hay tamaños de letra libres: los fija cada bloque para que el diseño sea coherente en móvil y Outlook. Los textos compuestos de varios campos, las imágenes y las opciones se editan en el panel. Para añadir un párrafo nuevo, usa el panel.
+- **＋ Texto/botón** (en la barra del bloque) lista los textos y botones opcionales que le faltan a ese bloque (etiqueta, precio, texto, botón de cada tarjeta…). Un texto se añade como «PENDIENTE: …» para escribirlo encima; un botón pide su enlace y luego se edita su texto pulsándolo. Si ya hay botón, permite cambiar su enlace o quitarlo.
 - También puedes arrastrar las tarjetas del panel para reordenarlas y soltar imágenes del brand kit sobre un bloque con imagen en la vista previa.
 - Con código editado a mano, la vista previa no es interactiva.
 

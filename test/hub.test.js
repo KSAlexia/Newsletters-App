@@ -280,5 +280,10 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   const saved = Object.values(JSON.parse(st[PROJ]))[0].state;
   assert.equal(saved.sections.length, 1); assert.equal(saved.sections[0].type, 'titulo');
   assert.equal(saved.sections[0].d.title, 'PENDIENTE: Título'); assert.equal(ui5.nodes['#palette'].hidden, true);
+  ui5.nodes['#add-toggle'].click();
+  walk(ui5.nodes['#palette-list']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent === 'Dos tarjetas de igual altura')).click();
+  await new Promise(r => setTimeout(r, 260));
+  const cards = Object.values(JSON.parse(st[PROJ]))[0].state.sections[1].d;
+  assert.equal(cards.a_title, 'PENDIENTE: Título (Tarjeta 1)'); assert.equal(cards.b_title, 'PENDIENTE: Título (Tarjeta 2)', 'Los textos pendientes de cada tarjeta se distinguen');
   console.log('OK: paleta de bloques (añadir con textos PENDIENTE y cerrar).');
 })().catch(e => { console.error(e); process.exit(1); });

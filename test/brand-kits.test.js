@@ -114,3 +114,12 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   assert.ok(h.includes('<em style="font-style:italic;">cur</em>') && h.includes('neg</strong>') && h.includes(' 2*3'));
   console.log('OK: cursiva en el email.');
 }
+
+// Bloque nuevo pendiente de tipo: solo en la vista previa, en la posición pedida.
+{
+  const st = K.fromRecipe('ref1'), p = K.build(st, { preview: true, pendingAt: 1 });
+  const order = [...p.matchAll(/data-ksa-(section="(\d+)"|pending)/g)].map(m => m[2] || 'nuevo');
+  assert.deepEqual(order.slice(0, 3), ['0', 'nuevo', '1']);
+  assert.ok(K.build(st, { preview: true, pendingAt: 99 }).includes('data-ksa-pending') && !K.build(st).includes('Bloque nuevo'));
+  console.log('OK: bloque nuevo pendiente solo en la vista previa.');
+}
