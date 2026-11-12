@@ -742,19 +742,25 @@
     button: 'Un botón. Bajo un Título principal se une a él.',
     box: 'Recuadro para destacar: suave (avisos, pasos), con borde (llamada a la acción) u oscuro (Important).',
     intro: 'Saludo y párrafos de texto.', titulo: 'Título grande centrado, con texto y botón opcionales.',
-    lista: 'Título con una lista de puntos.', datos: 'Banda de color con fecha, hora, lugar…',
+    lista: 'Título con una lista de puntos.', datos: 'Banda de color con 1 a 4 datos en fila: fecha, hora, lugar…',
     tarjetas: 'Dos opciones lado a lado, con botón.', cards: 'De 1 a 8 tarjetas: opciones, precios, datos o fechas. Claras u oscuras, con botón opcional.', info: 'Aviso o instrucciones sobre fondo suave.',
     producto: 'Servicio con precio, imagen y opciones.', separador: 'Línea fina entre dos productos.',
     imagen: 'Imagen a sangre o con márgenes.', cierre: 'Frase de cierre entre dos líneas.',
     compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.',
     step: 'Paso con etiqueta, título, fecha límite y botón.', glance: 'Tres datos clave: dos tarjetas oscuras y una clara.',
-    timeline: 'Hasta cuatro fechas o hitos en columna.', deadlines: 'Dos fechas límite lado a lado.',
+    timeline: 'De 1 a 8 fechas o hitos, uno debajo de otro.', deadlines: 'Dos fechas límite lado a lado.',
     fotos3: 'Tres fotos en fila (se apilan en móvil).', cta: 'Caja con borde para inscribirse o actuar.',
     boton: 'Un botón solo, del color principal u oscuro.', important: 'Aviso destacado en caja oscura.',
     wallet: 'Botones para añadir la entrada al wallet.'
   };
   // dragBlock: { kind: 'move', from } (bloque existente) | { kind: 'new', type } (desde la paleta)
   var dragBlock = null, selectedSection = -1, insertAt = null, pendingInsert = null, previewDoc = null, previewScroll = 0, inlineEditing = false;
+  // Miniatura con el esquema del bloque (js/block-icons.js); si no hay, la letra de siempre.
+  function blockThumb(id, cls) {
+    var svg = K.blockIcon && K.blockIcon(id), n = el('span', { class: cls });
+    if (svg) n.innerHTML = svg; else { n.classList.add('letter'); n.textContent = K.MODULES[id].letter; }
+    return n;
+  }
   function blockName(i) { var s = state.sections[i]; return s && K.MODULES[s.type] ? K.MODULES[s.type].name : ''; }
   // Un bloque nuevo trae sus textos obligatorios como «PENDIENTE: …» para poder pulsarlos y escribir en la vista previa.
   // La revisión los marca como error hasta que se sustituyan.
@@ -787,6 +793,15 @@
     if (!confirm('¿Eliminar «' + blockName(i) + '»?')) return;
     state.sections.splice(i, 1); selectedSection = -1; renderSections(); update();
   }
+  // Ojo: ocultar un bloque lo quita del email sin borrarlo; en la vista previa queda una tira para volver a mostrarlo.
+  var EYE = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  var EYE_OFF = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><path d="M14.12 14.12a3 3 0 1 1-4.24-4.24"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+  function eyeTitle(s) { return s && s.hidden ? 'Mostrar (ahora está oculto y no sale en el email)' : 'Ocultar (no sale en el email, pero no se borra)'; }
+  function toggleHidden(i) {
+    var s = state.sections[i]; if (!s) return;
+    if (s.hidden) delete s.hidden; else s.hidden = true;
+    selectedSection = i; renderSections(); update();
+  }
   function duplicateBlock(i) {
     var c = JSON.parse(JSON.stringify(state.sections[i])); c.id = 's' + Date.now(); state.sections.splice(i + 1, 0, c);
     selectedSection = i + 1; renderSections(); update();
@@ -803,7 +818,7 @@
     var box = $('#palette-list'); box.innerHTML = '';
     K.MODULE_ORDER.forEach(function (id) {
       var m = K.MODULES[id], card = el('button', { type: 'button', class: 'palette-card', draggable: 'true', title: 'Pulsa para añadirlo o arrástralo a la vista previa', onclick: function () { insertBlock(id, pendingInsert != null ? pendingInsert : insertAt); } }, [
-        el('span', { class: 'letter', text: m.letter }), el('span', { class: 'palette-text' }, [el('strong', { text: m.name }), el('small', { text: BLOCK_INFO[id] || '' })])
+        blockThumb(id, 'palette-thumb'), el('span', { class: 'palette-text' }, [el('strong', { text: m.name }), el('small', { text: BLOCK_INFO[id] || '' })])
       ]);
       card.addEventListener('dragstart', function (event) { dragBlock = { kind: 'new', type: id }; event.dataTransfer.effectAllowed = 'copy'; event.dataTransfer.setData('text/plain', m.name); });
       card.addEventListener('dragend', endBlockDrag);
@@ -849,6 +864,7 @@
     '.ksa-bar{position:absolute;z-index:10;display:flex;gap:2px;background:#1b1630;border-radius:8px;padding:3px;box-shadow:0 4px 14px rgba(0,0,0,.3);font:12px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif}' +
     '.ksa-bar button{border:0;background:none;color:#fff;cursor:pointer;padding:5px 7px;border-radius:5px;font:inherit;white-space:nowrap}' +
     '.ksa-bar button:hover,.ksa-bar .ksa-handle:hover{background:#6F4ACC}' +
+    '.ksa-bar .ksa-eye{display:inline-flex;align-items:center;gap:5px}.ksa-bar .ksa-eye svg{display:block}' +
     '.ksa-bar .ksa-handle{color:#fff;padding:5px 7px;border-radius:5px;white-space:nowrap;cursor:grab;user-select:none;-webkit-user-select:none;-webkit-user-drag:element}.ksa-bar .ksa-handle:active{cursor:grabbing}' +
     '.ksa-line{position:absolute;z-index:9;height:4px;margin-top:-2px;background:#6F4ACC;border-radius:2px;pointer-events:none;box-shadow:0 0 0 2px #fff}' +
     '.ksa-drop{border:3px solid #91FAFB;background:rgba(145,250,251,.12)}' +
@@ -1058,6 +1074,7 @@
     btn('↑', 'Subir', function (i) { if (i > 0) { selectedSection = i - 1; move(i, -1); } });
     btn('↓', 'Bajar', function (i) { if (i < state.sections.length - 1) { selectedSection = i + 1; move(i, 1); } });
     btn('＋', 'Añadir un bloque debajo', function (i) { startPending(i + 1); });
+    var eyeBtn = btn('', '', toggleHidden, 'ksa-eye');
     btn('⧉', 'Duplicar', duplicateBlock);
     btn('＋ Texto/botón', 'Añadir textos o botones opcionales a este bloque', function (i) { openPop(i); });
     btn('✕', 'Eliminar', removeBlock);
@@ -1087,6 +1104,7 @@
     function secAt(target) { return target && target.closest ? target.closest('[data-ksa-section]') : null; }
     function showBar(sec) {
       barFor = +sec.getAttribute('data-ksa-section');
+      var hs = state.sections[barFor]; eyeBtn.innerHTML = hs && hs.hidden ? EYE + '<span>Mostrar</span>' : EYE_OFF; eyeBtn.title = eyeTitle(hs);
       var r = sec.getBoundingClientRect(), w = doc.defaultView;
       bar.style.display = 'flex'; bar.style.top = (r.top + w.scrollY + 6) + 'px';
       bar.style.left = Math.max(4, Math.min(r.right, w.innerWidth) + w.scrollX - bar.offsetWidth - 6) + 'px';
@@ -1108,6 +1126,7 @@
       if (event.target.closest && event.target.closest('[data-ksa-pending]')) { openPalette(pendingInsert); return; }
       var sec = secAt(event.target); if (!sec) return;
       var i = +sec.getAttribute('data-ksa-section'), s = state.sections[i]; if (!s) return;
+      if (s.hidden) { selectSection(i); return; } // la tira de un bloque oculto no se edita
       var found = findEditable(event.target, sec, s);
       selectSection(i);
       if (found) startEdit(doc, found, s);
@@ -1242,15 +1261,16 @@
     state.sections.forEach(function (s, i) {
       var m = K.MODULES[s.type]; if (!m) return;
       var snip = el('span', { class: 'snip', text: snippet(s) });
-      var det = el('details', { class: 'card mod' + (i === selectedSection ? ' is-selected' : '') });
+      var det = el('details', { class: 'card mod' + (i === selectedSection ? ' is-selected' : '') + (s.hidden ? ' is-hidden' : '') });
       if (s.open) det.open = true;
       det.addEventListener('toggle', function () { s.open = det.open; persist(); });
       function tool(txt, title, fn, dis) { var b = el('button', { class: 'tool', title: title, text: txt, onclick: function (e) { e.preventDefault(); e.stopPropagation(); fn(); } }); if (dis) b.disabled = true; return b; }
       var summary = det.appendChild(el('summary', {}, [
-        el('span', { class: 'letter', text: m.letter }), el('span', { class: 'mname', text: m.name }), snip,
+        blockThumb(s.type, 'mod-thumb'), el('span', { class: 'mname', text: m.name }), snip,
         el('span', { class: 'tools' }, [
           tool('↑', 'Subir', function () { move(i, -1); }, i === 0),
           tool('↓', 'Bajar', function () { move(i, 1); }, i === state.sections.length - 1),
+          (function () { var b = tool('', eyeTitle(s), function () { toggleHidden(i); }); b.innerHTML = s.hidden ? EYE_OFF : EYE; b.classList.add('eye'); b.setAttribute('aria-pressed', String(!!s.hidden)); b.setAttribute('aria-label', s.hidden ? 'Mostrar el bloque' : 'Ocultar el bloque'); return b; })(),
           tool('⧉', 'Duplicar', function () { duplicateBlock(i); }),
           tool('✕', 'Eliminar', function () { removeBlock(i); })
         ])

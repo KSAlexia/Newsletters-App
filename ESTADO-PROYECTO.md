@@ -690,3 +690,31 @@ Misma regla: la Caja usada para lo mismo que un bloque antiguo genera exactament
 - Siguen en la paleta: Banda de datos, Producto (aviso incluido), At a glance, Timeline, Dos fechas límite (fase 4 o pendientes de equivalencia exacta), Separador, Compra, Contacto y Wallet.
 
 Pruebas: nuevas equivalencias en `test/pieces.test.js` (suave, suave con título encima, Step, CTA, Important y una newsletter mixta) y reglas de encadenado de la Caja; todas las suites pasan y todas las recetas salvo la de la BASE dan el mismo HTML que antes de la fase 1. En el navegador integrado (`http://127.0.0.1:8790`, datos sintéticos): Título de sección + Caja suave, Caja con borde con botón y Caja oscura se ven como los bloques antiguos; cada estilo muestra solo sus campos; sin desbordamiento horizontal.
+
+## Ocultar y mostrar bloques con el ojo (2026-11-12)
+
+- Cada bloque tiene un ojo en el panel de la derecha (entre ↓ y ⧉) y en la barra flotante de la vista previa. Ocultar no borra: marca la sección con `hidden: true`, que se guarda con la newsletter y entra en deshacer y en el historial de versiones.
+- **Email** (copiar, descargar, código, comparar): un bloque oculto no sale; el HTML es exactamente el mismo que si el bloque no existiera, también cuando separa piezas que se encadenan en una celda (`K.build` agrupa solo los visibles con `K.flowGroups`).
+- **Vista previa**: en su sitio queda una tira fina «Oculto: <bloque> · no sale en el email» con `data-ksa-section` de su índice real, para seleccionarlo, moverlo, borrarlo o volver a mostrarlo (en la barra, «👁 Mostrar»). La tira no se edita. El «Bloque nuevo» pendiente respeta el orden con los ocultos.
+- **Panel**: la tarjeta del bloque oculto se ve atenuada, con el nombre tachado y el ojo tachado.
+- **Revisión**: avisa «Hay N bloques ocultos: no salen en el email» (y si están todos ocultos) y no revisa su contenido; los números de módulo siguen siendo los del panel.
+- Prueba: `node test/hidden.test.js` (oculto = quitado en el HTML, tira e índices en la vista previa, orden con el bloque nuevo, revisión). Comprobado en el navegador: ocultar y mostrar desde el panel y desde la vista previa. El resto de suites pasan y las recetas generan el mismo HTML que antes.
+
+## Catálogo de bloques mínimos · fase 5 (parte visual): esquemas en vez de letras (2026-11-12)
+
+- Nuevo `js/block-icons.js` (cargado después de `modules.js`): `K.BLOCK_ICONS` y `K.blockIcon(id)` con un esquema SVG (placeholders: líneas de texto, título, imagen, botón, tarjetas, cajas…) para los 29 bloques, también los antiguos. Solo interfaz: no cambia el HTML del email.
+- **Paleta**: cada bloque es una ficha con su esquema grande arriba, el nombre y la descripción. **Panel de bloques**: la letra de cada tarjeta pasa a ser una miniatura del esquema (atenuada si el bloque está oculto). Si un bloque no tuviera esquema, sale la letra de antes.
+- Recetas e instrucciones de ChatGPT con las piezas nuevas ya se hicieron en las fases 1 a 3.
+- Prueba: `node test/icons.test.js` (los 29 bloques tienen esquema y el email no cambia). Comprobado en el navegador: paleta y panel.
+- **Sigue pendiente**: fase 4 (Banda de datos de 1 a 4 y Timeline de 1 a 8, con el mismo HTML en lo antiguo; At a glance y Dos fechas límite solo se retiran si Tarjetas los reproduce igual) y fase 6 (botón «Convertir» de bloques antiguos, opcional).
+
+## Catálogo de bloques mínimos · fase 4: Banda de datos y Timeline de 1 a N (2026-11-12)
+
+- **Banda de datos**: de 1 a 4 datos (antes 3 fijos). Empieza con uno y «＋ Añadir otro dato»; cada dato con «Quitar» (sube los siguientes). Con 4 van al 25 % en escritorio; en móvil, uno debajo de otro (clase `data-col` de siempre).
+- **Timeline**: de 1 a 8 hitos (antes 4 fijos), con «＋ Añadir otro hito». Solo el primero es obligatorio.
+- Mismas claves que antes (`l1`/`v1`…, `d1`/`h1`/`t1`…): las newsletters guardadas y lo importado no cambian. `K.repeat` acepta ahora `cfg.key(n, k)` para claves de bloques existentes y `cfg.more` para el texto del botón; nuevos `K.datosCount` y `K.hitosCount` (contadores en `dN` y `hN`).
+- **HTML idéntico**: con datos antiguos (hasta 3 datos, hasta 4 hitos) el email es igual byte a byte que antes en los 19 torneos (133 casos comparados con la versión anterior del módulo) y todas las recetas siguen dando el mismo HTML que antes de la fase 1.
+- Instrucciones de ChatGPT (importar y guion): el reparto dice «datos (de 1 a 4)» y «timeline (de 1 a 8)»; la lista de campos sale sola de los campos del bloque.
+- **At a glance y Dos fechas límite siguen en la paleta**: «Tarjetas» no los reproduce byte a byte (otra rejilla y otra tipografía de dato), así que, según la regla acordada, no se retiran.
+- Prueba: `node test/datos-timeline.test.js`. Comprobado en el navegador: 4 datos en fila en escritorio y apilados en móvil, sin desbordar.
+- **Sigue pendiente**: fase 6 (botón «Convertir» de bloques antiguos, opcional).

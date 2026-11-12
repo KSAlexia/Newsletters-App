@@ -256,7 +256,8 @@
   // cfg: { prefix, countKey, max, keys (los que cuentan como rellenos), titleKey, noun ('opción'/'tarjeta'), fields(n, show) }
   K.repeat = function (cfg) {
     var g = {};
-    function key(n, k) { return cfg.prefix + n + '_' + k; }
+    // Claves «p1_title» por defecto; cfg.key permite las de bloques ya existentes («l1», «v1»…).
+    function key(n, k) { return cfg.key ? cfg.key(n, k) : cfg.prefix + n + '_' + k; }
     g.filled = function (d, n) { return cfg.keys.some(function (k) { return has(d[key(n, k)]); }); };
     g.count = function (d) {
       var hi = 0, n; d = d || {};
@@ -284,12 +285,12 @@
         out.push({ type: 'opt', n: n, label: name, showIf: show, canRemove: function (d) { return g.count(d) > 1 || g.filled(d, n); }, remove: function (d) { g.remove(d, n); } });
         cfg.fields(n, show).forEach(function (f) { out.push(f); });
       })(n);
-      out.push({ type: 'more', label: '＋ Añadir otra ' + cfg.noun, hint: cfg.hint, showIf: function (d) { return g.count(d) < cfg.max; }, add: function (d) { return key(g.add(d), cfg.titleKey); } });
+      out.push({ type: 'more', label: cfg.more || '＋ Añadir otra ' + cfg.noun, hint: cfg.hint, showIf: function (d) { return g.count(d) < cfg.max; }, add: function (d) { return key(g.add(d), cfg.titleKey || cfg.keys[0]); } });
       return out;
     };
     // Revisión: un elemento con contenido pero sin título no se muestra.
     g.check = function (d, W, where) {
-      for (var n = 1; n <= cfg.max; n++) if (!has(d[key(n, cfg.titleKey)]) && g.filled(d, n)) W(where + ': la ' + cfg.noun + ' ' + n + ' no tiene ' + cfg.titleName + ' y no se mostrará.');
+      if (cfg.titleKey) for (var n = 1; n <= cfg.max; n++) if (!has(d[key(n, cfg.titleKey)]) && g.filled(d, n)) W(where + ': la ' + cfg.noun + ' ' + n + ' no tiene ' + cfg.titleName + ' y no se mostrará.');
     };
     return g;
   };
@@ -423,22 +424,34 @@
     }
   };
 
+  // Banda de datos: de 1 a 4 datos (l1/v1… como siempre, para que las newsletters guardadas no cambien).
+  var DATOS = K.repeat({ key: function (n, k) { return k + n; }, countKey: 'dN', max: 4, keys: ['l', 'v'], noun: 'dato', more: '＋ Añadir otro dato',
+    hint: 'Hasta 4 datos en fila, separados por una línea. En móvil, uno debajo de otro.',
+    fields: function (n, show) {
+      return [{ k: 'l' + n, label: 'Etiqueta ' + n, type: 'text', half: true, showIf: show, ph: ['Date', 'Time', 'Venue', 'Format'][n - 1] }, { k: 'v' + n, label: 'Valor ' + n, type: 'text', half: true, showIf: show }];
+    } });
+  K.datosCount = DATOS.count;
+  // Timeline: de 1 a 8 hitos (d1/h1/t1… como siempre).
+  var HITOS = K.repeat({ key: function (n, k) { return k + n; }, countKey: 'hN', max: 8, keys: ['d', 'h', 't'], noun: 'hito', more: '＋ Añadir otro hito',
+    hint: 'Hasta 8 hitos, uno debajo de otro.',
+    fields: function (n, show) {
+      return [{ k: 'd' + n, label: 'Fecha o momento', type: 'text', half: true, req: n === 1, ph: 'Day ' + n, showIf: show }, { k: 'h' + n, label: 'Título', type: 'text', half: true, req: n === 1, showIf: show }, { k: 't' + n, label: 'Texto', type: 'area', hint: TIP, showIf: show }];
+    } });
+  K.hitosCount = HITOS.count;
   M.datos = {
     letter: 'J', name: 'Banda de datos (fondo de color)', tag: 'BANDA DE DATOS',
     fields: [
       { k: 'pre', label: 'Antetítulo (opcional)', type: 'text' },
       { k: 'title', label: 'Titular', type: 'text', req: true },
-      { type: 'head', label: 'Datos (hasta 3)' },
-      { k: 'l1', label: 'Etiqueta 1', type: 'text', half: true, ph: 'Date' }, { k: 'v1', label: 'Valor 1', type: 'text', half: true },
-      { k: 'l2', label: 'Etiqueta 2', type: 'text', half: true, ph: 'Time' }, { k: 'v2', label: 'Valor 2', type: 'text', half: true },
-      { k: 'l3', label: 'Etiqueta 3', type: 'text', half: true }, { k: 'v3', label: 'Valor 3', type: 'text', half: true },
+      { type: 'head', label: 'Datos (de 1 a ' + DATOS.max + ')' }
+    ].concat(DATOS.fields(), [
       { k: 'text', label: 'Texto de apoyo (opcional)', type: 'area', hint: TIP }
-    ],
+    ]),
     build: function (d) {
       var h = '';
       if (has(d.pre)) h += '<p style="' + F.med + 'font-size:12px;line-height:16px;color:' + A + ';letter-spacing:3px;text-transform:uppercase;text-align:center;padding-bottom:10px;">' + esc(d.pre.trim()) + '</p>';
       h += '<p class="h1" style="' + titleFont(d.title, 'ex60', 40, 44) + 'color:#FFFFFF;text-transform:uppercase;text-align:center;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>';
-      var cols = [[d.l1, d.v1], [d.l2, d.v2], [d.l3, d.v3]].filter(function (c) { return has(c[0]) || has(c[1]); });
+      var cols = [1, 2, 3, 4].map(function (n) { return [d['l' + n], d['v' + n]]; }).filter(function (c) { return has(c[0]) || has(c[1]); });
       if (cols.length) {
         var w = Math.floor(100 / cols.length) + '%';
         h += TBL + ' style="margin-top:26px;"><tbody><tr>' + cols.map(function (c, i) {
@@ -650,11 +663,9 @@
 
   M.timeline = {
     letter: 'T', name: 'Timeline (fechas e hitos)', tag: 'TIMELINE',
-    fields: [{ k: 'title', label: 'Título de sección (opcional)', type: 'text' }].concat([1, 2, 3, 4].reduce(function (all, n) {
-      return all.concat([{ type: 'head', label: 'Hito ' + n + (n > 1 ? ' (opcional)' : '') }, { k: 'd' + n, label: 'Fecha o momento', type: 'text', half: true, req: n === 1, ph: 'Day 1' }, { k: 'h' + n, label: 'Título', type: 'text', half: true, req: n === 1 }, { k: 't' + n, label: 'Texto', type: 'area', hint: TIP }]);
-    }, [])),
+    fields: [{ k: 'title', label: 'Título de sección (opcional)', type: 'text' }].concat(HITOS.fields()),
     build: function (d) {
-      var rows = [1, 2, 3, 4].filter(function (n) { return has(d['d' + n]) || has(d['h' + n]) || has(d['t' + n]); }).map(function (n, i) {
+      var rows = [1, 2, 3, 4, 5, 6, 7, 8].filter(function (n) { return has(d['d' + n]) || has(d['h' + n]) || has(d['t' + n]); }).map(function (n, i) {
         var sep = i ? 'border-top:2px solid #FFFFFF;' : '';
         return '<tr><td width="120" valign="top" bgcolor="' + C.band + '" style="width:120px;padding:16px 14px;background-color:' + C.band + ';' + sep + '">' + boxTitle(d['d' + n] || '', 16, 20, '#FFFFFF') + '</td>' +
           '<td valign="top" bgcolor="' + SOFT + '" style="padding:16px 20px;background-color:' + SOFT + ';' + sep + '">' + (has(d['h' + n]) ? boxTitle(d['h' + n], 17, 22) : '') + bodyText(d['t' + n], 14, 22, '#000000', 'left', has(d['h' + n]) ? 6 : 0) + '</td></tr>';
@@ -932,21 +943,34 @@
     var preview = !!(opts && opts.preview), pendingAt = preview && opts.pendingAt != null ? opts.pendingAt : -1;
     // Bloque nuevo aún sin tipo: solo en la vista previa, nunca en el email.
     var PENDING = '</tbody><tbody data-ksa-pending="1"><tr><td align="center" style="padding:34px 24px;background:#FFFFFF;border:2px dashed #6F4ACC;font-family:Arial,Helvetica,sans-serif;font-size:16px;line-height:24px;color:#48237E;"><strong>Bloque nuevo</strong><br /><span style="font-size:13px;color:#6F4ACC;">Elige qué tipo de bloque es en el panel de la derecha →</span></td></tr></tbody><tbody>';
-    var secs = st.sections || [];
-    K.flowGroups(secs, pendingAt).forEach(function (g) {
-      if (g.start === pendingAt) add('BLOQUE NUEVO', PENDING);
+    // Bloques ocultos (ojo): no salen en el email. En la vista previa queda una tira fina para volver a mostrarlos.
+    var all = st.sections || [], secs = [], map = [], shown = {};
+    all.forEach(function (s, i) { if (!s.hidden) { secs.push(s); map.push(i); } });
+    var vPending = pendingAt < 0 ? -1 : map.filter(function (i) { return i < pendingAt; }).length;
+    function hiddenUpTo(limit) {
+      if (!preview) return;
+      all.forEach(function (s, i) {
+        if (!s.hidden || shown[i] || i >= limit) return; shown[i] = true;
+        var m = M[s.type], name = m ? m.name : s.type;
+        add('OCULTO', '</tbody><tbody data-ksa-section="' + i + '" data-ksa-hidden="1"><tr><td style="padding:9px 24px;background:#F7F4FC;border:1px dashed #A5A0C4;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;color:#6f6a85;">Oculto: <strong>' + esc(name) + '</strong> · no sale en el email</td></tr></tbody><tbody>');
+      });
+    }
+    K.flowGroups(secs, vPending).forEach(function (g) {
+      if (g.start === vPending) { hiddenUpTo(pendingAt); add('BLOQUE NUEVO', PENDING); }
+      hiddenUpTo(map[g.start]);
       if (g.align) {
         // Piezas encadenadas: una sola celda. En la vista previa, cada pieza va en su propio <div> seleccionable.
         var pieces = secs.slice(g.start, g.end + 1);
-        add(pieces.map(function (s) { return M[s.type].tag; }).join(' + '), K.flowCell(pieces, g.align, preview ? function (j, part) { return '<div data-ksa-section="' + (g.start + j) + '">' + part + '</div>'; } : null));
+        add(pieces.map(function (s) { return M[s.type].tag; }).join(' + '), K.flowCell(pieces, g.align, preview ? function (j, part) { return '<div data-ksa-section="' + map[g.start + j] + '">' + part + '</div>'; } : null));
         return;
       }
-      var s = secs[g.start], i = g.start, m = M[s.type]; if (!m) return;
+      var s = secs[g.start], i = map[g.start], m = M[s.type]; if (!m) return;
       var part = m.build(s.d || {}, t);
       add(m.tag, preview ? '</tbody><tbody data-ksa-section="' + i + '">' + part + '</tbody><tbody>' : part);
     });
-    if (pendingAt >= (st.sections || []).length) add('BLOQUE NUEVO', PENDING);
-    else if (preview && !(st.sections || []).length) add('VACÍO', '</tbody><tbody data-ksa-empty="1"><tr><td align="center" style="padding:48px 24px;background:#F7F4FC;border:2px dashed #A5A0C4;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#48237E;">Arrastra aquí un bloque desde «＋ Añadir bloque»<br />o haz clic para elegir uno</td></tr></tbody><tbody>');
+    if (vPending >= secs.length) { hiddenUpTo(pendingAt); add('BLOQUE NUEVO', PENDING); }
+    else if (preview && !all.length) add('VACÍO', '</tbody><tbody data-ksa-empty="1"><tr><td align="center" style="padding:48px 24px;background:#F7F4FC;border:2px dashed #A5A0C4;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#48237E;">Arrastra aquí un bloque desde «＋ Añadir bloque»<br />o haz clic para elegir uno</td></tr></tbody><tbody>');
+    hiddenUpTo(Infinity);
     if (t.footer && !off.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
     var title = (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name) + (has(st.name) ? ' – ' + st.name.trim() : '');
@@ -986,7 +1010,9 @@
   K.check = function (st, html) {
     var t = K.BrandKits ? K.BrandKits.effectiveTournament(st) : K.tournament(st.tournament), kit = K.BrandKits ? K.BrandKits.forState(st) : null, out = [], off0 = st.off || {};
     function E(m) { out.push({ level: 'error', msg: m }); } function W(m) { out.push({ level: 'warn', msg: m }); } function OK(m) { out.push({ level: 'ok', msg: m }); }
-    var secs = st.sections || [];
+    var all = st.sections || [], hiddenN = all.filter(function (x) { return x.hidden; }).length;
+    // Los bloques ocultos no salen en el email: no se revisan (los números de módulo siguen siendo los del panel).
+    var secs = all.map(function (x) { return x.hidden ? { type: '', d: {} } : x; });
     if (st.brandKit && K.BrandKits) { try { K.BrandKits.snapshot(st.brandKit); } catch (e) { E('Brand kit inválido: ' + e.message); } }
     if (kit && !t.header && !off0.header) W('El kit no tiene custom link de header; el email sale sin esa imagen.');
     if (kit && st.mediaPackages && !kit.mediaBanner.url) W('El kit no tiene custom link para el banner de Media Packages.');
@@ -997,7 +1023,9 @@
     if (t.club && !has(t.contact) && secs.some(function (x) { return x.type === 'contacto'; })) E('Caja de contacto: falta el email o custom field de contacto de ' + t.clubName + '. Sale «CONTACTO PENDIENTE».');
     if (!has(st.name)) W('Falta el nombre de la newsletter (título interno y nombre de archivo).');
     if (!t.footer && !off0.footer) W('Footer de imagen de ' + (kit ? kit.name : t.name) + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
-    if (!secs.length) W('La newsletter no tiene módulos todavía.');
+    if (!all.length) W('La newsletter no tiene módulos todavía.');
+    else if (hiddenN === all.length) W('Todos los bloques están ocultos: el email sale sin contenido.');
+    if (hiddenN) W(hiddenN === 1 ? 'Hay 1 bloque oculto: no sale en el email.' : 'Hay ' + hiddenN + ' bloques ocultos: no salen en el email.');
     var off = st.off || {};
     if (!off.franja && !has(st.franjaLeft) && !has(t.franjaLeft)) E('Falta la etiqueta izquierda de la franja identificadora.');
     // {[E-RSVP YES LINK]} y {[E-MODIFY REG LINK]} generan su propio enlace: nunca dentro de otro enlace.
@@ -1169,7 +1197,7 @@
     L.push('- Botones: el texto del botón en su campo y el enlace solo si el guion lo da; si no, deja el enlace vacío. Botón bajo un titular → button justo después del title principal (y su text). Opciones paralelas con botón → cards (una tarjeta por opción: c1_*, c2_*…). Botón de registro o modificar inscripción con {[E-MODIFY REG LINK]} → compra.');
     L.push('- NO incluyas header, footer de imagen ni línea de baja (opt-out): la app los pone sola. Si el guion indica la etiqueta de la franja identificadora, ponla en "franja"; si no, "".');
     L.push('- PIEZAS: cada titular es un módulo title ("style": principal para titulares grandes, seccion para el título de una lista o sección, saludo para «Dear …», entre para la frase de despedida); los párrafos que van juntos, un text; cada lista de puntos, un list; cada botón, un button.');
-    L.push('- Reparto: saludo y párrafos → title (saludo) + text. Titular con texto y botón → title + text + button. Fecha, hora, lugar → datos. Opciones, precios, datos o fechas paralelos → cards (de 1 a 8 tarjetas: c1_title, c1_price, c1_text…). Instrucciones → box (style suave; con título fuera de la caja → title (seccion) + box). Paso con fecha límite → box (suave) con label, title y deadline. Llamada a la acción con botón o enlace de Cvent → box (borde). Aviso importante → box (oscura) con label. Lista de puntos → title (seccion) + list. Servicio con precio → producto (separador entre dos productos seguidos). Cierre o despedida → title (entre) + text. Texto que no encaje → text.');
+    L.push('- Reparto: saludo y párrafos → title (saludo) + text. Titular con texto y botón → title + text + button. Fecha, hora, lugar → datos (de 1 a 4 datos: l1/v1…). Fechas o pasos en orden → timeline (de 1 a 8 hitos: d1/h1/t1…). Opciones, precios, datos o fechas paralelos → cards (de 1 a 8 tarjetas: c1_title, c1_price, c1_text…). Instrucciones → box (style suave; con título fuera de la caja → title (seccion) + box). Paso con fecha límite → box (suave) con label, title y deadline. Llamada a la acción con botón o enlace de Cvent → box (borde). Aviso importante → box (oscura) con label. Lista de puntos → title (seccion) + list. Servicio con precio → producto (separador entre dos productos seguidos). Cierre o despedida → title (entre) + text. Texto que no encaje → text.');
     L.push('- No dejes fuera ningún texto del guion.');
     L.push('');
     moduleList(L);
@@ -1210,7 +1238,7 @@
     L.push('- Si la newsletter es de Media Packages, pon "mediaPackages": true y NO añadas el banner de Media Packages como imagen.');
     L.push('- Imágenes: solo las que estén en el original y con su URL de custom.cvent.com tal cual. Si no hay URL, no pongas el módulo.');
     L.push('- PIEZAS: cada titular es un módulo title ("style": principal para titulares grandes, seccion para el título de una lista o sección, saludo para «Dear …», entre para la frase de despedida); los párrafos que van juntos, un text; cada lista de puntos, un list; cada botón, un button.');
-    L.push('- Reparto: saludo y párrafos de apertura → title (saludo) + text. Titular con texto y botón → title + text + button. Fecha, hora, lugar → datos. Opciones, precios, datos o fechas paralelos → cards (de 1 a 8 tarjetas: c1_title, c1_price, c1_text…). Instrucciones → box (style suave; con título fuera de la caja → title (seccion) + box). Paso con fecha límite → box (suave) con label, title y deadline. Llamada a la acción con botón o enlace de Cvent → box (borde). Aviso importante → box (oscura) con label. Lista de puntos → title (seccion) + list. Cada servicio con precio → producto, con un separador entre dos productos seguidos. Cierre o despedida → title (entre) + text. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra. Texto que no encaje en nada → text.');
+    L.push('- Reparto: saludo y párrafos de apertura → title (saludo) + text. Titular con texto y botón → title + text + button. Fecha, hora, lugar → datos (de 1 a 4 datos: l1/v1…). Fechas o pasos en orden → timeline (de 1 a 8 hitos: d1/h1/t1…). Opciones, precios, datos o fechas paralelos → cards (de 1 a 8 tarjetas: c1_title, c1_price, c1_text…). Instrucciones → box (style suave; con título fuera de la caja → title (seccion) + box). Paso con fecha límite → box (suave) con label, title y deadline. Llamada a la acción con botón o enlace de Cvent → box (borde). Aviso importante → box (oscura) con label. Lista de puntos → title (seccion) + list. Cada servicio con precio → producto, con un separador entre dos productos seguidos. Cierre o despedida → title (entre) + text. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra. Texto que no encaje en nada → text.');
     L.push('- No uses el mismo recurso dos veces seguidas y no dejes fuera ningún texto del original.');
     L.push('');
     L.push('TORNEOS ("tournament"): ' + K.CLIENT.tournaments.map(function (t) { return t.id + ' = ' + t.name; }).join(' · '));
