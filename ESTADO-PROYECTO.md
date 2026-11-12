@@ -418,3 +418,21 @@ Problemas reportados por el usuario en «Dos tarjetas de igual altura»: al edit
 - Causa 2: un botón vacío no se pinta, así que no había nada que pulsar. Nueva opción «＋ Texto/botón» en la barra del bloque (`optionalItems`, `applyOptional`, menú `.ksa-pop` en el iframe): lista campos opcionales vacíos de texto con su grupo y los botones (`btn`/`*_btn` con su `url`/`*_url`). Texto → «PENDIENTE: <campo> (<grupo>)», con aviso si ese campo no aparece en el email por depender de otros; botón → pide enlace (validado con `K.linkLevel`) y pone «PENDIENTE: Texto del botón»; con botón existente: cambiar enlace o quitarlo. Esc o clic fuera cierra el menú.
 
 Pruebas: `test/hub.test.js` comprueba los textos pendientes distintos por tarjeta; pasan todas las suites. En el navegador integrado (`http://127.0.0.1:8775`): dos tarjetas con el mismo título «Pack», editar la derecha cambia `b_title` (no `a_title`); añadir botón a la Tarjeta 2 desde el menú, editar su texto en línea y ver «Cambiar enlace / Quitar botón». No se ha revisado el resto de bloques uno por uno: el usuario dijo que había fallos «en algunos bloques» y solo concretó este.
+
+## Corrección: campo editado en la vista previa con textos repetidos (2026-11-12)
+
+El usuario siguió viendo que, en «Dos tarjetas» (vista Escritorio, textos rellenados en el panel), al escribir en la etiqueta o el botón de la tarjeta derecha se cambiaba la izquierda.
+
+- Causa: la corrección anterior elegía el campo por orden de aparición entre elementos con el mismo texto. Falla cuando un campo con ese texto no se pinta: p. ej. `a_btn` y `b_btn` = «Reserva» pero solo `b_url` relleno → solo se ve el botón derecho, que quedaba en la posición 0 y se asignaba a `a_btn`. Reproducido con clics y teclado reales.
+- Solución (`probeHit` en `app.js`): si varios campos coinciden con el texto pulsado, para cada candidato se genera el HTML del bloque con esa línea sustituida por una marca, se parsea en un `<tbody>` del documento de la vista previa y se compara la ruta de hijos (`pathOf`) del elemento con la marca con la del elemento pulsado dentro del bloque; gana el que está en la misma rama (`related`). No dependen del orden ni los campos invisibles ni la copia escritorio/móvil. Si no hay coincidencia, se usa el primero.
+
+Verificación: en el navegador integrado (`http://127.0.0.1:8777`) con etiquetas «Oferta» en ambas tarjetas y botones «Reserva» con enlace solo en la derecha: editar el botón derecho → `b_btn` «Reserva ya» y `a_btn` sin cambios; editar la etiqueta derecha → `b_label` «Oferta B». Suites existentes pasan. No probado en vista Móvil con este caso concreto.
+
+## Botón visible sin enlace (2026-11-12)
+
+Pedido por el usuario: si se escribe el texto de un botón sin enlace, el botón debe verse igualmente y la revisión debe indicar que está incompleto.
+
+- `modules.js`: `twoCards` (tarjetas) y `titulo` pintan el botón con solo `btn`; sin enlace usan `href="#"`. `K.check` sustituye el error genérico por mensajes concretos por bloque y tarjeta: «el botón «X» no tiene enlace. Añádelo antes de enviar» y «hay un enlace de botón pero falta el texto del botón». Al ser errores, la descarga pide confirmación.
+- `app.js`: en «＋ Texto/botón», «＋ Botón» admite dejar el enlace vacío (se añade igual); un botón con texto y sin enlace ofrece «＋ Enlace del botón» y «Quitar botón».
+
+Pruebas: `test/brand-kits.test.js` añade botón sin enlace visible en tarjetas y título, con sus errores; pasan todas las suites y la comparación BASE no cambia. Navegador integrado (`http://127.0.0.1:8778`): texto de botón en Tarjeta 2 desde el panel sin enlace → botón visible y error en Revisión.

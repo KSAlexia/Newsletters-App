@@ -121,15 +121,17 @@
   }
   // Dos tarjetas de igual altura: rejilla en escritorio + copia apilada en móvil
   function twoCards(c1, c2) {
-    var cs = [c1, c2], btn = cs.some(function (c) { return has(c.btn) && has(c.url); });
+    // El botón se pinta en cuanto tiene texto; si falta el enlace, la revisión da error.
+    var cs = [c1, c2], btn = cs.some(function (c) { return has(c.btn); });
+    function cardBtn(c) { return has(c.btn) ? button(c.btn.trim(), String(c.url || '').trim() || '#', true) : '&nbsp;'; }
     var SP = '<td width="16" style="width:16px;font-size:0;line-height:0;">&nbsp;</td>';
     var desk = '<table role="presentation" class="desk-only" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody>';
     var mob = '';
     if (btn) {
       desk += '<tr>' + cs.map(function (c) { return '<td width="277" valign="top" style="border:2px solid ' + P + ';border-bottom:none;border-radius:14px 14px 0 0;padding:22px 20px 0 20px;background-color:#FFFFFF;">' + cardBody(c) + '</td>'; }).join(SP) + '</tr>';
-      desk += '<tr>' + cs.map(function (c) { return '<td width="277" valign="bottom" style="border:2px solid ' + P + ';border-top:none;border-radius:0 0 14px 14px;padding:18px 20px 22px 20px;background-color:#FFFFFF;">' + (has(c.btn) && has(c.url) ? button(c.btn.trim(), c.url.trim(), true) : '&nbsp;') + '</td>'; }).join(SP) + '</tr>';
+      desk += '<tr>' + cs.map(function (c) { return '<td width="277" valign="bottom" style="border:2px solid ' + P + ';border-top:none;border-radius:0 0 14px 14px;padding:18px 20px 22px 20px;background-color:#FFFFFF;">' + cardBtn(c) + '</td>'; }).join(SP) + '</tr>';
       mob = cs.map(function (c) {
-        return TBL + ' height="100%" style="height:100%;background-color:#FFFFFF;border:2px solid ' + P + ';border-radius:14px;border-collapse:separate !important;"><tbody><tr><td valign="top" height="100%" style="height:100%;padding:22px 20px 0 20px;">' + cardBody(c) + '</td></tr><tr><td align="center" valign="bottom" style="padding:18px 20px 22px 20px;">' + (has(c.btn) && has(c.url) ? button(c.btn.trim(), c.url.trim(), true) : '&nbsp;') + '</td></tr></tbody></table>';
+        return TBL + ' height="100%" style="height:100%;background-color:#FFFFFF;border:2px solid ' + P + ';border-radius:14px;border-collapse:separate !important;"><tbody><tr><td valign="top" height="100%" style="height:100%;padding:22px 20px 0 20px;">' + cardBody(c) + '</td></tr><tr><td align="center" valign="bottom" style="padding:18px 20px 22px 20px;">' + cardBtn(c) + '</td></tr></tbody></table>';
       }).join(gap(16));
     } else {
       desk += '<tr>' + cs.map(function (c) { return '<td width="277" valign="top" style="border:2px solid ' + P + ';border-radius:14px;padding:22px 20px;background-color:#FFFFFF;">' + cardBody(c) + '</td>'; }).join(SP) + '</tr>';
@@ -184,10 +186,10 @@
       { k: 'url', label: 'Enlace del botón', type: 'url' }
     ],
     build: function (d) {
-      var ps = paras(d.text), b = has(d.btn) && has(d.url);
+      var ps = paras(d.text), b = has(d.btn);
       var h = '<p style="' + titleFont(d.title, 'ex60', 38, 42) + 'color:' + P + ';text-transform:uppercase;text-align:center;word-break:break-word;">' + esc((d.title || '').trim()) + '</p>' + bar(56, P, 'center', '14px auto 0 auto');
       ps.forEach(function (p, i) { h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;text-align:center;padding-top:' + (i ? 8 : 20) + 'px;word-break:break-word;">' + inline(p) + '</p>'; });
-      if (b) h += button(d.btn.trim(), d.url.trim(), false);
+      if (b) h += button(d.btn.trim(), String(d.url || '').trim() || '#', false);
       return section(cell(ps.length || b ? '34px 40px 36px 40px' : '34px 40px 6px 40px', 'center', h));
     }
   };
@@ -484,8 +486,12 @@
         if (/\[[^\]\n]+\]\s*\(/.test(raw.replace(LINK, ''))) W(where + 'hay un enlace mal escrito; no se convertirá en enlace. Formato: [texto](https://…), sin espacios en el enlace.');
       });
       if (s.type === 'compra' && d.variant === 'custom' && String(d.line || '').indexOf('{[E-MODIFY REG LINK]}') < 0) E('Módulo ' + (i + 1) + ': la frase de la caja debe incluir {[E-MODIFY REG LINK]}.');
-      if (s.type === 'tarjetas') ['a', 'b'].forEach(function (x) { if (has(d[x + '_btn']) !== has(d[x + '_url'])) E('Módulo ' + (i + 1) + ' (Tarjetas): un botón necesita texto y enlace.'); });
-      if (s.type === 'titulo' && has(d.btn) !== has(d.url)) E('Módulo ' + (i + 1) + ' (Título): el botón necesita texto y enlace.');
+      function btnCheck(where, b, u) {
+        if (has(b) && !has(u)) E('Módulo ' + (i + 1) + ' (' + where + '): el botón «' + String(b).trim() + '» no tiene enlace. Añádelo antes de enviar.');
+        if (!has(b) && has(u)) E('Módulo ' + (i + 1) + ' (' + where + '): hay un enlace de botón pero falta el texto del botón.');
+      }
+      if (s.type === 'tarjetas') btnCheck('Tarjetas, tarjeta 1', d.a_btn, d.a_url), btnCheck('Tarjetas, tarjeta 2', d.b_btn, d.b_url);
+      if (s.type === 'titulo') btnCheck('Título', d.btn, d.url);
       if (s.type === 'producto' && has(d.p1_title) !== has(d.p2_title)) W('Módulo ' + (i + 1) + ' (Producto): las opciones con precio van de dos en dos.');
       if (s.type === 'producto' && has(d.img) && !isPh(d.img) && !has(d.alt)) E('Módulo ' + (i + 1) + ' (Producto): falta la descripción de la imagen.');
       if (i && secs[i - 1].type === s.type && (s.type === 'datos' || s.type === 'info')) W('Módulos ' + i + ' y ' + (i + 1) + ': el mismo recurso dos veces seguidas.');

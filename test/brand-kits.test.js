@@ -123,3 +123,12 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   assert.ok(K.build(st, { preview: true, pendingAt: 99 }).includes('data-ksa-pending') && !K.build(st).includes('Bloque nuevo'));
   console.log('OK: bloque nuevo pendiente solo en la vista previa.');
 }
+
+// Botón sin enlace: se ve en la newsletter y la revisión lo marca como incompleto.
+{
+  const st = { ...K.fromRecipe('blank'), franjaLeft: 'x', sections: [{ type: 'tarjetas', d: { a_title: 'A', b_title: 'B', b_btn: 'Reserva' } }, { type: 'titulo', d: { title: 'T', btn: 'Ver más' } }] };
+  const out = K.build(st), checks = K.check(st, out).filter(x => x.level === 'error').map(x => x.msg).join('\n');
+  assert.ok(out.includes('>Reserva</a>') && out.includes('>Ver más</a>'), 'Los botones sin enlace se pintan');
+  assert.match(checks, /tarjeta 2\): el botón «Reserva» no tiene enlace/); assert.match(checks, /Título\): el botón «Ver más» no tiene enlace/);
+  console.log('OK: botón sin enlace visible y marcado en la revisión.');
+}

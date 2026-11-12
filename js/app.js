@@ -619,14 +619,34 @@
       if (hits.length) {
         n = widest(n, t);
         if (hits.length === 1) return { el: n, hit: hits[0] };
-        // Mismo texto en varios campos (p. ej. las dos tarjetas): se elige por orden de aparición.
-        // Algunos bloques repiten el contenido (versión escritorio y móvil), de ahí el módulo.
-        var seen = [];
-        Array.prototype.forEach.call(sec.querySelectorAll('*'), function (c) { if (nodeText(c) === t) { c = widest(c, t); if (seen.indexOf(c) < 0) seen.push(c); } });
-        var idx = Math.max(0, seen.indexOf(n));
-        return { el: n, hit: hits[idx % hits.length] };
+        // Mismo texto en varios campos (p. ej. las dos tarjetas): se pinta el bloque con cada campo
+        // sustituido por una marca y se mira en qué posición exacta aparece. Así no influyen los campos
+        // que no se ven (un botón sin enlace) ni la copia escritorio/móvil del bloque.
+        var hit = probeHit(sec, s, hits, n);
+        return { el: n, hit: hit || hits[0] };
       }
       if (t.length > 3000) break;
+    }
+    return null;
+  }
+  function pathOf(node, root) {
+    var p = [];
+    while (node && node !== root) { var i = 0, c = node; while ((c = c.previousElementSibling)) i++; p.unshift(i); node = node.parentElement; }
+    return node === root ? p : null;
+  }
+  function related(a, b) { var n = Math.min(a.length, b.length); for (var i = 0; i < n; i++) if (a[i] !== b[i]) return false; return true; }
+  function probeHit(sec, s, hits, clicked) {
+    var doc = sec.ownerDocument, m = K.MODULES[s.type], target = pathOf(clicked, sec), MARK = 'KSAPROBE7Q';
+    var t = K.BrandKits ? K.BrandKits.effectiveTournament(state) : K.tournament(state.tournament);
+    if (!target) return null;
+    for (var h = 0; h < hits.length; h++) {
+      var d = JSON.parse(JSON.stringify(s.d)), lines = String(d[hits[h].k] || '').split('\n');
+      lines[hits[h].j] = MARK; d[hits[h].k] = lines.join('\n');
+      var box = doc.createElement('tbody'); box.innerHTML = m.build(d, t);
+      var found = Array.prototype.filter.call(box.querySelectorAll('*'), function (e) {
+        return e.textContent.indexOf(MARK) >= 0 && !Array.prototype.some.call(e.children, function (c) { return c.textContent.indexOf(MARK) >= 0; });
+      });
+      for (var f = 0; f < found.length; f++) { var p = pathOf(found[f], box); if (p && related(p, target)) return hits[h]; }
     }
     return null;
   }
@@ -859,19 +879,20 @@
       var where = head ? ' (' + head + ')' : '';
       if (/(^|_)btn$/.test(f.k)) {
         var urlKey = f.k.replace(/btn$/, 'url');
-        if (!filled(s.d[f.k]) || !filled(s.d[urlKey])) items.push({ label: '＋ Botón' + where, kind: 'btn', k: f.k, url: urlKey });
-        else items.push({ label: 'Cambiar enlace del botón' + where, kind: 'url', k: f.k, url: urlKey }, { label: 'Quitar botón' + where, kind: 'rm', k: f.k, url: urlKey });
+        if (!filled(s.d[f.k])) items.push({ label: '＋ Botón' + where, kind: 'btn', k: f.k, url: urlKey });
+        else items.push({ label: (filled(s.d[urlKey]) ? 'Cambiar enlace del botón' : '＋ Enlace del botón') + where, kind: 'url', k: f.k, url: urlKey }, { label: 'Quitar botón' + where, kind: 'rm', k: f.k, url: urlKey });
         return;
       }
       if (!filled(s.d[f.k])) items.push({ label: '＋ ' + f.label.replace(/\s*\(opcional\)/i, '') + where, name: f.label.replace(/\s*\(opcional\)/i, '') + where, kind: 'text', k: f.k });
     });
     return items;
   }
+  // Devuelve null si se cancela, '' si se deja vacío (el botón se añade igual y la revisión avisa).
   function askUrl(current) {
-    var url = prompt('Enlace del botón (https://… o mailto:…):', current || 'https://');
+    var url = prompt('Enlace del botón (https://… o mailto:…). Puedes dejarlo vacío y añadirlo después:', current || 'https://');
     if (url === null) return null;
-    url = url.trim();
-    if (K.linkLevel(url) === 'error') { alert('El enlace no es válido. Usa https://… o mailto:…'); return null; }
+    url = url.trim(); if (url === 'https://') url = '';
+    if (url && K.linkLevel(url) === 'error') { alert('El enlace no es válido. Usa https://… o mailto:…'); return null; }
     return url;
   }
   function applyOptional(i, item) {
@@ -881,9 +902,10 @@
       if (K.build(state).indexOf(value.replace(/&/g, '&amp;')) < 0) alert('Este texto solo aparece en el email junto con otros datos del bloque. Complétalo en el panel de la derecha.');
     } else if (item.kind === 'btn') {
       var url = askUrl(s.d[item.url]); if (url === null) return;
-      s.d[item.url] = url; if (!filled(s.d[item.k])) s.d[item.k] = 'PENDIENTE: Texto del botón';
+      if (url) s.d[item.url] = url; else delete s.d[item.url];
+      if (!filled(s.d[item.k])) s.d[item.k] = 'PENDIENTE: Texto del botón';
     } else if (item.kind === 'url') {
-      var next = askUrl(s.d[item.url]); if (next === null) return; s.d[item.url] = next;
+      var next = askUrl(s.d[item.url]); if (next === null) return; if (next) s.d[item.url] = next; else delete s.d[item.url];
     } else if (item.kind === 'rm') { delete s.d[item.k]; delete s.d[item.url]; }
     selectedSection = i; s.open = true; renderSections(); refresh();
   }
