@@ -544,6 +544,55 @@
       view.collapsed = !view.collapsed; try { localStorage.setItem(VIEW, JSON.stringify(view)); } catch (e) {} applyCollapse();
     });
     applyCollapse();
+    // Preferencia de ancho independiente del contenido de las newsletters.
+    var workspace = $('#workspace'), resize = $('#tree-resize'), dragWidth = null;
+    function treeMax() { return Math.max(240, Math.min(520, (workspace.clientWidth || 1240) * .42)); }
+    function applyTreeWidth(value) {
+      var width = Math.round(Math.max(240, Math.min(treeMax(), value)));
+      workspace.style.setProperty('--tree-width', width + 'px');
+      resize.setAttribute('aria-valuemin', '240');
+      resize.setAttribute('aria-valuemax', String(Math.floor(treeMax())));
+      resize.setAttribute('aria-valuenow', String(width));
+      resize.setAttribute('aria-valuetext', width + ' píxeles');
+      fitFrames(); return width;
+    }
+    function preferredTreeWidth() { return typeof view.treeWidth === 'number' && isFinite(view.treeWidth) ? view.treeWidth : 320; }
+    function saveTreeWidth(width) {
+      view.treeWidth = width;
+      try { localStorage.setItem(VIEW, JSON.stringify(view)); } catch (e) {}
+    }
+    resize.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0 || view.collapsed) return;
+      event.preventDefault();
+      dragWidth = preferredTreeWidth(); resize.setPointerCapture(event.pointerId);
+      document.body.classList.add('tree-resizing');
+    });
+    resize.addEventListener('pointermove', function (event) {
+      if (dragWidth === null) return;
+      applyTreeWidth(event.clientX - workspace.getBoundingClientRect().left);
+    });
+    function finishTreeResize(event) {
+      if (dragWidth === null) return;
+      if (event.type === 'pointerup') saveTreeWidth(applyTreeWidth(event.clientX - workspace.getBoundingClientRect().left));
+      else applyTreeWidth(dragWidth);
+      dragWidth = null; document.body.classList.remove('tree-resizing');
+      if (resize.hasPointerCapture(event.pointerId)) resize.releasePointerCapture(event.pointerId);
+    }
+    resize.addEventListener('pointerup', finishTreeResize);
+    resize.addEventListener('pointercancel', finishTreeResize);
+    resize.addEventListener('lostpointercapture', finishTreeResize);
+    resize.addEventListener('keydown', function (event) {
+      var width = Number(resize.getAttribute('aria-valuenow'));
+      if (event.key === 'ArrowLeft') width -= 16;
+      else if (event.key === 'ArrowRight') width += 16;
+      else if (event.key === 'Home') width = 240;
+      else if (event.key === 'End') width = treeMax();
+      else return;
+      event.preventDefault(); saveTreeWidth(applyTreeWidth(width));
+    });
+    resize.addEventListener('dblclick', function () { saveTreeWidth(320); applyTreeWidth(320); });
+    window.addEventListener('resize', function () { applyTreeWidth(preferredTreeWidth()); });
+    applyTreeWidth(preferredTreeWidth());
     $('#hub-scope').addEventListener('change', function () { showLobby(); $('#hub-search').focus(); });
     // En pantallas estrechas el panel de ubicaciones empieza plegado; en escritorio siempre está abierto.
     if (window.matchMedia) {

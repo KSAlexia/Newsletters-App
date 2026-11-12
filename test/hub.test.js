@@ -20,7 +20,7 @@ assert.equal(H.matches({ name: 'Álbum', updated: date }, '', '', '2026-11-10'),
 
 // Integración del hub con almacenamiento y eventos en un DOM mínimo.
 class Element {
-  constructor(tag) { this.tag = tag; this.children = []; this.handlers = {}; this.value = ''; this.textContent = ''; this.dataset = {}; this.hidden = false; this.classList = { add() {}, remove() {}, toggle() {} }; }
+  constructor(tag) { this.tag = tag; this.children = []; this.handlers = {}; this.value = ''; this.textContent = ''; this.dataset = {}; this.style = { setProperty() {} }; this.hidden = false; this.classList = { add() {}, remove() {}, toggle() {} }; }
   set innerHTML(v) { this.children = []; }
   get innerHTML() { return ''; }
   setAttribute(k,v) { this[k] = v; }
@@ -413,3 +413,18 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.ok(texts(e.nodes['#folders']).includes('📁 Dos'), 'Y abre esa carpeta en el hub');
   console.log('OK: menú en el editor (ubicación marcada, plegable a columna estrecha y navegación que guarda).');
 }
+
+// Ajuste del menú con teclado: límites, persistencia y restablecimiento.
+{
+  const st = {}, e = boot(st), handle = e.nodes['#tree-resize'];
+  const key = value => handle.handlers.keydown({ key: value, preventDefault() {} });
+  key('Home'); assert.equal(handle['aria-valuenow'], '240');
+  key('ArrowLeft'); assert.equal(handle['aria-valuenow'], '240');
+  key('ArrowRight'); assert.equal(handle['aria-valuenow'], '256');
+  assert.equal(boot(st).nodes['#tree-resize']['aria-valuenow'], '256');
+  key('End'); assert.equal(handle['aria-valuenow'], '520');
+  key('ArrowRight'); assert.equal(handle['aria-valuenow'], '520');
+  handle.handlers.dblclick(); assert.equal(handle['aria-valuenow'], '320');
+  assert.equal(boot(st).nodes['#tree-resize']['aria-valuenow'], '320');
+}
+console.log('OK: ancho del menú con teclado, límites, persistencia y restablecimiento.');

@@ -834,3 +834,12 @@ Problema: la newsletter de PSG importada desde el JSON de ChatGPT no se parecía
 - HTML con `look: 'classic'`: igual que antes en todas las recetas y torneos (0 diferencias).
 - Prueba: `node test/club-style.test.js`. Comprobado en el navegador: la referencia de PSG (escritorio y móvil) frente al original, la misma con Arsenal y Bayern, y el selector de estilo en el editor.
 - Pendiente: probar en Outlook/Gmail reales; si hay newsletters de referencia de otros clubs, comparar con ellas.
+
+## Menú lateral ajustable y sin desbordamientos (12/11/2026)
+
+- Ancho inicial 320 px; borde con asa para arrastrar, ajustable entre 240 y 520 px y limitado al 42 % de la pantalla en escritorio. Doble clic restablece 320 px. El separador admite foco, flechas izquierda/derecha, Inicio y Fin, con valor accesible.
+- La preferencia `view.treeWidth` se guarda en `kaptiva-newsletters-hub-view-v1`; adaptarse a una ventana menor no sustituye el ancho elegido. Se conserva el plegado a columna estrecha.
+- En pantallas de hasta 800 px el menú ocupa el ancho disponible y se despliega con su cabecera; desplazamiento vertical limitado. El estado plegado del escritorio ya no impide desplazarse por el menú móvil.
+- Las filas permiten partir nombres largos, mantienen iconos/contadores dentro y limitan la sangría a 42 px incluso con muchos niveles. El contenedor no genera scroll horizontal. Cambios solo en la interfaz, sin tocar el generador de email.
+- Comprobado en Chrome real sobre copia en origen local aislado: arrastre 240 → 390 px, persistencia tras recarga, teclado y doble clic, plegado, tamaños de 1280, 801, 390 y 320 px, y 18 carpetas anidadas con nombres largos/palabras sin espacios. Medidas del DOM confirman `scrollWidth === clientWidth` y ningún control/texto/icono fuera del menú en los casos revisados.
+- Todas las suites `test/*.test.js`, sintaxis y comparación BASE ejecutadas; la BASE conserva únicamente la diferencia conocida `?d=650`. Añadida prueba del ancho por teclado, sus límites, persistencia y restablecimiento. Capturas en `test/capturas-hub/menu-responsive-escritorio.png` y `menu-responsive-movil.png`.
