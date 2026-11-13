@@ -832,12 +832,12 @@
   // ---------- Montar por bloques: paleta, arrastrar y editar en la vista previa ----------
   var BLOCK_INFO = {
     title: 'Un titular: principal, de sección, saludo, entre dos líneas o antetítulo pequeño.', text: 'Párrafos de texto, normal o pequeño. Bajo un título, se alinea con él.',
-    list: 'Puntos con viñeta. Pon un Título (sección) encima si hace falta.', images: 'De 1 a 3 imágenes en fila, a sangre o con márgenes.',
+    list: 'Puntos con viñeta. Pon un Título (sección) encima si hace falta.', images: 'De 1 a 3 imágenes en fila, a sangre, con márgenes o a escala.', textimg: 'Texto (con título y botón opcionales) a un lado e imagen al otro.',
     button: 'Un botón. Bajo un Título principal se une a él.',
     box: 'Recuadro para destacar: suave (avisos, pasos; texto o puntos), con borde (llamada a la acción) u oscuro (Important).',
     intro: 'Saludo y párrafos de texto.', titulo: 'Título grande centrado, con texto y botón opcionales.',
     lista: 'Título con una lista de puntos.', datos: 'Banda de color con 1 a 4 datos en fila: fecha, hora, lugar…',
-    tarjetas: 'Dos opciones lado a lado, con botón.', cards: 'De 1 a 8 tarjetas: opciones, precios, datos o fechas. Claras u oscuras, con botón opcional.', info: 'Aviso o instrucciones sobre fondo suave.',
+    tarjetas: 'Dos opciones lado a lado, con botón.', cards: 'De 1 a 8 tarjetas: opciones, precios, datos o fechas. Claras u oscuras, con imagen y botón opcionales.', info: 'Aviso o instrucciones sobre fondo suave.',
     producto: 'Servicio con precio, imagen y opciones.', separador: 'Línea fina entre dos productos.',
     imagen: 'Imagen a sangre o con márgenes.', cierre: 'Frase de cierre entre dos líneas.',
     compra: 'Caja de registro con los campos de Cvent.', contacto: 'Caja «Get in Touch» con el contacto.',

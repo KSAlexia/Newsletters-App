@@ -186,6 +186,8 @@
   // · 2, 4 y 8: filas de dos (rejilla 2×2…). · 3, 5, 6 y 7 con textos cortos: filas de tres (5 → 3+2, 7 → 3+2+2).
   //   Con textos largos, filas de dos y la última impar a todo el ancho. · En móvil, siempre una debajo de otra.
   var CARD_W = 570, CARD_GAP = 16;
+  // Escala de imágenes (opción nueva de Imagen y Tarjetas): '' = tamaño de siempre.
+  var SCALE_OPTS = [['', '100 % (tamaño normal)'], ['85', '85 %'], ['70', '70 %'], ['55', '55 %'], ['40', '40 %']];
   function plain(t) { return String(t || '').replace(/\*\*|==|\+\+|[*_]/g, '').replace(/\[([^\]]*)\]\([^)]*\)/g, '$1').trim(); }
   K.optionRows = function (cs) {
     var n = cs.length, rows = [], i;
@@ -220,7 +222,14 @@
   }
   // Rejilla responsive de tarjetas (bloque «Tarjetas»): mismas filas que las opciones de Producto (K.optionRows),
   // con etiqueta, botón (alineado abajo en cada fila) y estilo claro u oscuro por tarjeta. En móvil, apiladas.
-  function cardRows(cs) {
+  // Imagen opcional arriba de una tarjeta (nueva): sin imagen no añade nada. pct = escala; fluid = móvil (ancho en %).
+  function cardPic(c, w, pct, fluid) {
+    if (!has(c.img)) return '';
+    var iw = Math.round(w * (pct || 100) / 100), src = String(c.img).trim();
+    var pic = isPh(src) ? phBlock(iw, Math.round(iw * 0.6)) : '<img src="' + attr(src) + '" alt="' + attr(c.alt) + '" title="' + attr(c.alt) + '" border="0" width="' + iw + '" style="width:' + (fluid ? (pct || 100) + '%' : iw + 'px') + ';max-width:100%;height:auto;display:block;margin:0 auto;border-radius:8px;" />';
+    return TBL + '><tbody><tr><td align="center" style="padding:0 0 14px 0;">' + pic + '</td></tr></tbody></table>';
+  }
+  function cardRows(cs, pct) {
     if (!cs.length) return '';
     var rows = K.optionRows(cs), SP = '<td width="' + CARD_GAP + '" style="width:' + CARD_GAP + 'px;font-size:0;line-height:0;">&nbsp;</td>';
     function look(c) { var bg = c.dark ? C.band : '#FFFFFF'; return 'border:2px solid ' + (c.dark ? C.band : P) + ';border-radius:14px;background-color:' + bg + ';'; }
@@ -231,19 +240,19 @@
       var k = row.length, padX = k === 3 ? 16 : 20, w = Math.floor((CARD_W - CARD_GAP * (k - 1)) / k) - padX * 2 - 4, inner;
       if (k === 1) {
         var c = row[0];
-        inner = '<tr><td width="100%"' + bg(c) + ' valign="top" style="' + look(c) + 'padding:22px 24px;">' + wideCard(c, c.dark) + (has(c.btn) ? cardButton(c, c.dark, true) : '') + '</td></tr>';
+        inner = '<tr><td width="100%"' + bg(c) + ' valign="top" style="' + look(c) + 'padding:22px 24px;">' + cardPic(c, CARD_W - 52, pct) + wideCard(c, c.dark) + (has(c.btn) ? cardButton(c, c.dark, true) : '') + '</td></tr>';
       } else if (row.some(function (c) { return has(c.btn); })) {
         // Dos filas (cuerpo y botón) para que los botones queden alineados abajo aunque los textos midan distinto.
-        inner = '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="top" style="' + look(c) + 'border-bottom:none;border-radius:14px 14px 0 0;width:' + w + 'px;padding:' + (k === 3 ? '20px ' : '22px ') + padX + 'px 0 ' + padX + 'px;">' + cardBody(c, c.dark) + '</td>'; }).join(SP) + '</tr>' +
+        inner = '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="top" style="' + look(c) + 'border-bottom:none;border-radius:14px 14px 0 0;width:' + w + 'px;padding:' + (k === 3 ? '20px ' : '22px ') + padX + 'px 0 ' + padX + 'px;">' + cardPic(c, w, pct) + cardBody(c, c.dark) + '</td>'; }).join(SP) + '</tr>' +
           '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="bottom" style="' + look(c) + 'border-top:none;border-radius:0 0 14px 14px;width:' + w + 'px;padding:18px ' + padX + 'px ' + (k === 3 ? 20 : 22) + 'px ' + padX + 'px;">' + (has(c.btn) ? cardButton(c, c.dark) : '&nbsp;') + '</td>'; }).join(SP) + '</tr>';
       } else {
-        inner = '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="top" style="' + look(c) + 'width:' + w + 'px;padding:' + (k === 3 ? '20px ' : '22px ') + padX + 'px;">' + cardBody(c, c.dark) + '</td>'; }).join(SP) + '</tr>';
+        inner = '<tr>' + row.map(function (c) { return '<td width="' + w + '"' + bg(c) + ' valign="top" style="' + look(c) + 'width:' + w + 'px;padding:' + (k === 3 ? '20px ' : '22px ') + padX + 'px;">' + cardPic(c, w, pct) + cardBody(c, c.dark) + '</td>'; }).join(SP) + '</tr>';
       }
       desk += '<tr><td style="padding:0;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;border-spacing:0;"><tbody>' + inner + '</tbody></table></td></tr>';
     });
     desk += '</tbody></table>';
     var mob = cs.map(function (c) {
-      return TBL + bg(c) + ' style="' + look(c) + 'border-collapse:separate !important;"><tbody><tr><td valign="top" style="padding:22px 20px;">' + (cs.length === 1 ? wideCard(c, c.dark) : cardBody(c, c.dark)) + (has(c.btn) ? '<div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>' + cardButton(c, c.dark) : '') + '</td></tr></tbody></table>';
+      return TBL + bg(c) + ' style="' + look(c) + 'border-collapse:separate !important;"><tbody><tr><td valign="top" style="padding:22px 20px;">' + cardPic(c, 486, pct, true) + (cs.length === 1 ? wideCard(c, c.dark) : cardBody(c, c.dark)) + (has(c.btn) ? '<div style="height:18px;line-height:18px;font-size:0;">&nbsp;</div>' + cardButton(c, c.dark) : '') + '</td></tr></tbody></table>';
     }).join(gap(16));
     return desk + '<!--[if !mso]><!--><div class="mob-only" style="display:none;max-height:0;overflow:hidden;mso-hide:all;">' + mob + '</div><!--<![endif]-->';
   }
@@ -323,7 +332,7 @@
   function pkFields() { return PK.fields(); }
 
   // Bloque «Tarjetas»: de 1 a 8 (c1_*, c2_*…).
-  var CARDS = K.repeat({ prefix: 'c', countKey: 'cN', max: 8, keys: ['label', 'title', 'price', 'text', 'btn', 'url'], allKeys: ['label', 'title', 'price', 'text', 'btn', 'url', 'style'], titleKey: 'title', titleName: 'título', noun: 'tarjeta',
+  var CARDS = K.repeat({ prefix: 'c', countKey: 'cN', max: 8, keys: ['label', 'title', 'price', 'text', 'btn', 'url', 'img'], allKeys: ['label', 'title', 'price', 'text', 'btn', 'url', 'style', 'img', 'alt'], titleKey: 'title', titleName: 'título', noun: 'tarjeta',
     hint: 'Hasta 8 tarjetas. ' + LAYOUT_HINT,
     fields: function (n, show) {
       var c = 'c' + n + '_';
@@ -331,6 +340,7 @@
         { k: c + 'title', label: 'Título ' + n, type: 'text', req: n === 1, half: true, showIf: show, ph: 'Pack, dato o fecha' }, { k: c + 'price', label: 'Precio ' + n + ' (opcional)', type: 'text', half: true, showIf: show, ph: '$49' },
         { k: c + 'label', label: 'Etiqueta ' + n + ' (opcional)', type: 'text', half: true, showIf: show, ph: 'Dates' }, { k: c + 'style', label: 'Estilo ' + n, type: 'select', half: true, showIf: show, opts: [['', 'Clara con borde'], ['dark', 'Oscura (color de banda)']] },
         { k: c + 'text', label: 'Texto ' + n + ' (opcional)', type: 'area', hint: TIP, showIf: show },
+        { k: c + 'img', label: 'Imagen ' + n + ' (opcional) · custom link', type: 'url', img: true, half: true, showIf: show }, { k: c + 'alt', label: 'Descripción imagen ' + n, type: 'text', half: true, showIf: show },
         { k: c + 'btn', label: 'Botón ' + n + ' (opcional)', type: 'text', half: true, showIf: show }, { k: c + 'url', label: 'Enlace ' + n, type: 'url', half: true, showIf: show }
       ];
     } });
@@ -487,13 +497,13 @@
 
   M.cards = {
     letter: 'K', name: 'Tarjetas', tag: 'TARJETAS',
-    fields: CARDS.fields(),
-    // Mismo margen que «Dos tarjetas»; con dos tarjetas claras el HTML es idéntico al del bloque antiguo.
+    fields: CARDS.fields().concat([{ k: 'imgScale', label: 'Tamaño de las imágenes de las tarjetas', type: 'select', opts: SCALE_OPTS.map(function (o) { return o[0] ? o : ['', '100 % (todo el ancho de la tarjeta)']; }), showIf: function (d) { return K.cardItems(d).some(function (c) { return has(c.img); }); } }]),
+    // Mismo margen que «Dos tarjetas»; con dos tarjetas claras (sin imagen) el HTML es idéntico al del bloque antiguo.
     build: function (d) {
-      var cs = K.cardItems(d);
+      var cs = K.cardItems(d), pics = cs.some(function (c) { return has(c.img); });
       // Sin ningún título todavía, se pintan los recuadros vacíos (como el bloque antiguo) para poder verlos y pulsarlos.
       if (!cs.length) for (var n = 1; n <= K.cardsCount(d); n++) cs.push({ dark: d['c' + n + '_style'] === 'dark' });
-      return section(cell('32px 40px 10px 40px', 'left', cs.length === 2 && !cs[0].dark && !cs[1].dark ? twoCards(cs[0], cs[1]) : cardRows(cs)));
+      return section(cell('32px 40px 10px 40px', 'left', cs.length === 2 && !cs[0].dark && !cs[1].dark && !pics ? twoCards(cs[0], cs[1]) : cardRows(cs, scalePct(d.imgScale))));
     }
   };
 
@@ -935,6 +945,43 @@
     defaults: { btnStyle: 'gold' },
     build: function (d) { var s = { type: 'button', d: d }; return K.flowCell([s], flowAlign(s)); }
   };
+  function scalePct(v) { var n = parseInt(v, 10); return n > 0 && n < 100 ? n : 0; }
+  function scaledPic(src, alt, w, extra) {
+    src = String(src || '').trim();
+    if (isPh(src)) return phBlock(w, Math.round(w * 0.6));
+    return '<img src="' + attr(src) + '" alt="' + attr(alt) + '" title="' + attr(alt) + '" border="0" width="' + w + '" style="width:' + w + 'px;max-width:100%;height:auto;display:block;margin:0 auto;' + (extra || '') + '" class="img-max" />';
+  }
+
+  // Texto + imagen: texto (antetítulo, título, párrafos y botón opcionales) a un lado e imagen al otro. En móvil, apilados.
+  var TI_W = { small: 200, '': 275, large: 340 };
+  M.textimg = {
+    letter: 'X', name: 'Texto + imagen', tag: 'TEXTO + IMAGEN',
+    fields: [
+      { k: 'label', label: 'Antetítulo (opcional)', type: 'text', half: true, ph: 'Good to know' }, { k: 'title', label: 'Título (opcional)', type: 'text', half: true },
+      { k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP },
+      { k: 'img', label: 'Imagen · custom link de Cvent', type: 'url', req: true, img: true, half: true }, { k: 'alt', label: 'Descripción de la imagen (alt)', type: 'text', req: true, half: true },
+      { k: 'side', label: 'Imagen', type: 'select', half: true, opts: [['right', 'A la derecha'], ['left', 'A la izquierda']] },
+      { k: 'imgW', label: 'Tamaño de la imagen', type: 'select', half: true, opts: [['', 'Mitad (275 px)'], ['small', 'Pequeña (200 px)'], ['large', 'Grande (340 px)']] },
+      { k: 'valign', label: 'Alineación vertical', type: 'select', opts: [['middle', 'Centrados'], ['top', 'Arriba']] },
+      { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true },
+      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']], showIf: function (d) { return has(d.btn); } }
+    ],
+    defaults: { side: 'right', valign: 'middle', btnStyle: 'gold' },
+    build: function (d) {
+      var iw = TI_W[d.imgW] || TI_W[''], GAP = 24, tw = 570 - iw - GAP, left = d.side === 'left', va = d.valign === 'top' ? 'top' : 'middle';
+      var t = (has(d.label) ? '<p style="' + F.bold + 'font-size:12px;line-height:16px;color:' + C.label + ';letter-spacing:1.5px;text-transform:uppercase;word-break:break-word;padding-bottom:8px;">' + esc(d.label.trim()) + '</p>' : '') +
+        (has(d.title) ? '<p style="' + titleFont(d.title, 'ex60', 28, 32) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;">' + br(esc(d.title.trim())) + '</p>' : '') +
+        bodyText(d.text, 16, 25, '#000000', 'left', has(d.title) ? 12 : 0) +
+        // El botón (tabla con align="left") flota: sin el clear, en móvil la imagen se le monta encima.
+        (has(d.btn) ? optBtn(d, 'left') + '<div style="clear:both;height:0;line-height:0;font-size:0;">&nbsp;</div>' : '');
+      var src = String(d.img || '').trim();
+      var pic = !src || isPh(src) ? phBlock(iw, Math.round(iw * 0.75)) : '<img src="' + attr(src) + '" alt="' + attr(d.alt) + '" title="' + attr(d.alt) + '" border="0" width="' + iw + '" style="width:' + iw + 'px;max-width:100%;height:auto;display:block;border-radius:8px;" class="img-max" />';
+      var txtTd = '<td class="col2" width="' + tw + '" valign="' + va + '" style="width:' + tw + 'px;padding:' + (left ? '0 0 0 ' + GAP + 'px' : '0 ' + GAP + 'px 0 0') + ';">' + t + '</td>';
+      var imgTd = '<td class="col2" width="' + iw + '" valign="' + va + '" style="width:' + iw + 'px;">' + pic + '</td>';
+      return section(cell('30px 40px 30px 40px', 'left', TBL + '><tbody><tr>' + (left ? imgTd + txtTd : txtTd + imgTd) + '</tr></tbody></table>'));
+    }
+  };
+
   // Imagen: de 1 a 3 por fila. Una = el antiguo «Imagen» (a sangre o con márgenes); tres = «Tres fotos en fila».
   var IMGS = K.repeat({ prefix: 'f', countKey: 'fN', max: 3, keys: ['src', 'alt'], titleKey: 'src', titleName: 'enlace de imagen', noun: 'imagen',
     hint: 'Hasta 3 imágenes en fila. En móvil, una debajo de otra.',
@@ -944,10 +991,19 @@
   K.imagesCount = IMGS.count;
   M.images = {
     letter: 'A', name: 'Imagen', tag: 'IMAGEN',
-    fields: IMGS.fields().concat([{ k: 'size', label: 'Tamaño (con una imagen)', type: 'select', opts: [['full', 'A sangre (650 px)'], ['inset', 'Con márgenes (570 px)']], showIf: function (d) { return IMGS.count(d) === 1; } }]),
+    fields: IMGS.fields().concat([
+      { k: 'size', label: 'Tamaño (con una imagen)', type: 'select', opts: [['full', 'A sangre (650 px)'], ['inset', 'Con márgenes (570 px)']], showIf: function (d) { return IMGS.count(d) === 1 && !scalePct(d.scale); } },
+      { k: 'scale', label: 'Escala (más pequeña, con más margen)', type: 'select', opts: SCALE_OPTS, hint: 'Reduce la imagen (o la fila) y la centra. En móvil mantiene la proporción.' }
+    ]),
     defaults: { size: 'full' },
     build: function (d) {
-      var its = IMGS.items(d);
+      var its = IMGS.items(d), pct = scalePct(d.scale);
+      // Escala (opcional, nueva): la fila ocupa ese % de los 570 px útiles y se centra. Sin escala, el HTML de siempre.
+      if (pct) {
+        var list = its.length ? its : [{ src: d.f1_src, alt: d.f1_alt }], total = Math.round(570 * pct / 100), n = list.length, w = Math.floor((total - 12 * (n - 1)) / n);
+        var pics = list.map(function (it) { return '<td class="col2" width="' + w + '" valign="top" style="width:' + w + 'px;">' + scaledPic(it.src, it.alt, w, n === 3 ? 'border-radius:6px;' : '') + '</td>'; });
+        return section(cell('12px 40px', 'center', '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="' + total + '" align="center" style="width:100%;max-width:' + total + 'px;margin:0 auto;"><tbody><tr>' + pics.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
+      }
       if (its.length <= 1) return M.imagen.build({ src: its.length ? its[0].src : d.f1_src, alt: its.length ? its[0].alt : d.f1_alt, size: d.size });
       if (its.length === 3) return M.fotos3.build({ src1: its[0].src, alt1: its[0].alt, src2: its[1].src, alt2: its[1].alt, src3: its[2].src, alt3: its[2].alt });
       var cells = its.map(function (it) {
@@ -994,7 +1050,7 @@
       return M.step.build(d);
     }
   };
-  K.MODULE_ORDER = ['title', 'text', 'list', 'images', 'button', 'cards', 'box', 'datos', 'producto', 'separador', 'compra', 'contacto', 'glance', 'timeline', 'deadlines', 'wallet'];
+  K.MODULE_ORDER = ['title', 'text', 'list', 'images', 'textimg', 'button', 'cards', 'box', 'datos', 'producto', 'separador', 'compra', 'contacto', 'glance', 'timeline', 'deadlines', 'wallet'];
   // Bloques antiguos: fuera de la paleta, pero se siguen pintando igual en las newsletters que los usan.
   K.LEGACY = { intro: 'text', titulo: 'title', lista: 'list', cierre: 'title', imagen: 'images', fotos3: 'images', boton: 'button', tarjetas: 'cards', info: 'box', step: 'box', cta: 'box', important: 'box' };
 
@@ -1340,7 +1396,8 @@
     L.push('  · Dos fechas límite o plazos lado a lado → deadlines (l = qué es, d = la fecha). No uses cards para fechas.');
     L.push('  · Notas finales («Good to know», «Please note», letra pequeña) → title (ante) + text con "size":"small".');
     L.push('  · Pregunta o llamada final con enlace de Cvent o botón → box (borde) con el title dentro y el texto en text (line solo para una línea suelta con un campo de Cvent).');
-    L.push('  · Opciones, packs o precios paralelos → cards (de 1 a 8: c1_title, c1_price, c1_text…). Cada servicio con precio e imagen → producto (separador entre dos productos seguidos).');
+    L.push('  · Opciones, packs o precios paralelos → cards (de 1 a 8: c1_title, c1_price, c1_text…; si cada opción tiene foto, c1_img/c1_alt). Cada servicio con precio e imagen → producto (separador entre dos productos seguidos).');
+    L.push('  · Párrafo (con titular o botón) junto a una foto, uno al lado del otro → textimg (label, title, text, img, alt; "side":"left" si la foto va a la izquierda). No lo separes en text + images.');
     L.push('  · Lista de puntos suelta, sin caja → title (seccion) + list. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra solo si el original tiene esa caja de compra; si tiene una caja suave, conserva box (suave) y el enlace en text o line. Cierre o despedida → title (entre) + text. Lo que no encaje → text.');
     L.push('  · Resumen de importes con etiquetas y valores en vertical dentro de caja clara → datos con "style":"summary", title como rótulo, l1/v1… y text para la nota. No convertirlo en list ni en cards.');
     L.push('  · Composición compacta: cajas suaves, caja final de borde recto y tarjetas de datos centradas → box o glance con "density":"editorial". Caja suave con rótulo superior → box (suave), label para el rótulo, title dentro, fmt puntos si corresponde. Caja final con borde → box (borde). Párrafo de introducción → text size intro; cuerpo compacto → size body. Separador gris → separador style neutral.');
