@@ -1,0 +1,52 @@
+{
+ "tournament": "psg-usa",
+ "name": "Paris Saint-Germain Academy Summer Camps – Registration Confirmation",
+ "desc": "psg_summer_camps_registration_confirmation",
+ "franja": "Registration Confirmation",
+ "franjaRight": "PSG Summer Camps",
+ "mediaPackages": false,
+ "sections": [
+  {
+   "type": "title",
+   "d": {
+    "style": "principal",
+    "align": "left",
+    "text": "Dear {[C-FIRST NAME:TC]},"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "Your registration has been confirmed. Please save this email for future reference."
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "label": "Registration Details",
+    "title": "",
+    "fmt": "pares",
+    "text": "Event: {[E-TITLE]}\nAttending: {[C-FIRST NAME:TC]} {[C-LAST NAME:TC]}\nNumber in Party: {[C-NUM RESERV]}\nDate: {[E-START DATE]}\nTime: {[E-START TIME]}\nConfirmation Number: {[C-CONFIRMATION NUM]}",
+    "line": "{[E-EMAIL LINK:View or modify your registration]}"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "text": "{[C-CURRENT REGISTRATION WIDGET:4f686948-b6bc-4d31-a6b3-9651f3ee5b6a]}\n{[E-EMAIL LINK:View or modify your registration]}\nWe look forward to seeing you there."
+   }
+  },
+  {
+   "type": "wallet",
+   "d": {
+    "buttons": "apple",
+    "appleUrl": "{[C-PASSBOOK_LINK]}",
+    "appleImage": "https://www.cvent-assets.com/event-email-editor/assets/images/US-UK_Add_to_Apple_Wallet_RGB_101421__d018a8bb15e6d1b46780.png",
+    "qr": "none"
+   }
+  }
+ ]
+}

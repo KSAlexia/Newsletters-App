@@ -564,3 +564,28 @@ body.editor-resizing iframe { pointer-events: none; }
 .kit-guidelines p { font-size:12px; color:var(--muted); }
 
 .kit-instructions { grid-column:1 / -1; }
+
+/* ---------- Coherencia de la interfaz (13/11/2026) ---------- */
+/* Datos de la newsletter: plegable, con un resumen de una línea cuando está cerrado. */
+.settings-box { padding: 0; }
+.settings-box > summary { cursor: pointer; padding: 10px 12px; display: flex; align-items: baseline; gap: 8px; list-style: none; }
+.settings-box > summary::-webkit-details-marker { display: none; }
+.settings-box > summary::before { content: '▸'; color: var(--brand); font-size: 11px; transition: transform .15s; }
+.settings-box[open] > summary::before { transform: rotate(90deg); }
+.settings-title { font-size: 12px; font-weight: 600; color: var(--brand); white-space: nowrap; }
+.settings-summary { font-size: 12px; color: var(--muted); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.settings-box[open] .settings-summary { display: none; }
+.settings-box > .settings { padding-top: 0; }
+/* Más acciones: menú desplegable en la barra superior (la barra cabe en una fila). */
+.more-menu { position: relative; }
+.more-menu > summary { list-style: none; cursor: pointer; border: 1px solid #4a4466; background: #2a2444; color: #fff; padding: 7px 12px; border-radius: var(--r); white-space: nowrap; }
+.more-menu > summary::-webkit-details-marker { display: none; }
+.more-menu > summary::after { content: ' ▾'; }
+.more-menu > summary:hover, .more-menu[open] > summary { border-color: #91FAFB; }
+.more-menu-list { position: absolute; right: 0; top: calc(100% + 6px); z-index: 60; display: grid; gap: 6px; min-width: 250px; padding: 8px; background: #221d3a; border: 1px solid #4a4466; border-radius: var(--r-lg); box-shadow: 0 12px 28px rgba(0,0,0,.35); }
+.more-menu-list > button, .more-menu-list > select { width: 100%; text-align: left; }
+/* Diálogo de avisos (sustituye a los alert del navegador). */
+#notice-dialog { max-width: 560px; }
+.notice-body p { margin: 0 0 8px; }
+.notice-body ul { margin: 0 0 10px; padding-left: 18px; max-height: 240px; overflow: auto; }
+.notice-body li { margin: 2px 0; font-size: 13px; }

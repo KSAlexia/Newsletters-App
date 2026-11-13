@@ -75,6 +75,19 @@
     var n = $('#history-toast'); n.textContent = text; n.hidden = false;
     clearTimeout(toastTimer); toastTimer = setTimeout(function () { n.hidden = true; }, 2500);
   }
+  // Aviso con el estilo de la app (sustituye a los alert del navegador). groups: [{ title, items: [...] }]; review: ofrece ir a Revisión.
+  function notice(title, intro, groups, review) {
+    $('#notice-title').textContent = title;
+    var b = $('#notice-body'); b.innerHTML = '';
+    if (intro) b.appendChild(el('p', { text: intro }));
+    (groups || []).forEach(function (g) {
+      if (!g || !g.items || !g.items.length) return;
+      if (g.title) b.appendChild(el('p', { text: g.title }));
+      b.appendChild(el('ul', {}, g.items.map(function (x) { return el('li', { text: x }); })));
+    });
+    $('#notice-review').hidden = !review;
+    $('#notice-dialog').showModal();
+  }
   function autoVersion(before) {
     var now = Date.now();
     try { if (KH.autoDue(localStorage, currentId, now)) KH.add(localStorage, currentId, before, 'Automática', true, now); }
@@ -143,7 +156,7 @@
     Array.prototype.forEach.call(list.querySelectorAll('.history-item'), function (n) { n.classList.toggle('on', n.getAttribute('data-id') === shownVersion); });
   }
   function restoreVersion(v) {
-    if (!versionState(v)) { alert('Esta versión no se puede leer.'); return; }
+    if (!versionState(v)) { notice('Versión dañada', 'Esta versión no se puede leer.'); return; }
     flushEdits();
     if (v.content === savedContent) { toast('La newsletter ya está igual que esta versión.'); return; }
     // Se guarda cómo estaba antes de restaurar, y la restauración se puede deshacer con Ctrl/⌘ + Z.
@@ -480,6 +493,8 @@
     var kind = $('#hub-kind').value || 'all', field = $('#hub-date-field').value || 'updated';
     var visible = all.filter(function (item) { return (kind === 'all' || item.kind === kind) && K.Hub.matches(item, query, from, to, field); });
     $('#hub-count').textContent = visible.length + ' de ' + all.length + ' elementos en esta carpeta';
+    // Carpeta vacía: sin filtros que aplicar, la barra de ordenar y fechas solo estorba.
+    if (!all.length) $('#hub-controls').hidden = true;
     if (!visible.length) { box.appendChild(el('p', { class: 'empty', text: all.length ? 'No hay resultados con estos filtros.' : 'Esta carpeta está vacía. Crea una subcarpeta o una newsletter.' })); return; }
     var grid = el('div', { class: 'grid' });
     visible.forEach(function (item) {
@@ -491,7 +506,7 @@
         action('Renombrar', function () { editFolder(organization.folders[item.id]); });
         action('Eliminar', function () {
           var occupied = Object.keys(organization.folders).some(function (id) { return organization.folders[id].parent === item.id; }) || Object.keys(projects).some(function (id) { return projects[id].folder === item.id; });
-          if (occupied) { alert('Mueve primero el contenido de esta carpeta. Solo se pueden eliminar carpetas vacías.'); return; }
+          if (occupied) { notice('Carpeta con contenido', 'Mueve primero el contenido de esta carpeta. Solo se pueden eliminar carpetas vacías.'); return; }
           if (confirm('¿Eliminar la carpeta «' + item.name + '»?')) { delete organization.folders[item.id]; saveAll(); showLobby(); }
         });
       } else {
@@ -678,6 +693,13 @@
     $('#contact-email').value = state.contactEmail || ''; $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || ''; $('#franja-right').value = state.franjaRight || ''; lookNote();
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; }); lookNote();
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
+    // Con bloques y la franja resuelta, los datos se pliegan para que los bloques queden arriba; una newsletter nueva los muestra abiertos.
+    $('#settings-box').open = !state.sections.length || !(String(state.franjaLeft || '').trim() || $('#franja').disabled);
+    settingsSummary();
+  }
+  function settingsSummary() {
+    var t = K.tournament(state.tournament);
+    $('#settings-summary').textContent = [t.club ? t.clubName + ' · ' + t.section : t.name, String(state.name || '').trim() || 'Sin nombre'].join(' · ');
   }
 
   // ---------- Otras newsletters: saltar entre ellas y comparar al lado ----------
@@ -976,8 +998,8 @@
     '[contenteditable=true]{outline:2px solid #6F4ACC !important;outline-offset:3px;cursor:text;background:rgba(145,250,251,.18)}' +
     '.ksa-fmt{position:absolute;z-index:12;display:flex;gap:2px;background:#fff;border:1px solid #d9d3ea;border-radius:8px;padding:3px;box-shadow:0 6px 18px rgba(27,22,48,.25);font:13px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif}' +
     '.ksa-fmt button{border:0;background:none;color:#1b1630;cursor:pointer;padding:5px 9px;border-radius:5px;font:inherit;white-space:nowrap}.ksa-fmt button:hover{background:#F7F4FC;color:#6F4ACC}' +
-    '.ksa-plus{position:absolute;z-index:9;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:#6F4ACC;color:#fff;font:700 17px/20px -apple-system,"Segoe UI",sans-serif;cursor:pointer;opacity:.45;box-shadow:0 2px 8px rgba(27,22,48,.35);padding:0}' +
-    '.ksa-plus:hover{opacity:1;transform:scale(1.12)}[data-ksa-pending]{cursor:pointer}' +
+    '.ksa-plus{position:absolute;z-index:9;width:26px;height:26px;border-radius:50%;border:2px solid #fff;background:#6F4ACC;color:#fff;font:700 17px/20px -apple-system,"Segoe UI",sans-serif;cursor:pointer;opacity:0;transition:opacity .12s;box-shadow:0 2px 8px rgba(27,22,48,.35);padding:0}' +
+    '.ksa-plus.near,.ksa-plus.end{opacity:.55}.ksa-plus:hover{opacity:1;transform:scale(1.12)}[data-ksa-pending]{cursor:pointer}' +
     '.ksa-pending-x{position:absolute;z-index:10;border:0;background:#1b1630;color:#fff;border-radius:8px;padding:5px 9px;font:12px/1.2 -apple-system,"Segoe UI",Roboto,sans-serif;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.3)}.ksa-pending-x:hover{background:#6F4ACC}' +
     '.ksa-pop{position:absolute;z-index:13;gap:2px;min-width:220px;max-width:300px;background:#fff;border:1px solid #d9d3ea;border-radius:10px;padding:8px;box-shadow:0 8px 24px rgba(27,22,48,.28);font:13px/1.3 -apple-system,"Segoe UI",Roboto,sans-serif;color:#1b1630}' +
     '.ksa-pop strong{font-size:12px;color:#6f6a85;padding:2px 6px 6px}.ksa-pop p{margin:0;padding:4px 6px;color:#6f6a85}' +
@@ -1302,9 +1324,16 @@
         b.type = 'button'; b.className = 'ksa-plus'; b.textContent = '+'; b.title = k === secs.length ? 'Añadir un bloque al final' : (k ? 'Añadir un bloque aquí' : 'Añadir un bloque al principio');
         b.style.top = (y + w.scrollY - 13) + 'px'; b.style.left = (cx + w.scrollX - 13) + 'px';
         (function (at) { b.addEventListener('click', function (e) { e.preventDefault(); e.stopPropagation(); startPending(at); }); })(k);
+        if (k === secs.length) b.classList.add('end');
         doc.body.appendChild(b); plus.push(b);
       }
     }
+    // Los «+» solo aparecen cerca del ratón: así no tapan el texto (entre piezas de una misma celda la frontera cae sobre las letras).
+    doc.addEventListener('mousemove', function (e) {
+      var y = e.clientY + doc.defaultView.scrollY;
+      plus.forEach(function (p) { p.classList.toggle('near', Math.abs(parseFloat(p.style.top) + 13 - y) < 22); });
+    });
+    doc.addEventListener('mouseleave', function () { plus.forEach(function (p) { p.classList.remove('near'); }); });
     placePlus();
     if (doc.defaultView.ResizeObserver) new doc.defaultView.ResizeObserver(function () { placePlus(); markPreview(false); }).observe(doc.body);
     doc.defaultView.addEventListener('resize', function () { markPreview(false); placePlus(); });
@@ -1500,6 +1529,16 @@
   var SESSION = 'kaptiva-newsletters-session-v1';
   var sessionFields = ['hub-search', 'hub-from', 'hub-to', 'hub-scope', 'hub-kind', 'hub-date-field'];
   var sessionScrolls = ['lobby', 'editor-panel', 'hub-tree-box', 'pane-preview', 'pane-review', 'pane-code', 'code'];
+  function wireChrome() {
+    var more = $('#more-actions');
+    // El menú «Más acciones» se cierra al usar una de sus opciones o al pulsar fuera.
+    more.addEventListener('click', function (e) { if (e.target && e.target.tagName === 'BUTTON') more.open = false; });
+    $('#recipe').addEventListener('change', function () { more.open = false; });
+    if (document.addEventListener) document.addEventListener('click', function (e) { if (more.open && more.contains && !more.contains(e.target)) more.open = false; });
+    $('#notice-ok').addEventListener('click', function () { $('#notice-dialog').close(); });
+    $('#notice-review').addEventListener('click', function () { $('#notice-dialog').close(); showOutputTab('review'); });
+    ['#name', '#franja'].forEach(function (id) { $(id).addEventListener('input', settingsSummary); });
+  }
   function showOutputTab(tab) {
     activeTab = ['preview', 'review', 'code'].indexOf(tab) >= 0 ? tab : 'preview';
     Array.prototype.forEach.call(document.querySelectorAll('.tabs > button'), function (b) { b.classList.toggle('on', b.dataset.tab === activeTab); });
@@ -1550,7 +1589,7 @@
       K.BrandKitsUI.currentTournament = function () { return currentId ? K.tournament(state.tournament).id : ''; };
       K.BrandKitsUI.init(function () { K.BrandKitsUI.refreshSelect(state); if (currentId) { renderImagePanel(); lookNote(); refresh(); } });
     }
-    fillSettings();
+    fillSettings(); wireChrome();
     loadAll(); initHub(); showLobby();
     $('#back').addEventListener('click', function () {
       if (!canLeaveCode()) return;
@@ -1592,10 +1631,8 @@
       var missing = script.trim() ? K.scriptCoverage(script, r.state) : [];
       $('#script-dlg').close(); $('#script-text').value = ''; $('#script-answer').value = '';
       createProject(r.state);
-      alert('Newsletter creada con ' + r.state.sections.length + ' módulos.' +
-        (r.notes.length ? '\n\nAvisos:\n· ' + r.notes.join('\n· ') : '') +
-        (missing.length ? '\n\nTextos del guion que no encuentro tal cual (revísalos):\n· ' + missing.join('\n· ') : (script.trim() ? '\n\nTodos los textos del guion aparecen en la newsletter.' : '')) +
-        '\n\nRevisa los textos y mira la pestaña Revisión (placeholders y contenido PENDIENTE).');
+      notice('Newsletter creada con ' + r.state.sections.length + ' bloques', (missing.length ? '' : (script.trim() ? 'Todos los textos del guion aparecen en la newsletter. ' : '')) + 'Revisa los textos y mira la pestaña Revisión (placeholders y contenido PENDIENTE).',
+        [{ title: 'Avisos:', items: r.notes }, { title: 'Textos del guion que no encuentro tal cual (revísalos):', items: missing }], true);
     });
     $('#new').addEventListener('click', function () {
       var target = hubTarget();
@@ -1643,7 +1680,7 @@
       if (kit) state.brandKit = K.BrandKits.snapshot(kit); else delete state.brandKit;
       update(); K.BrandKitsUI.refreshSelect(state); lookNote(); renderImagePanel();
     });
-    $('#tournament').addEventListener('change', function () { state.tournament = this.value; if (K.Designs) state.designVersion = K.Designs.version; if (state.brandKit && state.brandKit.base) delete state.brandKit; if(K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state); lookNote(); update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); });
+    $('#tournament').addEventListener('change', function () { state.tournament = this.value; if (K.Designs) state.designVersion = K.Designs.version; if (state.brandKit && state.brandKit.base) delete state.brandKit; if(K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state); lookNote(); update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); settingsSummary(); });
     $('#contact-email').addEventListener('input',function(){state.contactEmail=this.value;update();});
     $('#name').addEventListener('input', function () { state.name = this.value; update(); });
     $('#desc').addEventListener('input', function () { state.desc = this.value; update(); });
@@ -1673,7 +1710,7 @@
       var f = this.files[0]; if (!f) return; var r = new FileReader();
       r.onload = function () {
         try { var s = JSON.parse(r.result); if (!s.sections) throw 0; createProject(s); }
-        catch (e) { alert('Este archivo no es un proyecto de newsletter válido.'); }
+        catch (e) { notice('No se ha podido abrir', 'Este archivo no es un proyecto de newsletter válido.'); }
       };
       r.readAsText(f); this.value = '';
     });
@@ -1696,8 +1733,9 @@
         var r = K.importProject($('#imp-text').value, state.tournament);
         if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
         state = r.state; persist(); syncSettings(); renderSections(); refresh();
+        var here = editorLocation(); openPath(here.t, here.f); renderTree(); // el menú lateral refleja la sección importada
         $('#imp-text').value = ''; $('#dlg').close();
-        alert('Importados ' + state.sections.length + ' módulos.' + (r.notes.length ? '\n\nAvisos:\n· ' + r.notes.join('\n· ') : '') + '\n\nRevisa los textos frente al original y mira la pestaña Revisión.');
+        notice('Importados ' + state.sections.length + ' bloques', 'Revisa los textos frente al original y mira la pestaña Revisión.', [{ title: 'Avisos:', items: r.notes }], true);
       } catch (e) { $('#imp-err').textContent = 'No se ha podido importar: ' + (e.message || 'el texto pegado no es válido') + ' Copia la respuesta completa de ChatGPT.'; }
     });
 

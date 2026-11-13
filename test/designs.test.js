@@ -16,8 +16,8 @@ for(const p of D.profiles){
  if(!p.id.startsWith('psg')){assert.ok(html.includes('font-family:Georgia'));assert.ok(!/@font-face/.test(html));}
  if(p.id==='rmf-wch'){
   assert.ok(html.includes('WORLD CHALLENGE 2027'));assert.ok(html.includes('FUNDACIÓN REAL MADRID'));
-  assert.ok(html.indexOf('Get in Touch')<html.indexOf(p.footer));
-  assert.ok(html.includes('{[P-FIRST NAME]} {[P-LAST NAME]}'));assert.ok(html.includes('32px;line-height:40px'));
+  assert.ok(html.indexOf('Sincerely,')<html.indexOf(p.footer)&&html.includes('{[E-CUSTOM:Event Phone Number]}')&&!html.includes('Get in Touch'),'WCH: contacto y firma como sus ejemplos');
+  assert.ok(html.includes('{[P-FIRST NAME]} {[P-LAST NAME]}'));assert.ok(html.includes('36px;line-height:44px'),'WCH: H1 36/44 como sus ejemplos');
   const all=K.build({...st,off:{header:true,franja:true,footer:true}});assert.ok(all.includes(p.header)&&all.includes(p.footer));
  }
  if(p.sections.length===2){

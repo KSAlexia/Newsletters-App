@@ -1,0 +1,91 @@
+{
+ "tournament": "arsenal-exp",
+ "name": "Arsenal Football Development Clinic – Key Reminders – Essential Pack",
+ "desc": "arsenal_clinic_key_reminders_essential_pack",
+ "franja": "Arsenal Football Development Clinic · Key Reminders · Essential Pack",
+ "franjaRight": "November 2026 · London",
+ "mediaPackages": false,
+ "sections": [
+  {
+   "type": "title",
+   "d": {
+    "style": "principal",
+    "align": "left",
+    "text": "Hello {[C-FIRST NAME:TC]}!"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "We’re absolutely thrilled to welcome you to our upcoming training clinic! We’d like to go over a few key details again — just to make sure you don’t miss a thing."
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "style": "seccion",
+    "align": "left",
+    "text": "Modifications  ⇄"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "⚡  Registration changes are now closed",
+    "text": "From **September 28**, **no further changes can be made** directly through the registration form.\nIf you need to make any changes or have an urgent request, please contact us by email and we will do our best to assist you."
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "style": "seccion",
+    "align": "left",
+    "text": "Tentative Schedule  📅"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "body",
+    "text": "Check the **tentative** schedule we will follow during the week.\nPlease be aware that changes to this schedule may occur due to last-minute logistical changes."
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/42674b9bad7844c2a35dd209831fe964.png",
+    "f1_alt": "Tentative schedule – Arsenal Football Development Clinic",
+    "size": "full"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "Extra activities",
+    "fmt": "puntos",
+    "text": "We’ll send you more information about the extra activities in the coming days so you can sign up.\nWhile supporters are enjoying the activities, the kids will stay with our staff and be supervised until you return."
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "Your registration access information",
+    "fmt": "pares",
+    "text": "Confirmation number: {[C-CONFIRMATION NUM]}\nEmail used for registration: {[C-EMAIL]}"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "text": "To access your registration, {[E-MODIFY REG LINK]}"
+   }
+  }
+ ]
+}

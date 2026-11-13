@@ -1,0 +1,166 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title>Real Madrid Foundation – Real Madrid Foundation – Summer Camp USA Confirmation</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="format-detection" content="telephone=no" /><style type="text/css">/* CLIENT-SPECIFIC STYLES ------------------- */
+#outlook a {
+  padding: 0; /* Force Outlook to provide a &quot;view in browser&quot; message */
+}
+
+.ReadMsgBody {
+  width: 100%; /* Force Hotmail to display emails at full width */
+}
+.ExternalClass {
+  width:100%; /* Force Hotmail to display emails at full width */
+}
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+  line-height: 100%; /* Force Hotmail to display normal line spacing */
+}
+body, table, td, a { /* Prevent WebKit and Windows mobile changing default text sizes */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+table, td, li { /* Remove spacing between tables in Outlook 2007 and up */
+  mso-table-lspace: 0pt;
+  mso-table-rspace: 0pt;
+  mso-line-height-rule: at-least;
+  border-spacing: 0;
+  mso-margin-bottom-alt: 0;
+  mso-margin-top-alt: 0;
+}
+img { /* Allow smoother rendering of resized image in Internet Explorer */
+  -ms-interpolation-mode: bicubic;
+}
+
+/* RESET STYLES --------------------------- */
+body {
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+  width: 100% !important;
+}
+img {
+  border: 0;
+  height: auto;
+  line-height: 100%;
+  outline: none;
+  text-decoration: none;
+}
+table {
+  border-collapse: collapse !important;
+}
+a {
+  color: #1A1D4F;
+}
+h1, h2, h3, h4, h5, h6, p { /* Override user agent styles for these elements */
+  margin-block-start: 0px;
+  margin-block-end: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+/* Override Gmail Blue Links */
+u + #body a {
+  color: #1A1D4F;
+}
+/* iOS BLUE LINKS */
+.apple-links a {
+  color: #AAAAAA;
+  text-decoration: none;
+}
+
+/* MOBILE STYLES ------------------------ */
+/* Media Queries
+  480px matches @small(20em) in nucleus-core/less/MediaQuery.less
+*/
+@media screen and (max-width: 480px) {
+  .responsive-table,
+  .wrapper,
+  .column,
+  .img-max {
+    width: 100% !important;
+  }
+
+  .mobile-button {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .mobile-pad {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  .h1 {
+    font-size: 28px !important;
+    line-height: 32px !important;
+  }
+  .col2 {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 0 16px 0 !important;
+  }
+  .desk-only {
+    display: none !important;
+  }
+  .mob-only {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .data-col {
+    display: block !important;
+    width: 100% !important;
+    border-left: none !important;
+    padding: 10px 0 !important;
+  }
+}</style><!--[if gte mso 9]>
+                <xml>
+                  <o:OfficeDocumentSettings>
+                    <o:AllowPNG/>
+                    <o:PixelsPerInch>96</o:PixelsPerInch>
+                  </o:OfficeDocumentSettings>
+                </xml>
+              <![endif]--><style type="text/css"> @media screen {
+  
+  
+  
+  
+  
+  
+  
+}</style></head> <body style="margin:0;padding:0" id="body"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed"><tbody><tr><td align="center" bgcolor="#FFFFFF" style="background-color:#FFFFFF"><!--[if gte mso 9]>
+            <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0"
+              width="650" style="width:650px;">
+              <tr>
+                <td align="center" valign="top" width="650" style="width:650px;">
+          <![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:650px" class="wrapper"><tbody>
+<!-- [0] HEADER -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/0680e31902b84ed88b7a08dcaa246d83.png" alt="Real Madrid Foundation Camps · USA y Canada" title="Real Madrid Foundation Camps · USA y Canada" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [1] FRANJA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#13163B" style="padding:12px 40px;background-color:#13163B;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td align="left"><p style="font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;font-size:11px;line-height:14px;color:#BF873C;letter-spacing:3px;text-transform:uppercase;word-break:break-word;">Registration Confirmation</p></td><td align="right" style="padding-left:12px;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:11px;line-height:14px;color:rgba(255,255,255,0.8);letter-spacing:1px;text-transform:uppercase;word-break:break-word;">Summer Camps</p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [2] TITULO + TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:34px 40px 24px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;letter-spacing:0.3px;font-size:28px;line-height:36px;color:#1A1D4F;text-transform:none;text-align:left;word-break:break-word;">Dear {[C-CUSTOM:PARENT FIRST NAME]},</p><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="56" style="margin:14px 0 0 0;"><tbody><tr><td height="4" style="height:4px;line-height:4px;font-size:0;background-color:#BF873C;border-radius:2px;">&nbsp;</td></tr></tbody></table><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:15px;line-height:25px;color:#2D2F30;text-align:left;padding-top:14px;word-break:break-word;">Thank you for registering for the <strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#1A1D4F;">Real Madrid Foundation Camp – {[E-CUSTOM:Camp City]}</strong>. We can't wait to welcome your player to an unforgettable week of soccer, learning and fun.</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [3] CAJA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:24px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td style="border-top:1px solid #EAE5DA;padding-top:22px;padding-bottom:14px;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:11px;line-height:14px;color:#BF873C;letter-spacing:2px;text-transform:uppercase;word-break:break-word;line-height:16px;">Registration Summary</p></td></tr></tbody></table><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#F5F7FA;border-left:4px solid #BF873C;"><tbody><tr><td style="padding:18px 22px;text-align:left;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#AAAAAA;letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:0px;">Player Name</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:14px;line-height:20px;color:#1A1D4F;word-break:break-word;padding-top:2px;">{[C-FIRST NAME:TC]} {[C-LAST NAME:TC]}</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#AAAAAA;letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:12px;">Player Date of Birth</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:14px;line-height:20px;color:#1A1D4F;word-break:break-word;padding-top:2px;">{[C-CUSTOM:RMF Date of Birth (MM/DD/YYYY)]}</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#AAAAAA;letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:12px;">Uniform Kit Size Selected</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:14px;line-height:20px;color:#1A1D4F;word-break:break-word;padding-top:2px;">{[C-CUSTOM:Uniform Kit Size RMF]}</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#AAAAAA;letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:12px;">Player Position</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:14px;line-height:20px;color:#1A1D4F;word-break:break-word;padding-top:2px;">{[C-CUSTOM:Player Position]}</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#AAAAAA;letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:12px;">Confirmation Number</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:14px;line-height:20px;color:#1A1D4F;word-break:break-word;padding-top:2px;">{[C-CONFIRMATION NUM]}</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#AAAAAA;letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:12px;">Tax ID</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:14px;line-height:20px;color:#1A1D4F;word-break:break-word;padding-top:2px;">20-8849278</p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [4] TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:16px 40px 24px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#2D2F30;text-align:left;word-break:break-word;">{[E-INVOICE LINK]}</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#2D2F30;text-align:left;padding-top:14px;word-break:break-word;">If you need to modify any information from your registration, please {[E-MODIFY REG LINK]}</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [5] SEPARADOR -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" style="padding:22px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#EAE5DA;">&nbsp;</td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [6] CAJA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="center" style="padding:16px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;border:2px solid #BF873C;border-radius:8px;border-collapse:separate !important;"><tbody><tr><td align="center" style="padding:24px 26px;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:11px;line-height:14px;color:#BF873C;letter-spacing:2px;text-transform:uppercase;word-break:break-word;text-align:center;padding-bottom:10px;">🎁</p><p style="font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;letter-spacing:0.3px;font-size:20px;line-height:26px;color:#1A1D4F;word-break:break-word;text-align:center;">Is this camp a gift?</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:22px;color:#2D2F30;text-align:center;word-break:break-word;padding-top:10px;">Make it extra special — download your personalized gift certificate below to share with the lucky recipient.</p><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="190" align="center" style="width:190px;margin:22px auto 0 auto;border-collapse:separate !important;" class="mobile-button"><tbody><tr><td align="center" bgcolor="#1A1D4F" style="background-color:#1A1D4F;border:1px solid #1A1D4F;border-radius:4px;"><a href="https://rmfsoccercampsusa.com/wp-content/uploads/2025/08/FRM-CERTIFICATE-ENGLISH-1.png" target="_blank" style="display:block;padding:13px 10px;font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:11px;line-height:15px;color:#FFFFFF;text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;text-align:center;">Download Gift Certificate</a></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [7] SEPARADOR -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" style="padding:22px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#EAE5DA;">&nbsp;</td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [8] TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:32px 40px 22px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:16px;line-height:25px;color:#2D2F30;word-break:break-word;">{[C-CURRENT REGISTRATION WIDGET:5d3800bf-e2d1-4eb2-b37f-996fb5dadb7e]}</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [9] SEPARADOR -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" style="padding:22px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td height="1" style="height:1px;line-height:1px;font-size:0;background-color:#EAE5DA;">&nbsp;</td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [10] TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:16px 40px 24px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:15px;line-height:25px;color:#2D2F30;text-align:left;word-break:break-word;">You will receive an email in the weeks leading up to camp with instructions on <strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#1A1D4F;">uniform pick-up time and location</strong>, along with other important details about the camp.</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:15px;line-height:25px;color:#2D2F30;text-align:left;padding-top:14px;word-break:break-word;">All information will be shared both via email and through the camp's official <strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#1A1D4F;">Telegram chat</strong>. We highly recommend joining as soon as you register to ensure you don't miss any important updates. You can join by pressing the button below. Please note that you may need to download the app for free from your device's app store.</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [11] BOTON -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="center" style="padding:6px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="190" align="center" style="width:190px;margin:22px auto 0 auto;border-collapse:separate !important;" class="mobile-button"><tbody><tr><td align="center" bgcolor="#1A1D4F" style="background-color:#1A1D4F;border:1px solid #1A1D4F;border-radius:4px;"><a href="{[E-CUSTOM:Telegram]}" target="_blank" style="display:block;padding:13px 10px;font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:11px;line-height:15px;color:#FFFFFF;text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;text-align:center;">Join Telegram Chat</a></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [12] TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:16px 40px 24px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:15px;line-height:25px;color:#2D2F30;text-align:left;word-break:break-word;">While waiting for camp, don't forget to follow us on social media for camp news and updates, <strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#1A1D4F;">{[E-CUSTOM:Instagram Handle]}</strong> on Instagram.</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:15px;line-height:25px;color:#2D2F30;text-align:left;padding-top:14px;word-break:break-word;">We are very excited for the upcoming camp. <strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#1A1D4F;">See you soon!</strong></p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [13] IMAGEN FOOTER -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/db9333ea4c694dcd954c90570f8d30f4.png" alt="Real Madrid Foundation Camps · USA y Canada" title="Real Madrid Foundation Camps · USA y Canada" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [14] OPT-OUT -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="center" style="padding:16px 20px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:10px;line-height:14px;color:#AAAAAA;text-align:center;word-break:break-word;padding:3px 0;"><span style="color: #AAAAAA;">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+</tbody></table><!--[if gte mso 9]>
+                </td>
+              </tr>
+            </table>
+            <![endif]--></td></tr></tbody></table></body></html>

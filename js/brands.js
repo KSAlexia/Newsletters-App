@@ -68,12 +68,12 @@
     { id: 'rmf', name: 'Fundación Real Madrid', filePrefix: 'rmf',
       base: { brand: 'Real Madrid Foundation', principal: '#1A1D4F', acento: '#BF873C', secundario: null, header: PIX + '0680e31902b84ed88b7a08dcaa246d83.png', contact: '' },
       sections: [
-        { id: 'rmf-usa', section: 'USA CAMPS', footer: PIX + 'db9333ea4c694dcd954c90570f8d30f4.png', footerAlt: 'See You At Camp' },
-        { id: 'rmf-canada', section: 'CANADA CAMPS', footer: PIX + 'db9333ea4c694dcd954c90570f8d30f4.png', footerAlt: 'See You At Camp' },
-        { id: 'rmf-exp', section: 'EXPERIENCES', footer: PIX + '6ca9b3ea03a54f20b3e76a29e1bbb500.png', footerAlt: 'Real Madrid Foundation' },
+        { id: 'rmf-usa', section: 'USA Camps', footer: PIX + 'db9333ea4c694dcd954c90570f8d30f4.png', footerAlt: 'See You At Camp' },
+        { id: 'rmf-canada', section: 'Canada Camps', footer: PIX + 'db9333ea4c694dcd954c90570f8d30f4.png', footerAlt: 'See You At Camp' },
+        { id: 'rmf-exp', section: 'Experiences', footer: PIX + '6ca9b3ea03a54f20b3e76a29e1bbb500.png', footerAlt: 'Real Madrid Foundation' },
         // World Challenge 2027 (WCH): blanco y dorado; negro/carbón solo para texto y detalles; nunca rojo.
         // Georgia en titulares y cifras, Helvetica en el resto, sin fuentes web. Paleta por roles en «theme».
-        { id: 'rmf-wc', section: 'RMF WORLD CHALLENGE', brand: 'Real Madrid Foundation World Challenge',
+        { id: 'rmf-wc', section: 'World Challenge', key: 'RMF WORLD CHALLENGE', brand: 'Real Madrid Foundation World Challenge',
           header: PIX + 'df32a86304cb472599c44c9e4979cf33.png', footer: PIX + 'c2955fb129e34300b1277fc35ad7e793.png', footerAlt: 'See You in Madrid',
           principal: '#BEA47A', acento: '#BEA47A', secundario: null, fonts: {},
           families: { Extenda60: SERIF, Extenda40: SERIF, DinProBlack: SERIF, DinProBold: SANS, DinProMedium: SANS, DinProLight: SANS, DinProRegular: SANS },
@@ -85,22 +85,22 @@
       ] },
     { id: 'psg', name: 'Paris Saint-Germain Academy', filePrefix: 'psg',
       base: { brand: 'Paris Saint-Germain', principal: '#004070', acento: '#E30613', secundario: null, header: PIX + '2c5043ece01d4a9a8ae79d29943bad1a.png', footer: PIX + '1abe18827cfe4f5e9e62da2599c16442.png', footerAlt: 'Paris Saint-Germain', fonts: PSG_FONTS, contact: '' },
-      sections: [{ id: 'psg-usa', section: 'USA CAMPS' }, { id: 'psg-canada', section: 'CANADA CAMPS' }, { id: 'psg-exp', section: 'EXPERIENCES' }] },
+      sections: [{ id: 'psg-usa', section: 'USA Camps' }, { id: 'psg-canada', section: 'Canada Camps' }, { id: 'psg-exp', section: 'Experiences' }] },
     { id: 'arsenal', name: 'Arsenal', filePrefix: 'arsenal',
       base: { brand: 'Arsenal Summer Camp', principal: '#B4001E', acento: '#8B0015', secundario: '#0C0C0C', header: PIX + 'd0dda35e9eef4fc5bc22f768749c292a.png', footer: PIX + '98f6f8c33f6d4fedb45231509e6f0fc5.png', footerAlt: 'Arsenal Football Development', fonts: {},
         families: { Extenda60: SERIF, Extenda40: SERIF, DinProBlack: SERIF, DinProBold: SANS, DinProMedium: SANS, DinProLight: SANS, DinProRegular: SANS }, contact: '' },
       sections: [
-        { id: 'arsenal-usa', section: 'USA CAMPS' }, { id: 'arsenal-canada', section: 'CANADA CAMPS' },
-        { id: 'arsenal-exp', section: 'EXPERIENCES', brand: 'Arsenal Football Development Clinic', footer: PIX + 'e1baea18930047838d4054ffe1d0f262.png' }
+        { id: 'arsenal-usa', section: 'USA Camps' }, { id: 'arsenal-canada', section: 'Canada Camps' },
+        { id: 'arsenal-exp', section: 'Experiences', brand: 'Arsenal Football Development Clinic', footer: PIX + 'e1baea18930047838d4054ffe1d0f262.png' }
       ] },
     { id: 'bayern', name: 'Bayern FC', filePrefix: 'bayern',
       base: { brand: 'FC Bayern Soccer Camp', principal: '#ED0037', acento: '#286CFC', secundario: null, header: PIX + '020025ab69804500ac546ae96b2ffdf4.png', footer: PIX + 'e1222579c3d6493381c01e340d4b6ef1.jpg', footerAlt: 'See you in Munich', fonts: BAYERN_FONTS, contact: 'experience@fcbayernsoccercamps.com' },
-      sections: [{ id: 'bayern-canada', section: 'CANADA CAMPS' }, { id: 'bayern-exp', section: 'EXPERIENCES' }] }
+      sections: [{ id: 'bayern-canada', section: 'Canada Camps' }, { id: 'bayern-exp', section: 'Experiences' }] }
   ];
   // Kaptiva Sports Academy: va en su propio grupo del hub y sus secciones se listan directamente (flat).
   K.CLIENT.clubs.push({ id: 'academy', name: 'Kaptiva Sports Academy', filePrefix: 'ksacademy', group: 'academy', flat: true,
     base: { brand: 'Kaptiva Sports Academy', principal: '#790B81', acento: '#AF6CB3', secundario: null, header: PIX + '6cc70ed029dd494b80735f821e8158a2.png', footer: PIX + '0e125d09d568466780e1bd113486df30.png', footerAlt: 'Kaptiva Sports Academy', fonts: ACADEMY_FONTS, contact: 'admissions@kaptivasports.com' },
-    sections: [{ id: 'academy-short', section: 'SHORT SESSIONS' }, { id: 'academy-residential', section: 'RESIDENTIAL CAMPS' }] });
+    sections: [{ id: 'academy-short', section: 'Short Sessions' }, { id: 'academy-residential', section: 'Residential Camps' }] });
   // Grupos del hub (pantalla inicial y menú lateral). Solo cambia la organización, no el contenido de los emails.
   K.CLIENT.groups = [
     { id: 'stage', name: 'Kaptiva Global Stage' },
@@ -113,8 +113,10 @@
       var t = { club: c.id, clubName: c.name, filePrefix: c.filePrefix, mediaBanner: null }, k;
       for (k in c.base) t[k] = c.base[k];
       for (k in sec) t[k] = sec[k];
+      // section: nombre visible («USA Camps»). sectionKey: el de siempre, en mayúsculas, para lo que ya salía en los emails y los archivos.
+      t.sectionKey = (sec.key || t.section).toUpperCase();
       t.name = c.name + ' · ' + t.section; t.short = null;
-      t.slug = t.section.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+      t.slug = (sec.key || t.section).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
       K.CLIENT.tournaments.push(t);
     });
   });
@@ -126,8 +128,16 @@
     '{[C-EMAIL]}', '{[E-CUSTOM:Event Phone Number]}', '{[P-FIRST NAME]}', '{[P-LAST NAME]}', '{[EMAIL OPT OUT]}',
     // Añadidos con el brand kit de RMF World Challenge (12/11/2026).
     '{[C-LAST NAME]}', '{[E-TITLE]}', '{[E-START DATE:WCMMSD1C4]}', '{[E-END DATE:WCMMSD1C4]}', '{[E-START TIME:UA]}', '{[E-END TIME:UA]}',
-    '{[E-TIME ZONE]}', '{[E-ADDRESS]}', '{[C-PAYMENTS]}', '{[C-QRCODE_LINK]}', '{[C-PASSBOOK_LINK]}', '{[C-GOOGLEWALLET_LINK]}', '{[E-RSVP YES LINK]}'
+    '{[E-TIME ZONE]}', '{[E-ADDRESS]}', '{[C-PAYMENTS]}', '{[C-QRCODE_LINK]}', '{[C-PASSBOOK_LINK]}', '{[C-GOOGLEWALLET_LINK]}', '{[E-RSVP YES LINK]}',
+    // Campos estándar usados en las newsletters de referencia de los clubs (13/11/2026).
+    '{[C-LAST NAME:TC]}', '{[E-START DATE]}', '{[E-END DATE]}', '{[E-START TIME]}', '{[E-END TIME]}', '{[E-LOCATION]}', '{[E-PHONE]}',
+    '{[C-AMOUNT PAID]}', '{[C-BALANCE DUE]}', '{[C-AMOUNT ORDERED]}', '{[C-NUM RESERV]}', '{[E-INVOICE LINK]}', '{[REGISTRATION SUMMARY]}',
+    '{[E-ONARRIVAL MAGIC URL]}', '{[E-ONARRIVAL LEARN MORE URL]}'
   ];
+  // Campos que dependen de cada evento o cuenta (preguntas personalizadas, widgets, enlaces con texto, calendario):
+  // se aceptan por su forma, con cualquier nombre dentro.
+  K.CVENT_FIELD_PATTERNS = [/^\{\[(C|E)-CUSTOM:[^\]]+\]\}$/, /^\{\[C-CURRENT REGISTRATION WIDGET:[^\]]+\]\}$/, /^\{\[E-EMAIL LINK:[^\]]+\]\}$/, /^\{\[E-CALENDAR URL:(OUTLOOK|ICS|ICAL|GOOGLE)\]\}$/];
+  K.isCventField = function (f) { return K.CVENT_FIELDS.indexOf(f) >= 0 || K.CVENT_FIELD_PATTERNS.some(function (r) { return r.test(f); }); };
 
   K.tournament = function (id) {
     return K.CLIENT.tournaments.filter(function (t) { return t.id === id; })[0] || K.CLIENT.tournaments[0];

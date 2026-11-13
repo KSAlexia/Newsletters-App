@@ -1,0 +1,116 @@
+{
+ "tournament": "rmf-wc",
+ "name": "Schedule & Tournament Wristbands",
+ "desc": "schedule_wristbands",
+ "franja": "",
+ "contactEmail": "{[E-CUSTOM:Event Phone Number]}",
+ "mediaPackages": false,
+ "sections": [
+  {
+   "type": "title",
+   "d": {
+    "style": "ante",
+    "text": "MADRID · MARCH 19–27, 2027"
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "style": "principal",
+    "align": "left",
+    "text": "SCHEDULE &\nWRISTBANDS"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "**Dear {[C-FIRST NAME]},**\nMadrid is getting closer! Here is what you need to know about the **tentative tournament schedule** and how to request spectator wristbands for family members."
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "style": "seccion",
+    "text": "01 · Tentative Schedule"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "label": "PLAN YOUR MADRID EXPERIENCE",
+    "title": "",
+    "text": "The program includes pre-tournament activities and competition days. Use the tentative schedule below to start planning your trip and time in Madrid."
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/195388be66e743cc93e60367aa47bd53.png",
+    "f1_alt": "World Challenge 2027 tentative schedule",
+    "scale": "55"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "oscura",
+    "label": "IMPORTANT",
+    "text": "This schedule is **tentative** and may change. Please follow the final information shared closer to the event."
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "style": "seccion",
+    "text": "02 · Tournament Wristbands"
+   }
+  },
+  {
+   "type": "cards",
+   "d": {
+    "sideImg": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/41374547c79d499ab770906512755c05.jpg",
+    "sideAlt": "Tournament supporters",
+    "side": "left",
+    "c1_style": "dark",
+    "c1_label": "ACCESS",
+    "c1_title": "Full tournament",
+    "c1_text": "One wristband covers all tournament days. No single-day option.",
+    "c2_label": "PER REGISTRATION",
+    "c2_title": "Up to 4",
+    "c2_text": "Wristbands are personal and non-transferable."
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "",
+    "text": "Wristbands are for relatives who are not included in the Challenge package but wish to attend the tournament in Madrid. They grant ++access to the facilities only++. Transportation and other services are not included."
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "borde",
+    "label": "REQUEST EXTRA WRISTBANDS",
+    "title": "",
+    "text": "Use your registration to request wristbands:",
+    "line": "{[E-MODIFY REG LINK]}"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "label": "YOUR REGISTRATION",
+    "title": "",
+    "text": "**Confirmation number:** {[C-CONFIRMATION NUM]}\n**Registration email:** {[C-EMAIL]}"
+   }
+  }
+ ]
+}

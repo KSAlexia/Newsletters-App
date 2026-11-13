@@ -1,0 +1,132 @@
+{
+ "tournament": "arsenal-usa",
+ "name": "Arsenal Football Development Clinic – Registration Confirmation",
+ "desc": "arsenal_camp_registration_confirmation",
+ "franja": "Registration Confirmation",
+ "franjaRight": "Arsenal Summer Camp",
+ "mediaPackages": false,
+ "sections": [
+  {
+   "type": "title",
+   "d": {
+    "text": "Dear {[C-CUSTOM:PARENT FIRST NAME]},",
+    "style": "principal",
+    "align": "left"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "Thank you for registering for the **{[E-TITLE]}** Camp! We can’t wait to welcome your player to an unforgettable week of football, learning and fun."
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "label": "Registration Summary",
+    "title": "",
+    "fmt": "pares",
+    "text": "Player Name: {[C-FIRST NAME:TC]} {[C-LAST NAME:TC]}\nPlayer Date of Birth: {[C-CUSTOM:ARS - Date of Birth (MM/DD/YYYY)]}\nUniform Kit Size Selected: {[C-CUSTOM:Uniform Kit Size ARS]}\nConfirmation Number: {[C-CONFIRMATION NUM]}\nAmount Paid: {[C-AMOUNT PAID]}\nTax ID: 36-5067241"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "body",
+    "text": "{[E-INVOICE LINK]}\nIf you need to modify any information from your registration, please {[E-MODIFY REG LINK]}"
+   }
+  },
+  {
+   "type": "separador",
+   "d": {
+    "style": "neutral"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "text": "{[C-CURRENT REGISTRATION WIDGET:5d3800bf-e2d1-4eb2-b37f-996fb5dadb7e]}"
+   }
+  },
+  {
+   "type": "separador",
+   "d": {
+    "style": "neutral"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "borde",
+    "label": "🎁",
+    "title": "Is this camp a gift?",
+    "text": "Make it extra special — download your personalized gift certificate below to share with the lucky recipient.",
+    "btn": "Download Gift Certificate",
+    "url": "https://arsenalsoccercampsus.com/wp-content/uploads/2025/09/ARS-1.pdf",
+    "btnStyle": "gold"
+   }
+  },
+  {
+   "type": "separador",
+   "d": {
+    "style": "neutral"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "You will receive an email in the weeks leading up to camp with instructions on **uniform pick-up time and location**, along with other important details about the camp.\n**All information will be shared both via email and through the camp’s official Telegram chat**. We highly recommend joining as soon as you register to ensure you don’t miss any important updates. You can join by pressing the button below. Please note that you may need to download the app for free from your device’s app store."
+   }
+  },
+  {
+   "type": "button",
+   "d": {
+    "btn": "Join Telegram Chat",
+    "url": "{[E-CUSTOM:Telegram]}",
+    "btnStyle": "gold",
+    "align": "center"
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "text": "📺 Watch a short instructional video on how to join the Telegram channel!",
+    "style": "seccion",
+    "align": "center"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "align": "center",
+    "text": "*Click on the phone image below to get started.*"
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/32bfa22c932246f1a76efa984348317d.jpg",
+    "f1_alt": "Watch Telegram tutorial",
+    "f1_url": "https://soccercampspro.com/wp-content/uploads/2025/06/SCP-Telegram_v02_compressed.mp4",
+    "size": "full"
+   }
+  },
+  {
+   "type": "separador",
+   "d": {
+    "style": "neutral"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "While waiting for camp, don’t forget to follow us on social media for camp news and updates, **{[E-CUSTOM:Instagram Handle]}** on Instagram.\nWe are very excited for the upcoming camp. **See you soon!**"
+   }
+  }
+ ]
+}

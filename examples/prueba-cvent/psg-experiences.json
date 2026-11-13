@@ -1,0 +1,121 @@
+{
+ "tournament": "psg-exp",
+ "name": "Paris Saint-Germain – Essential Pack Information",
+ "desc": "psg_essential_pack_information",
+ "franja": "Paris Saint-Germain Academy Clinic",
+ "franjaRight": "November 2026 · Paris",
+ "mediaPackages": false,
+ "sections": [
+  {
+   "type": "title",
+   "d": {
+    "style": "principal",
+    "align": "left",
+    "text": "Your Week in Paris,\n{[C-FIRST NAME:TC]}"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "Here’s how your week in Paris will unfold, day by day, along with everything you need to know about your hotel, meals, and important deadlines"
+   }
+  },
+  {
+   "type": "glance",
+   "d": {
+    "density": "editorial",
+    "l1": "Clinic dates",
+    "v1": "Nov 22 – 28\n2026",
+    "l2": "Reference hotel",
+    "v2": "La Défense\ndistrict",
+    "l3": "Final payment",
+    "v3": "September 1\n2026"
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "style": "ante",
+    "text": "Your week, day by day"
+   }
+  },
+  {
+   "type": "timeline",
+   "d": {
+    "fmt": "puntos",
+    "d1": "Nov 22",
+    "s1": "Arrival",
+    "t1": "Kaptiva Sports check-in, approx. 2:30–3:30 PM in the lobby of the reference hotel — welcome pack and players' kit handed out\nWelcome meeting, approx. 4:00–5:00 PM\nAirport transfers are not included in this pack",
+    "d2": "Nov 23–27",
+    "s2": "Training",
+    "t2": "Players travel by bus from the reference hotel to the training facilities with our staff\nFour days of double training sessions. Players are transported from the reference hotel to their morning session, spend the day with their team, and return to the hotel after the second training session for parent pick-up.\nTraining sessions are closed to relatives, except Parent's Day. The exact date will be confirmed closer to the event",
+    "d3": "Nov 28",
+    "s3": "Departure",
+    "t3": "A free day for Essential Pack families\nOrganized activities finish on the evening of November 27, so we recommend departing on November 28\nAirport transfers are not included in this pack"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "Your reference hotel",
+    "fmt": "puntos",
+    "text": "The hotel is not included, but it will be the daily meeting point: players meet our staff there before travelling to all activities and training sessions, and return there at the end of each day\nThe reference hotel will be located in the La Défense district. Families arrange their own accommodation"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "Meals included",
+    "fmt": "puntos",
+    "text": "**Players only:** lunch on the 4 double-training-session days\n**Relatives:** no meals included"
+   }
+  },
+  {
+   "type": "deadlines",
+   "d": {
+    "l1": "Final payment deadline",
+    "d1": "September 1, 2026",
+    "l2": "Last day for changes",
+    "d2": "September 22, 2026"
+   }
+  },
+  {
+   "type": "title",
+   "d": {
+    "style": "ante",
+    "text": "Good to know"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "small",
+    "text": "The exact reference hotel name will be confirmed approximately one month before the event.\nPSG first-team match tickets are not included in the pack.\nUnregistered relatives cannot attend training sessions or extra activities, or use the group buses.\nThe detailed schedule is coming soon."
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/748789e7f0084448873ba7dd5fc209b8.png",
+    "f1_alt": "Paris Saint-Germain",
+    "f2_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/06bf20224c974d91ab31fa32fd179ec8.png",
+    "f2_alt": "Paris Saint-Germain",
+    "f3_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/fcdfd108a5ad45938f89a0ea142a47d1.jpg",
+    "f3_alt": "Paris Saint-Germain"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "borde",
+    "title": "Any questions about your pack?",
+    "text": "Review or update your registration {[E-MODIFY REG LINK]} — or reply to this email and our team will help you."
+   }
+  }
+ ]
+}

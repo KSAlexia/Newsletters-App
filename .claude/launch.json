@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "newsletters",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-I", "-c", "import os, functools, http.server; H = functools.partial(http.server.SimpleHTTPRequestHandler, directory='/private/tmp/claude-501/-Users-agkaptiva--claude-spares-spare-uAAaVM/7f00d3d0-563c-4af0-90ba-227088ca14b8/scratchpad/app'); http.server.ThreadingHTTPServer(('127.0.0.1', int(os.environ.get('PORT', '8790'))), H).serve_forever()"],
+      "port": 8790
+    }
+  ]
+}

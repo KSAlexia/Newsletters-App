@@ -9,7 +9,7 @@ for(const tid of ['arsenal-exp','arsenal-usa','arsenal-canada','psg-exp','rmf-ex
   assert.equal(theme.franjaBg,'#B4001E');assert.equal(theme.franjaTracking,'1px');
   assert.ok(html.includes('font-size:10px;line-height:14px;color:#FFFFFF;letter-spacing:1px;'));
   assert.ok(html.includes('letter-spacing:-0.5px;'));
- }else{assert.equal(theme.franjaTracking||null,null);assert.ok(!html.includes('letter-spacing:-0.5px;'));}
+ }else{assert.equal(theme.franjaTracking||null,null);assert.equal(html.includes('letter-spacing:-0.5px;'),tid==='rmf-wc',tid+': -0.5 px solo en Arsenal y WCH (sus ejemplos)');}
  for(const block of html.split(/<!-- \[\d+\] /).slice(1)){
   if(!/^(TÍTULO|TITULO|TEXTO|CAJA|BANDA DE DATOS|IMAGEN)/.test(block)||block.startsWith('IMAGEN FOOTER'))continue;
   const pad=block.match(/class="wrapper"><tbody><tr><td[^>]*style="padding:([^;]+)/);assert.ok(pad);

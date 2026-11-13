@@ -48,7 +48,9 @@ function boot(storage, session = {}, designCatalog = false) {
   for (const file of ['head','brands',...(designCatalog ? ['brand-designs'] : []),'brand-kits','history','modules','block-icons','hub','app']) vm.runInContext(fs.readFileSync(__dirname + '/../js/' + file + '.js', 'utf8'), context);
   const walk = node => [node, ...node.children.flatMap(walk)];
   const clickText = text => { const button = walk(nodes['#folders']).find(n => n.tag === 'button' && walk(n).some(child => child.textContent === text)); assert.ok(button, 'Button: ' + text); button.click(); };
-  return { nodes, prompts, alerts, clickText, fire(type) { windowEvents[type](); }, change(id, value) { const node = nodes[id]; node.value = value; node.handlers.change.call(node); } };
+  // Texto del diálogo de avisos de la app (sustituye a los alert del navegador).
+  const noticeText = () => nodes['#notice-dialog'].open ? [nodes['#notice-title'].textContent, ...walk(nodes['#notice-body']).map(n => n.textContent || '')].join('\n') : undefined;
+  return { nodes, prompts, alerts, noticeText, clickText, fire(type) { windowEvents[type](); }, change(id, value) { const node = nodes[id]; node.value = value; node.handlers.change.call(node); } };
 }
 const PROJ = 'kaptiva-newsletters-projects-v1', HUB = 'kaptiva-newsletters-hub-v1';
 const storage = { [PROJ]: JSON.stringify({ old: { id: 'old', updated: 123, state: { tournament: 'surfcup', name: 'Original', sections: [], off: {}, franjaLeft: '' } } }) };
@@ -114,7 +116,7 @@ console.log('OK: diálogo de carpetas y fecha exacta de plegado/edición.');
 const guardStorage = { [PROJ]: JSON.stringify({ p: { id: 'p', folder: 'child', updated: 123, state: { tournament: 'surfcup', name: 'Hija', sections: [], off: {} } } }), [HUB]: JSON.stringify({ folders: { parent: { id: 'parent', name: 'Padre', parent: '', tournament: 'surfcup', updated: 123 }, child: { id: 'child', name: 'Hijo', parent: 'parent', tournament: 'surfcup', updated: 123 }, other: { id: 'other', name: 'Otro torneo', parent: '', tournament: 'fit', updated: 123 } }, sorts: {}, orders: {} }) };
 ui = boot(guardStorage); ui.clickText('Surf Cup 2026');
 ui.clickText('Eliminar');
-assert.match(ui.alerts[0], /Solo se pueden eliminar carpetas vacías/);
+assert.match(ui.noticeText(), /Solo se pueden eliminar carpetas vacías/);
 assert.ok(JSON.parse(guardStorage[HUB]).folders.parent);
 ui.clickText('Mover');
 assert.deepEqual(ui.nodes['#move-destination'].children.map(n => n.value), ['']);
@@ -175,14 +177,14 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   const clubStorage = {}, club = boot(clubStorage);
   club.clickText('Arsenal');
   assert.throws(() => club.clickText('Surf Cup 2026'), 'En el nivel de club solo se ven sus secciones');
-  club.clickText('USA CAMPS');
+  club.clickText('USA Camps');
   club.nodes['#new'].click();
   const created = Object.values(JSON.parse(clubStorage[PROJ]));
   assert.equal(created.length, 1); assert.equal(created[0].state.tournament, 'arsenal-usa');
   const bayern = boot({}); bayern.clickText('Bayern FC');
-  assert.throws(() => bayern.clickText('USA CAMPS'), 'Bayern no tiene USA CAMPS');
-  bayern.clickText('CANADA CAMPS');
-  const rmf = boot({}); rmf.clickText('Fundación Real Madrid'); rmf.clickText('RMF WORLD CHALLENGE');
+  assert.throws(() => bayern.clickText('USA Camps'), 'Bayern no tiene USA Camps');
+  bayern.clickText('Canada Camps');
+  const rmf = boot({}); rmf.clickText('Fundación Real Madrid'); rmf.clickText('World Challenge');
   console.log('OK: clubs en la pantalla inicial, secciones por club (Bayern sin USA, RMF con World Challenge) y newsletter nueva en la sección.');
 }
 
@@ -257,7 +259,7 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
 // Crear desde guion en el hub: la newsletter nace en la sección elegida y avisa de textos que faltan.
 {
   const st = {}, ui4 = boot(st);
-  ui4.clickText('Arsenal'); ui4.clickText('EXPERIENCES');
+  ui4.clickText('Arsenal'); ui4.clickText('Experiences');
   ui4.nodes['#from-script'].click();
   assert.equal(ui4.nodes['#script-dlg'].open, true); assert.equal(ui4.nodes['#script-tournament'].value, 'arsenal-exp');
   ui4.nodes['#script-text'].value = 'BANNER 1: Título: Clinic London\nBANNER 2: Texto: Texto que ChatGPT olvidó';
@@ -265,7 +267,7 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   ui4.nodes['#script-go'].click();
   const created = Object.values(JSON.parse(st[PROJ]));
   assert.equal(created.length, 1); assert.equal(created[0].state.tournament, 'arsenal-exp', 'Manda el torneo elegido');
-  const msg = ui4.alerts.pop();
+  const msg = ui4.noticeText();
   assert.ok(/Texto que ChatGPT olvidó/.test(msg) && /se usa el elegido/.test(msg));
   console.log('OK: nueva newsletter desde guion en la sección del hub, con aviso de textos que faltan.');
 }
@@ -307,7 +309,7 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.ok(texts(q.nodes['#hub-tree']).includes('Arsenal'), 'El panel lista los clubs');
   q.nodes['#hub-search'].value = 'early'; q.nodes['#hub-search'].handlers.input();
   assert.match(q.nodes['#hub-count'].textContent, /^2 resultados/);
-  assert.ok(texts(q.nodes['#folders']).includes('Arsenal › USA CAMPS'), 'La búsqueda del inicio recorre todos los torneos y clubs');
+  assert.ok(texts(q.nodes['#folders']).includes('Arsenal › USA Camps'), 'La búsqueda del inicio recorre todos los torneos y clubs');
   // Dentro de una sección, «En esta carpeta» mantiene el filtro local y «En todas» busca en todo.
   q.nodes['#hub-search'].value = ''; q.nodes['#hub-search'].handlers.input(); q.clickText('Surf Cup 2026');
   assert.ok(texts(q.nodes['#hub-tree']).includes('📁 Ventas'), 'El panel despliega las carpetas de la sección abierta');
@@ -330,7 +332,7 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
     [HUB]: JSON.stringify({ folders: { fx: { id: 'fx', name: 'Carpeta X', tournament: 'surfcup', parent: '', updated: 1 } }, sorts: {}, orders: {} })
   };
   const g = boot(st), home = () => texts(g.nodes['#folders']);
-  for (const name of ['Kaptiva Global Stage', 'Clubs', 'Kaptiva Sports Academy', 'SHORT SESSIONS', 'RESIDENTIAL CAMPS']) assert.ok(home().includes(name), 'Inicio: ' + name);
+  for (const name of ['Kaptiva Global Stage', 'Clubs', 'Kaptiva Sports Academy', 'Short Sessions', 'Residential Camps']) assert.ok(home().includes(name), 'Inicio: ' + name);
   assert.ok(!home().includes('KSA Global Stage'));
   const chip = name => walk(g.nodes['#hub-show']).find(n => n.tag === 'button' && walk(n).some(c => c.textContent.endsWith(name)));
   chip('Clubs').click();
@@ -340,7 +342,7 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.ok(boot(st) && !texts(boot(st).nodes['#folders']).includes('Arsenal'), 'La preferencia sobrevive a recargar');
   chip('Clubs').click(); assert.ok(home().includes('Arsenal'));
   // Academy: sección con su nombre de marca y diseño pendiente; abrir Beta registra la apertura sin tocar la modificación.
-  g.clickText('SHORT SESSIONS'); assert.match(g.nodes['#hub-count'].textContent, /^0 de 0/);
+  g.clickText('Short Sessions'); assert.match(g.nodes['#hub-count'].textContent, /^0 de 0/);
   g.nodes['#hub-path'].children[0].click(); g.clickText('Surf Cup 2026');
   g.clickText('Beta'); g.nodes['#back'].click();
   const beta = JSON.parse(st[PROJ]).b; assert.ok(beta.opened > 0); assert.equal(beta.updated, 200);
@@ -480,7 +482,7 @@ console.log('OK: recarga en newsletter/carpeta, scroll, filtros, cambios pendien
 // El editor aplica el perfil por sección y no vuelve a ofrecer Club/Clásico.
 {
   const e=boot({}, {}, true);
-  e.clickText('Fundación Real Madrid'); e.clickText('RMF WORLD CHALLENGE'); e.nodes['#new'].click();
+  e.clickText('Fundación Real Madrid'); e.clickText('World Challenge'); e.nodes['#new'].click();
   assert.equal(e.nodes['#franja'].disabled,true);
   assert.equal(e.nodes['#franja'].value,'WORLD CHALLENGE 2027');
   assert.ok(e.nodes['#kit-guidelines-text'].textContent.includes('Nunca rojo'));

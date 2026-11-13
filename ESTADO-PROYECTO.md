@@ -1071,3 +1071,97 @@ Revisión de las 53 referencias de `docs/brand-kits/referencias` (la sección qu
 Verificación: nueva `test/franjas.test.js`, que lee las referencias, calcula el formato mayoritario por kit y lo compara con la franja generada en las 9 secciones. Todas las suites pasan y `test/test.js` mantiene el `igual: false` conocido. Recetas en los 19 torneos y secciones, con y sin `designVersion` y ambos estilos (532 casos): solo cambia la línea de la franja, en 72 casos de PSG y RMF con kit; el resto es idéntico. En el navegador integrado, cada referencia frente a la app con el mismo texto: la misma fuente, el mismo color y el mismo ancho de texto al píxel. La altura queda en 38 px (las referencias miden 36,5–39 px porque no fijan el interlineado). No probado en Outlook/Gmail reales.
 
 Seguimiento WCH: en las 12 recetas de World Challenge con kit cambian solo la franja y la regla `mobile-sub` del `<head>`. La receta de la BASE, las demás marcas y WCH sin `designVersion` son idénticas. `test/franjas.test.js` incluye ahora WCH entre las secciones comparadas con sus referencias (10 en total) y comprueba la regla de móvil. Navegador: en escritorio, mismos anchos de texto que los ejemplos al píxel y alto de 40 px, como el 01 (el 02 mide 36,5 px porque no fija el interlineado). En móvil (375 px), 9 px y una línea por etiqueta (antes ocupaban dos), con los mismos anchos que el 02. El margen lateral en móvil es 24 px frente a 20 px en el ejemplo, porque es la regla general de todos los emails y no se ha cambiado. Durante una ejecución completa de las suites, `test/hub.test.js` falló una vez sin repetirse; posible prueba inestable, sin investigar.
+
+## Revisión completa: app frente a las referencias, generador y coherencia de la interfaz · 13/11/2026
+
+Petición del usuario: comprobar que todo funciona, comparar cómo hace la app las newsletters frente a una versión profesional con el mismo contexto, revisar la UX/UI para que sea coherente y preparar la prueba real.
+
+### Cómo se hizo
+
+- **App en el navegador integrado**: `.claude/launch.json` (no versionado) sirve una copia de la app desde la carpeta temporal de la sesión, porque macOS no deja al servidor leer `Documents`. Datos vacíos y aislados; no se tocó la colección del usuario.
+- **Recorrido de un PM**: hub, club, sección, crear, importar, editar en la vista previa, revisión, móvil, brand kits; a 1440, 1280 y 375 px.
+- **Comparación por kit**: una referencia por kit (PSG Exp 01, PSG Camps 01, Arsenal Exp 02, Arsenal Camps 01, RMF Exp 03, RMF Camps 02, WCH 01). Agentes independientes hicieron de ChatGPT: solo recibieron las instrucciones de importar de la app y el HTML, sin acceso al código. Su JSON se importó y se comparó lado a lado con el original, en escritorio y en móvil. Después de las correcciones se repitió con las instrucciones nuevas (WCH, RMF Camps, Arsenal Camps).
+
+### Hallazgos y correcciones del generador
+
+- **Caja con borde: se perdía la etiqueta** (todas las marcas). Ahora sale encima del título. Solo cambia el HTML cuando hay etiqueta.
+- **La revisión daba errores falsos**: campos de Cvent reales de las referencias (`{[C-LAST NAME:TC]}`, `{[E-START DATE]}`, `{[C-AMOUNT PAID]}`, `{[C-CUSTOM:…]}`, `{[E-CUSTOM:…]}`, widgets, `{[E-EMAIL LINK:…]}`, `{[E-CALENDAR URL:…]}`) y botones que enlazan a un campo (`{[E-CUSTOM:Telegram]}`). Cambios en `brands.js`:
+  - se añaden a la lista los campos estándar;
+  - los campos propios de cada evento se aceptan por su forma (`K.CVENT_FIELD_PATTERNS`, `K.isCventField`);
+  - un campo desconocido pasa de error a aviso;
+  - un campo de Cvent vale como enlace de botón.
+  Otros dos falsos avisos corregidos:
+  - el Timeline ya no exige «Título» en el primer hito (es opcional, como dicen las instrucciones);
+  - con brand kit no se avisa de emojis (el kit pide conservar los iconos del contenido).
+- **World Challenge, igual que sus dos emails de ejemplo** (solo con kit; ver ficha `docs/brand-kits/rmf-wch.md`):
+  - titular de 36/44 px con espaciado −0,5 px;
+  - antetítulo de 11 px en la celda del titular, a 8 px;
+  - «Dear …» en negrita de 15 px, pegado al titular y a la introducción;
+  - títulos de sección a la izquierda y sin barra, unidos al bloque que los sigue (14 px, sin el mínimo de 20);
+  - en la caja suave compacta, la etiqueta va dentro;
+  - «Important»: caja recta, etiqueta en texto dorado y texto de 13/21 px;
+  - caja con borde recta y compacta; si su línea es solo `{[E-MODIFY REG LINK]}` o `{[E-RSVP YES LINK]}`, va en un recuadro dorado de 190 px (un campo que genera su propio enlace no puede ir dentro de otro `<a>`);
+  - tarjetas con esquinas rectas.
+  **Contacto y firma**: una sola franja suave con «For any questions, please contact us at: <contacto>», «Sincerely,» y la firma. Por defecto usa `{[E-CUSTOM:Event Phone Number]}`, como en los dos ejemplos, y si hay email propio usa ese. Antes salía una caja «Get in Touch» que repetía la frase del teléfono, y un error si no había contacto.
+- **Opciones nuevas** (apagadas por defecto):
+  - Tarjetas · «Foto al lado» (`sideImg`, `sideAlt`, `side`): foto de 235 px y tarjetas compactas apiladas al lado; en móvil, una debajo de otra. Reproduce el bloque «Tournament Wristbands» de WCH.
+  - Caja suave · formato «Datos» (`fmt: 'pares'`): cada línea «Etiqueta: valor» sale con la etiqueta pequeña encima del valor en negrita, como el resumen de registro de los Camps. Sirve para más de 4 datos.
+  - Imagen · enlace al pulsarla (`f1_url`…): para badges de App Store o Google Play, QR de Telegram o vídeos, que antes perdían su enlace.
+  - Botón · estilo «Color de acento» (`btnStyle: 'accent'`): por ejemplo, el rojo de Telegram de PSG Camps (#E20613). El nombre de la opción principal ya no dice solo «dorado en WCH».
+- **PSG Experiences**: los rótulos pequeños pasan al rojo de acento, como en 6 de sus 7 casos; PSG Camps sigue en azul.
+- **Instrucciones de ChatGPT**, con las contradicciones que encontraron los agentes resueltas:
+  - se indica la sección de destino («no adivines USA o Canada») y el ejemplo de JSON la usa;
+  - se explica qué es el footer de imagen (el banner antes de la línea de baja);
+  - «no repitas un recurso seguido» pasa a «no pongas dos text ni dos datos seguidos; varias cajas seguidas sí»;
+  - cuándo «Dear …» es titular y cuándo es saludo;
+  - importes mezclados con datos de registro: una sola caja «Datos»;
+  - no crear un recuadro de 3 datos con lo que ya tiene sus propias tarjetas o el antetítulo;
+  - cómo escribir el subrayado de color (`++…++`) y la etiqueta (`==…==`);
+  - guía para foto con tarjetas, caja «Datos» e imágenes con enlace;
+  - WCH: contacto y firma automáticos, sin copiarlos;
+  - la ficha de Arsenal Camps ya no dice «franja negra».
+
+### Interfaz
+
+- **Barra superior en una fila**: «Más acciones ▾» agrupa importar, receta, exportar proyecto y descargar .html; «Descargar .txt (Cvent)» sigue como botón principal. El menú se cierra al usar una opción o al pulsar fuera.
+- **«Datos de la newsletter» plegable** (`#settings-box`), con una línea de resumen (sección · nombre). Se pliega sola cuando la newsletter ya tiene bloques y franja, así los bloques quedan arriba; si es nueva, se abre. Las imágenes del kit empiezan plegadas; la sesión recuerda lo último elegido.
+- **Avisos con el estilo de la app** (`#notice-dialog`, `notice()`): resultado de importar, crear desde guion, archivo no válido, carpeta con contenido y versión dañada. Incluye «Ver la revisión». Los `confirm()` de acciones destructivas siguen siendo del navegador.
+- **Tras importar, el menú lateral** muestra la sección nueva.
+- **Los «+» de la vista previa** solo aparecen cerca del ratón (antes tapaban el texto entre piezas de una celda); el último, «Añadir al final», siempre se ve.
+- **Nombres de sección**: «USA Camps», «Canada Camps», «Experiences», «World Challenge», «Short Sessions», «Residential Camps» (antes en mayúsculas). `t.sectionKey` conserva el nombre antiguo para el texto alternativo del banner de Media Packages, y `slug` no cambia, así que los emails y los nombres de archivo salen iguales.
+- **Carpeta vacía**: sin la barra de ordenar y fechas. Los placeholders de «Nombre», «Archivo» y «Franja» ya no dicen «Media Packages».
+
+### Compatibilidad y pruebas
+
+- **Recetas en los 19 torneos y secciones**, con y sin kit y ambos estilos (532 casos): solo cambia World Challenge con kit; lo demás es idéntico. `compare-modules.js` frente al último commit: 268 casos sin diferencias. Tarjetas e Imagen sin opciones nuevas: 12 920 casos idénticos.
+- **Nueva `test/referencias.test.js`**. Actualizadas `designs` (contacto y H1 de WCH), `spacing-arsenal` (−0,5 px también en WCH), `hub` (nombres de sección y avisos en el diálogo) y `brand-kits` (nombres de sección). Todas las suites pasan; `test/test.js` mantiene el `igual: false` conocido.
+- **Navegador**:
+  - WCH, PSG Exp, RMF Camps y Arsenal Camps frente a sus originales;
+  - WCH en móvil (375/375, foto y tarjetas apiladas);
+  - en el editor a 1280 px: barra en una fila, ajustes plegados, menú, importar con el diálogo nuevo y menú lateral actualizado.
+
+### Pendiente
+
+- **Prueba real**: `examples/prueba-cvent/` tiene una newsletter por kit (.txt para Cvent y .json para la app) y la lista de qué mirar en Gmail, Outlook (Windows y web) y Apple Mail. Sin hacer todavía: requiere al usuario.
+- **Interfaz**:
+  - los `confirm()` de borrar o sustituir siguen siendo del navegador;
+  - a 1280 px la vista previa es estrecha y «Escritorio/Móvil» baja a otra línea;
+  - en el móvil la app es usable pero pesada;
+  - los nombres de los kits RMF dicen «Real Madrid Foundation» y el club «Fundación Real Madrid»: no se cambió porque el nombre del kit puede salir en el texto alternativo del header.
+- **Generador**:
+  - el widget de registro de Cvent (`{[C-CURRENT REGISTRATION WIDGET:…]}`) va como texto, sin bloque propio;
+  - la caja del regalo (🎁 + botón) de los Camps aún no tiene una composición exacta;
+  - los márgenes laterales en móvil son 24 px frente a 20 en WCH.
+
+### Seguimiento: enlaces de imágenes y paquete de prueba (13/11/2026)
+
+El usuario preguntó si se habían resuelto los enlaces de las imágenes. Al comprobarlo, el paquete `examples/prueba-cvent/` se había generado en 4 kits con las simulaciones hechas con las instrucciones **antiguas**: el `.txt` de RMF Experiences llevaba los badges de App Store y Google Play y el QR de Telegram sin enlace. Se repitió la simulación de ChatGPT de PSG Exp, PSG Camps, Arsenal Exp y RMF Exp con las instrucciones actuales y se regeneró el paquete.
+
+Comprobación automática de cada envío frente a su original (textos visibles, campos de Cvent, `src` de imágenes y `href`):
+- Los 7 kits conservan todos los campos, imágenes y enlaces: los badges con su enlace a App Store y Google Play, el QR a `t.me`, el vídeo `.mp4` de Arsenal y `{[E-CUSTOM:Telegram]}`.
+- De texto solo faltan las filas de ejemplo de los widgets de Cvent y, en WCH, la frase de contacto, que sustituye la fija del kit (la de su ejemplo 02).
+- La revisión, sin errores ni avisos en los 7.
+
+En el navegador, la sección de Telegram de RMF Exp lleva los mismos enlaces que el original.
+
+Detalle visual: ChatGPT no puso escala a los badges, que salen a 279 px (más grandes que en el original); se ajusta con «Escala» en el bloque Imagen. Siguen sin probarse Cvent, Gmail y Outlook reales.

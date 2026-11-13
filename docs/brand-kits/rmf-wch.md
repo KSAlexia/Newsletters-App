@@ -143,3 +143,11 @@ Importante: {[E-RSVP YES LINK]} y {[E-MODIFY REG LINK]} nunca van dentro de otro
 ## Emails de ejemplo (13/11/2026)
 
 El usuario aportó dos emails de WCH como referencia: `referencias/rmf-wch/01.html` (Schedule & Tournament Wristbands) y `02.html` (About Madrid). Su subheader manda sobre lo que la ficha no concreta: fondo carbón #1F1F1F, padding 12/40 y sin línea inferior; Helvetica 11 px negrita, blanca, en mayúsculas, espaciado 1 px y sin cortes de línea. En móvil baja a 9 px sin espaciado (clase `mobile-sub`, como en el 02). El resto de piezas de estos ejemplos no se ha comparado todavía con el generador.
+
+Después, el generador se igualó a los dos ejemplos en el resto de piezas (13/11/2026), y estas decisiones prevalecen sobre la ficha original donde no coinciden:
+- Titular de 36/44 px con espaciado −0,5 px. Antetítulo de 11 px pegado al titular. «Dear …» en negrita de 15 px, junto a la introducción.
+- Títulos de sección (H2) a la izquierda y sin barra, a 14 px del bloque que los sigue.
+- Caja suave con la etiqueta dentro. «Important» y la caja con borde, rectas.
+- Si la línea con enlace de Cvent de la caja con borde es solo `{[E-MODIFY REG LINK]}` o `{[E-RSVP YES LINK]}`, va en un recuadro dorado de 190 px.
+- Tarjetas rectas. La foto con tarjetas apiladas al lado es la opción «Foto al lado» del bloque Tarjetas.
+- Contacto y firma: «For any questions, please contact us at: {[E-CUSTOM:Event Phone Number]}» (u otro contacto de la newsletter), «Sincerely,» y la firma, sobre fondo #F8F5EF.

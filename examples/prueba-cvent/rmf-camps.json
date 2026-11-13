@@ -1,0 +1,102 @@
+{
+ "tournament": "rmf-usa",
+ "name": "Real Madrid Foundation – Summer Camp USA Confirmation",
+ "desc": "rmf_summer_camp_usa_confirmation",
+ "franja": "Registration Confirmation",
+ "franjaRight": "Summer Camps",
+ "mediaPackages": false,
+ "sections": [
+  {
+   "type": "title",
+   "d": {
+    "text": "Dear {[C-CUSTOM:PARENT FIRST NAME]},",
+    "style": "principal",
+    "align": "left"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "Thank you for registering for the **Real Madrid Foundation Camp – {[E-CUSTOM:Camp City]}**. We can't wait to welcome your player to an unforgettable week of soccer, learning and fun."
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "label": "Registration Summary",
+    "title": "",
+    "fmt": "pares",
+    "text": "Player Name: {[C-FIRST NAME:TC]} {[C-LAST NAME:TC]}\nPlayer Date of Birth: {[C-CUSTOM:RMF Date of Birth (MM/DD/YYYY)]}\nUniform Kit Size Selected: {[C-CUSTOM:Uniform Kit Size RMF]}\nPlayer Position: {[C-CUSTOM:Player Position]}\nConfirmation Number: {[C-CONFIRMATION NUM]}\nTax ID: 20-8849278"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "body",
+    "text": "{[E-INVOICE LINK]}\nIf you need to modify any information from your registration, please {[E-MODIFY REG LINK]}"
+   }
+  },
+  {
+   "type": "separador",
+   "d": {
+    "style": "neutral"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "borde",
+    "label": "🎁",
+    "title": "Is this camp a gift?",
+    "text": "Make it extra special — download your personalized gift certificate below to share with the lucky recipient.",
+    "btn": "Download Gift Certificate",
+    "url": "https://rmfsoccercampsusa.com/wp-content/uploads/2025/08/FRM-CERTIFICATE-ENGLISH-1.png",
+    "btnStyle": "dark"
+   }
+  },
+  {
+   "type": "separador",
+   "d": {
+    "style": "neutral"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "text": "{[C-CURRENT REGISTRATION WIDGET:5d3800bf-e2d1-4eb2-b37f-996fb5dadb7e]}"
+   }
+  },
+  {
+   "type": "separador",
+   "d": {
+    "style": "neutral"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "You will receive an email in the weeks leading up to camp with instructions on **uniform pick-up time and location**, along with other important details about the camp.\nAll information will be shared both via email and through the camp's official **Telegram chat**. We highly recommend joining as soon as you register to ensure you don't miss any important updates. You can join by pressing the button below. Please note that you may need to download the app for free from your device's app store."
+   }
+  },
+  {
+   "type": "button",
+   "d": {
+    "btn": "Join Telegram Chat",
+    "url": "{[E-CUSTOM:Telegram]}",
+    "btnStyle": "dark",
+    "align": "center"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "While waiting for camp, don't forget to follow us on social media for camp news and updates, **{[E-CUSTOM:Instagram Handle]}** on Instagram.\nWe are very excited for the upcoming camp. **See you soon!**"
+   }
+  }
+ ]
+}

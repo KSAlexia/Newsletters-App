@@ -93,7 +93,7 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
   const [wc, wcHtml] = make('rmf-wc'), wcChecks = K.check(wc, wcHtml);
   // Desde el 12/11/2026 World Challenge tiene diseño propio: ya no hay header pendiente ni colores provisionales.
   assert.ok(!wcChecks.some(x => /Header de .*PENDIENTE/.test(x.msg)) && !wcChecks.some(x => /provisionales/.test(x.msg)));
-  assert.equal(K.CLIENT.tournaments.filter(t => t.club === 'bayern').map(t => t.section).join(), 'CANADA CAMPS,EXPERIENCES');
+  assert.equal(K.CLIENT.tournaments.filter(t => t.club === 'bayern').map(t => t.section).join(), 'Canada Camps,Experiences');
   console.log('OK: clubs con nombre, fuentes, colores, contacto y pendientes por sección.');
 }
 
@@ -101,7 +101,7 @@ console.log('OK: placeholders de imagen en imagen a sangre, con márgenes y prod
 {
   const script = 'BANNER 1: Título: Summer Camp 2027\nBANNER 2: Texto: Join us in **London** this summer.\nBANNER 3: Foto: jugadores celebrando\nBANNER 4: Botón: Book now\nHora: 10:00';
   const prompt = K.scriptPrompt('arsenal-exp', script);
-  assert.ok(prompt.includes('Arsenal · EXPERIENCES') && prompt.includes('"tournament":"arsenal-exp"') && prompt.endsWith(script));
+  assert.ok(prompt.includes('Arsenal · Experiences') && prompt.includes('"tournament":"arsenal-exp"') && prompt.endsWith(script));
   assert.ok(prompt.includes('PLACEHOLDER') && prompt.includes('PENDIENTE: '));
   const answer = { tournament: 'arsenal-exp', name: 'Summer', sections: [{ type: 'titulo', d: { title: 'Summer Camp 2027', btn: 'Book now' } }, { type: 'intro', d: { text: 'Join us in **London** this summer.' } }, { type: 'imagen', d: { src: 'PLACEHOLDER', alt: 'jugadores celebrando' } }, { type: 'info', d: { text: 'PENDIENTE: horarios' } }] };
   const r = K.importProject(JSON.stringify(answer), 'arsenal-exp');

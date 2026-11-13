@@ -1,0 +1,132 @@
+{
+ "tournament": "rmf-exp",
+ "name": "Real Madrid Foundation Clinic – All-In Pack Information",
+ "desc": "rmf_clinic_all_in_pack_information",
+ "franja": "Real Madrid Foundation Clinic · All-In Pack",
+ "franjaRight": "November 2026 · Madrid",
+ "mediaPackages": false,
+ "sections": [
+  {
+   "type": "title",
+   "d": {
+    "style": "principal",
+    "align": "left",
+    "text": "Your Week in Madrid,\n{[C-FIRST NAME:TC]}"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "size": "intro",
+    "text": "The countdown to Madrid is on, and we know you’re just as excited as we are! We’re now happy to share your **accommodation details** along with a few more important updates to help you prepare for the trip."
+   }
+  },
+  {
+   "type": "glance",
+   "d": {
+    "density": "editorial",
+    "l1": "Hotel",
+    "v1": "Novotel Madrid Campo de las Naciones 4*",
+    "l2": "Check-in",
+    "v2": "from 2 PM",
+    "l3": "Check-out",
+    "v3": "until 12 PM"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "Important information",
+    "fmt": "puntos",
+    "text": "Please note that, as previously informed, **the period for modifying your registration is closed** and we can’t guarantee you the needed modifications. If you need to make any change on your registration **you have to inform us via email**.\nChanges regarding sizes, participants, extra nights or type of rooms are not possible."
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/d63cb84c330346ae9019b60c34e2c1e6.png?d=620",
+    "f1_alt": "Real Madrid Foundation",
+    "size": "full"
+   }
+  },
+  {
+   "type": "textimg",
+   "d": {
+    "label": "Your hotel will be:",
+    "title": "Novotel Madrid Campo de las Naciones 4*",
+    "text": "Campo De Las Naciones, C. de Ámsterdam, N° 3, Barajas, 28042 Madrid\nCheck-in: from 2 PM\nCheck-out: until 12 PM",
+    "img": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/850c2bbf69114829b89eb38589bea447.jpg?d=295",
+    "alt": "Real Madrid Foundation",
+    "side": "left"
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/3ec547bace83473799db32c509683eb9.png",
+    "f1_alt": "Tentative Schedule - RMF Clinic November 2026 - All-In Pack",
+    "size": "full"
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/74efa03a83c94932a7e65d6e9bb69772.png?d=620",
+    "f1_alt": "Real Madrid Foundation",
+    "size": "full"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "text": "We’ll be using the **Telegram app** to communicate during the RMF Training Clinic. This is the same app used during the RMF Summer Camps, so you may already be familiar with it. If you no longer have it, please download the app again and join **the event’s official channel** to stay updated. Through this channel, we will share news, schedules, and updates daily."
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/f5a78b52cd43463f906f0b035c02d9a4.png?d=295",
+    "f1_alt": "Download on the App Store",
+    "f1_url": "https://apps.apple.com/es/app/telegram-messenger/id686449807",
+    "f2_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/9684508779cc41e2bfcf82efebddf611.png?d=295",
+    "f2_alt": "Get it on Google Play",
+    "f2_url": "https://play.google.com/store/apps/details?id=org.telegram.messenger&hl=es&gl=US"
+   }
+  },
+  {
+   "type": "button",
+   "d": {
+    "btn": "Join RMF Clinic Channel",
+    "url": "https://t.me/+Sy-Zl2ngwTBhYjVk",
+    "align": "center"
+   }
+  },
+  {
+   "type": "images",
+   "d": {
+    "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/17a152f861694e10bc6676066dd79000.png",
+    "f1_alt": "QR Code - Join RMF Clinic Channel on Telegram",
+    "f1_url": "https://t.me/+Sy-Zl2ngwTBhYjVk",
+    "size": "inset"
+   }
+  },
+  {
+   "type": "box",
+   "d": {
+    "style": "suave",
+    "density": "editorial",
+    "title": "Your registration access information:",
+    "fmt": "pares",
+    "text": "Confirmation number: {[C-CONFIRMATION NUM]}\nEmail used for registration: {[C-EMAIL]}"
+   }
+  },
+  {
+   "type": "text",
+   "d": {
+    "text": "To purchase any extra activity {[E-MODIFY REG LINK]}"
+   }
+  }
+ ]
+}

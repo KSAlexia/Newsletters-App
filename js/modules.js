@@ -456,10 +456,22 @@
     }
   };
 
+  // Contacto y firma de World Challenge (referencias rmf-wch/01 y 02): franja suave, frase de contacto, «Sincerely,» y firma.
+  // Sin contacto propio se usa el teléfono del evento, como en los dos ejemplos.
+  var WCH_PHONE = '{[E-CUSTOM:Event Phone Number]}';
+  function wchContact(t) {
+    var c = String((t && t.contact) || '').trim() || WCH_PHONE;
+    var who = /^[^\s@{}]+@[^\s@{}]+\.[^\s@{}]+$/.test(c) ? '<a href="mailto:' + attr(c) + '" style="color:' + C.title + ';text-decoration:underline;"><strong style="color:' + C.title + ';">' + esc(c) + '</strong></a>' : '<strong style="color:' + C.title + ';">' + esc(c) + '</strong>';
+    return section(cell('24px 40px', 'left', '<p style="' + F.reg + 'font-size:14px;line-height:22px;color:#000000;word-break:break-word;padding-bottom:12px;">For any questions, please contact us at: ' + who + '</p>' +
+      '<p style="' + F.reg + 'font-size:13px;line-height:20px;color:#000000;">Sincerely,</p>' +
+      '<p style="' + F.reg + 'font-size:15px;line-height:22px;color:#000000;"><strong style="font-family:Georgia, \'Times New Roman\', Times, serif;color:' + C.title + ';">{[P-FIRST NAME]} {[P-LAST NAME]}</strong></p>', C.contactBg), C.contactBg);
+  }
+
   M.contacto = {
     letter: 'F', name: 'Caja de contacto (Get in Touch)', tag: 'CONTACTO',
     fields: [], note: 'Texto fijo con el email de contacto y el teléfono del evento.',
     build: function (d, t) {
+      if (renderingWCH) return wchContact(t);
       var mail = t && t.club ? String(t.contact || '').trim() : K.CLIENT.contactEmail;
       var link = mail ? '<a href="mailto:' + attr(mail) + '" style="color:' + C.link + ';text-decoration:underline;"><span style="' + F.bold + '">' + esc(mail) + '</span></a>' : '<span style="' + F.bold + '">CONTACTO PENDIENTE</span>';
       return section(cell('16px 40px 32px 40px', 'center', TBL + ' style="background-color:' + C.contactBg + ';border:1px solid ' + C.line + ';border-left:4px solid ' + (renderingProfile ? C.edge : P) + ';"><tbody><tr><td align="center" style="padding:22px 24px;text-align:center;"><p style="' + F.ex60 + 'font-size:34px;line-height:38px;color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;padding-bottom:10px;">Get in Touch</p><p style="' + F.reg + 'font-size:15px;line-height:23px;color:#000000;text-align:center;word-break:break-word;">If you have any questions, please feel free to contact us at ' + link + '</p><p style="' + F.bold + 'font-size:15px;line-height:23px;color:' + P + ';text-align:center;padding-top:8px;word-break:break-word;"><span style="color: ' + C.title + ';"><span style="font-weight: bold;">For any questions, please contact us at: {[E-CUSTOM:Event Phone Number]}</span></span></p></td></tr></tbody></table>'));
@@ -477,7 +489,7 @@
   var HITOS = K.repeat({ key: function (n, k) { return k + n; }, countKey: 'hN', max: 8, keys: ['d', 's', 'h', 't'], noun: 'hito', more: '＋ Añadir otro hito',
     hint: 'Hasta 8 hitos, uno debajo de otro.',
     fields: function (n, show) {
-      return [{ k: 'd' + n, label: 'Fecha o momento', type: 'text', half: true, req: n === 1, ph: 'Day ' + n, showIf: show }, { k: 's' + n, label: 'Etiqueta bajo la fecha (opcional)', type: 'text', half: true, ph: 'Arrival', showIf: show }, { k: 'h' + n, label: 'Título', type: 'text', half: true, req: n === 1, showIf: show }, { k: 't' + n, label: 'Texto', type: 'area', hint: TIP, showIf: show }];
+      return [{ k: 'd' + n, label: 'Fecha o momento', type: 'text', half: true, req: n === 1, ph: 'Day ' + n, showIf: show }, { k: 's' + n, label: 'Etiqueta bajo la fecha (opcional)', type: 'text', half: true, ph: 'Arrival', showIf: show }, { k: 'h' + n, label: 'Título (opcional)', type: 'text', half: true, showIf: show }, { k: 't' + n, label: 'Texto', type: 'area', hint: TIP, showIf: show }];
     } });
   K.hitosCount = HITOS.count;
   M.datos = {
@@ -511,15 +523,42 @@
     }
   };
 
+  // Tarjetas apiladas junto a una foto (opción de Tarjetas): foto de 235 px y tarjetas compactas en la otra columna; en móvil, una debajo de otra.
+  // Referencia: «Tournament Wristbands» de World Challenge. Tarjeta oscura = color de banda; clara = fondo suave con borde.
+  function sideCards(cs, d) {
+    var IW = 235, GAP = 14, CW = 570 - IW - GAP, left = d.side !== 'right', radius = renderingWCH ? '' : 'border-radius:8px;';
+    var src = String(d.sideImg || '').trim();
+    var pic = isPh(src) ? phBlock(IW, 180) : '<img src="' + attr(src) + '" alt="' + attr(d.sideAlt) + '" title="' + attr(d.sideAlt) + '" border="0" width="' + IW + '" style="width:' + IW + 'px;max-width:100%;height:auto;display:block;' + radius + '" class="img-max" />';
+    var stack = cs.map(function (c, i) {
+      var dark = c.dark, fg = dark ? '#FFFFFF' : C.title, body = dark ? '#FFFFFF' : '#000000';
+      var h = (has(c.label) ? eyebrow(c.label, dark ? (renderingProfile ? C.onDark : A) : C.label, 'line-height:16px;padding-bottom:6px;') : '') +
+        (has(c.title) ? boxTitle(c.title, 19, 26, fg, 'padding-bottom:' + (has(c.price) ? 2 : 6) + 'px;') : '') +
+        (has(c.price) ? '<p style="' + F.black + 'font-size:18px;line-height:24px;color:' + fg + ';padding-bottom:6px;">' + esc(c.price.trim()) + '</p>' : '') +
+        (dark ? bodyText(c.text, 13, 21, body, 'left', 0).split(C.link).join('#FFFFFF') : bodyText(c.text, 13, 21, body, 'left', 0)) + (has(c.btn) ? cardButton(c, dark, true) : '');
+      var box = dark ? 'bgcolor="' + C.band + '" style="background-color:' + C.band + ';' + radius + 'padding:15px 18px;"' : 'bgcolor="' + SOFT + '" style="background-color:' + SOFT + ';border:2px solid ' + (renderingProfile ? C.edge : P) + ';' + radius + 'padding:13px 16px;"';
+      return (i ? '<tr><td style="height:12px;line-height:12px;font-size:0;">&nbsp;</td></tr>' : '') + '<tr><td ' + box + '>' + h + '</td></tr>';
+    }).join('');
+    var imgTd = '<td class="col2" width="' + IW + '" valign="middle" style="width:' + IW + 'px;' + (left ? 'padding-right:' + GAP + 'px;' : 'padding-left:' + GAP + 'px;') + '">' + pic + '</td>';
+    var cardsTd = '<td class="col2" width="' + CW + '" valign="top" style="width:' + CW + 'px;">' + TBL + ' style="border-collapse:separate !important;"><tbody>' + stack + '</tbody></table></td>';
+    return TBL + '><tbody><tr>' + (left ? imgTd + cardsTd : cardsTd + imgTd) + '</tr></tbody></table>';
+  }
+
   M.cards = {
     letter: 'K', name: 'Tarjetas', tag: 'TARJETAS',
-    fields: CARDS.fields().concat([{ k: 'imgScale', label: 'Tamaño de las imágenes de las tarjetas', type: 'select', opts: SCALE_OPTS.map(function (o) { return o[0] ? o : ['', '100 % (todo el ancho de la tarjeta)']; }), showIf: function (d) { return K.cardItems(d).some(function (c) { return has(c.img); }); } }]),
+    fields: CARDS.fields().concat([
+      { type: 'head', label: 'Foto al lado (opcional)' },
+      { k: 'sideImg', label: 'Foto junto a las tarjetas · custom link de Cvent', type: 'url', img: true, half: true }, { k: 'sideAlt', label: 'Descripción de la foto (alt)', type: 'text', half: true },
+      { k: 'side', label: 'Foto', type: 'select', opts: [['left', 'A la izquierda (tarjetas apiladas a la derecha)'], ['right', 'A la derecha (tarjetas apiladas a la izquierda)']], showIf: function (d) { return has(d.sideImg); } },
+      { k: 'imgScale', label: 'Tamaño de las imágenes de las tarjetas', type: 'select', opts: SCALE_OPTS.map(function (o) { return o[0] ? o : ['', '100 % (todo el ancho de la tarjeta)']; }), showIf: function (d) { return K.cardItems(d).some(function (c) { return has(c.img); }); } }]),
     // Mismo margen que «Dos tarjetas»; con dos tarjetas claras (sin imagen) el HTML es idéntico al del bloque antiguo.
     build: function (d) {
       var cs = K.cardItems(d), pics = cs.some(function (c) { return has(c.img); });
       // Sin ningún título todavía, se pintan los recuadros vacíos (como el bloque antiguo) para poder verlos y pulsarlos.
       if (!cs.length) for (var n = 1; n <= K.cardsCount(d); n++) cs.push({ dark: d['c' + n + '_style'] === 'dark' });
-      return section(cell('32px 40px 10px 40px', 'left', cs.length === 2 && !cs[0].dark && !cs[1].dark && !pics ? twoCards(cs[0], cs[1]) : cardRows(cs, scalePct(d.imgScale))));
+      if (has(d.sideImg)) return section(cell('24px 40px 10px 40px', 'left', sideCards(cs, d)));
+      var html = section(cell('32px 40px 10px 40px', 'left', cs.length === 2 && !cs[0].dark && !cs[1].dark && !pics ? twoCards(cs[0], cs[1]) : cardRows(cs, scalePct(d.imgScale))));
+      // WCH: tarjetas de esquinas rectas, como en sus emails de ejemplo.
+      return renderingWCH ? html.replace(/border-radius:14px( 14px 0 0| 0 0 14px 14px)?;/g, 'border-radius:0;').replace(/border-radius:8px;/g, 'border-radius:0;') : html;
     }
   };
 
@@ -654,14 +693,16 @@
     return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" style="margin-top:' + (top == null ? 10 : top) + 'px;border-collapse:separate !important;"><tbody><tr><td bgcolor="' + P + '" style="background-color:' + P + ';padding:5px 10px;border-radius:3px;"><p style="' + SANS + 'font-size:12px;line-height:15px;color:' + C.buttonText + ';letter-spacing:1px;text-transform:uppercase;">' + esc(String(text).trim()) + '</p></td></tr></tbody></table>';
   }
   // Botón de 190 px: «gold» (color principal, texto según la marca) u «dark» (carbón, texto blanco).
+  // Estilos de botón: principal de la marca, acento (p. ej. el rojo de Telegram en PSG) u oscuro. Sin elegir, el principal de siempre.
+  var BTN_STYLES = [['gold', 'Color principal de la marca (rojo en Arsenal, dorado en WCH)'], ['accent', 'Color de acento (p. ej. rojo en PSG, para Telegram)'], ['dark', 'Oscuro (carbón)']];
   function btn190(text, url, style, align) {
-    var bg = style === 'dark' ? C.band : C.button, color = style === 'dark' ? '#FFFFFF' : C.buttonText;
+    var bg = style === 'dark' ? C.band : style === 'accent' ? A : C.button, color = style === 'dark' || style === 'accent' ? '#FFFFFF' : C.buttonText;
     return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="190" align="' + (align || 'center') + '" style="width:190px;margin:' + (align === 'left' ? '18px 0 0 0' : '22px auto 0 auto') + ';border-collapse:separate !important;" class="mobile-button"><tbody><tr><td align="center" bgcolor="' + bg + '" style="background-color:' + bg + ';border:1px solid ' + bg + ';border-radius:' + C.btnRadius + ';"><a href="' + attr(url) + '" target="_blank" style="display:block;padding:13px 10px;' + SANS + 'font-size:11px;line-height:15px;color:' + color + ';text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;text-align:center;">' + esc(text) + '</a></td></tr></tbody></table>';
   }
   function optBtn(d, align) { return has(d.btn) ? btn190(d.btn.trim(), String(d.url || '').trim() || '#', d.btnStyle, align) : ''; }
   var BTN_FIELDS = [
     { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true },
-    { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']] }
+    { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: BTN_STYLES }
   ];
   function sectionTitle(text) {
     return has(text) ? '<p style="' + titleFont(text, 'ex60', 22, 28) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;word-break:break-word;">' + esc(text.trim()) + '</p>' + bar(40, P, 'center', '12px auto 22px auto') : '';
@@ -766,9 +807,11 @@
     ].concat(BTN_FIELDS),
     defaults: { btnStyle: 'gold' },
     build: function (d) {
-      var h = (has(d.title) ? boxTitle(d.title, 20, 26, C.title, 'text-align:center;') : '') + bodyText(d.text, 14, 22, '#000000', 'center', has(d.title) ? 10 : 0) +
-        (has(d.line) ? '<p style="' + SANS + 'font-size:14px;line-height:22px;color:' + C.title + ';text-align:center;padding-top:12px;word-break:break-word;">' + inline(d.line) + '</p>' : '') + optBtn(d);
-      return section(cell('16px 40px', 'center', TBL + ' style="background-color:#FFFFFF;border:2px solid ' + C.hilite + ';border-radius:8px;border-collapse:separate !important;"><tbody><tr><td align="center" style="padding:24px 26px;">' + h + '</td></tr></tbody></table>'));
+      // La etiqueta solo existe en la «Caja» con borde (el bloque antiguo no la tiene): antes se ignoraba y el texto se perdía.
+      var h = (has(d.label) ? eyebrow(d.label, C.label, 'text-align:center;padding-bottom:10px;') : '') + (has(d.title) ? boxTitle(d.title, 20, 26, C.title, 'text-align:center;') : '') + bodyText(d.text, 14, 22, '#000000', 'center', has(d.title) ? 10 : 0) +
+        (has(d.line) ? (renderingWCH && /^\{\[E-(MODIFY REG|RSVP YES) LINK\]\}$/.test(d.line.trim()) ? wchLinkButton(d.line.trim()) : '<p style="' + SANS + 'font-size:14px;line-height:22px;color:' + C.title + ';text-align:center;padding-top:12px;word-break:break-word;">' + inline(d.line) + '</p>') : '') + optBtn(d);
+      // WCH: caja recta y más compacta, como en sus emails de ejemplo.
+      return section(cell('16px 40px', 'center', TBL + ' style="background-color:#FFFFFF;border:2px solid ' + C.hilite + ';' + (renderingWCH ? '' : 'border-radius:8px;') + 'border-collapse:separate !important;"><tbody><tr><td align="center" style="padding:' + (renderingWCH ? '15px 18px' : '24px 26px') + ';">' + h + '</td></tr></tbody></table>'));
     }
   };
 
@@ -776,17 +819,24 @@
     letter: 'U', name: 'Botón suelto (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Botón».', tag: 'BOTON',
     fields: [
       { k: 'btn', label: 'Texto del botón', type: 'text', req: true, half: true }, { k: 'url', label: 'Enlace', type: 'url', req: true, half: true },
-      { k: 'btnStyle', label: 'Estilo', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']] }
+      { k: 'btnStyle', label: 'Estilo', type: 'select', opts: BTN_STYLES }
     ],
     defaults: { btnStyle: 'gold' },
     build: function (d) { return section(cell('6px 40px 16px 40px', 'center', btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle))); }
   };
+
+  // WCH: un campo de Cvent que genera su propio enlace (no se puede meter dentro de otro <a>) va en un recuadro dorado de botón.
+  function wchLinkButton(field) {
+    return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="190" align="center" bgcolor="' + C.button + '" style="width:190px;background-color:' + C.button + ';border:1px solid ' + C.button + ';border-collapse:separate !important;margin:12px auto 0 auto;" class="mobile-button"><tbody><tr><td align="center" style="padding:10px 15px;' + SANS + 'font-size:12px;line-height:16px;color:' + C.buttonText + ';">' + esc(field) + '</td></tr></tbody></table>';
+  }
 
   M.important = {
     letter: 'V', name: 'Aviso «Important» (antiguo)', note: 'Bloque antiguo. Para newsletters nuevas usa «Caja» oscura.', tag: 'IMPORTANT',
     fields: [{ k: 'label', label: 'Etiqueta', type: 'text', ph: 'IMPORTANT' }, { k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }],
     defaults: { label: 'IMPORTANT' },
     build: function (d) {
+      // WCH (sus emails de ejemplo): caja carbón recta, etiqueta en texto dorado y texto blanco de 13/21.
+      if (renderingWCH) return section(cell('12px 40px', 'left', TBL + ' bgcolor="' + C.band + '" style="background-color:' + C.band + ';"><tbody><tr><td bgcolor="' + C.band + '" style="padding:15px 19px;background-color:' + C.band + ';">' + eyebrow(has(d.label) ? d.label : 'IMPORTANT', C.label, 'line-height:16px;padding-bottom:8px;') + bodyText(d.text, 13, 21, '#FFFFFF', 'left', 0).split(C.link).join('#FFFFFF') + '</td></tr></tbody></table>'));
       // Sobre carbón, los enlaces y negritas van en blanco.
       var h = tag(has(d.label) ? d.label : 'IMPORTANT', 0) + bodyText(d.text, 14, 22, '#FFFFFF', 'left', 12).split(C.link).join('#FFFFFF');
       return section(cell('12px 40px', 'left', TBL + ' bgcolor="' + C.band + '" style="background-color:' + C.band + ';border-radius:8px;border-collapse:separate !important;"><tbody><tr><td bgcolor="' + C.band + '" style="padding:22px 24px;background-color:' + C.band + ';border-radius:8px;">' + h + '</td></tr></tbody></table>'));
@@ -859,7 +909,7 @@
   // Alineación de una pieza: el Título según su estilo (o la elegida); Texto y Botón heredan la de la celda si no se elige.
   function flowAlign(s, groupAlign) {
     var d = s.d || {};
-    if (s.type === 'title') return titleStyle(d) === 'entre' ? 'center' : (d.align === 'left' || d.align === 'center' ? d.align : (renderingWCH && titleStyle(d)==='seccion' ? 'center' : TITLE_ALIGN[titleStyle(d)]));
+    if (s.type === 'title') return titleStyle(d) === 'entre' ? 'center' : (d.align === 'left' || d.align === 'center' ? d.align : TITLE_ALIGN[titleStyle(d)]);
     if (s.type === 'list') return 'left';
     return d.align === 'left' || d.align === 'center' ? d.align : (groupAlign || (s.type === 'button' ? 'center' : 'left'));
   }
@@ -872,6 +922,12 @@
       // El Botón solo se une a una celda que empieza con un Título principal (como en el antiguo «Título centrado»);
       // si no, es el Botón suelto de siempre.
       var head = g && secs[g.start], principalHead = head && head.type === 'title' && titleStyle(head.d || {}) === 'principal';
+      // Con kit, un Título principal justo bajo un Antetítulo va en su misma celda (rótulo pegado al titular, como en las referencias).
+      var anteHead = renderingProfile && g && g.start === g.end && i === g.end + 1 && head.type === 'title' && titleStyle(head.d || {}) === 'ante' && s.type === 'title' && titleStyle(s.d || {}) === 'principal' && flowAlign(s, g.align) === g.align;
+      if (anteHead && i !== breakAt) { g.end = i; return; }
+      // WCH: el saludo «Dear …» va en la celda del titular, como en sus ejemplos (pegado al titular y a la introducción).
+      var prevPiece = g && secs[i - 1];
+      if (renderingWCH && g && i !== breakAt && i === g.end + 1 && prevPiece && prevPiece.type === 'title' && titleStyle(prevPiece.d || {}) === 'principal' && s.type === 'title' && titleStyle(s.d || {}) === 'saludo' && flowAlign(s, g.align) === g.align) { g.end = i; return; }
       var joins = flow && g && i !== breakAt && s.type !== 'title' && secs[i - 1] && secs[i - 1].type !== 'button' && secs[i - 1].type !== 'box' && (s.type !== 'button' || principalHead) && flowAlign(s, g.align) === g.align;
       // Una Caja suave solo de texto justo después de un Título de sección = la antigua «Banda informativa» con título.
       if (s.type === 'box' && g && i !== breakAt && g.start === g.end && g.align === 'left' && head.type === 'title' && titleStyle(head.d || {}) === 'seccion' && boxSimple(s.d || {})) { g.end = i; return; }
@@ -888,16 +944,19 @@
     if (s.type === 'title' && next && next.type === 'box') return '<p style="' + titleFont(d.text, 'ex60', 34, 38).replace('font-size:34px;line-height:38px;', 'font-size:' + C.h2 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;padding-bottom:16px;">' + br(esc((d.text || '').trim())) + '</p>';
     if (s.type === 'title') {
       var st = titleStyle(d), txt = br(esc((d.text || '').trim())), ta = align === 'center' ? 'text-align:center;' : '';
-      if (st === 'principal') return '<p style="' + titleFont(d.text, 'ex60', 38, 42).replace('font-size:38px;line-height:42px;', 'font-size:' + C.h1 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:' + align + ';word-break:break-word;">' + txt + '</p>' + (align === 'center' ? bar(56, P, 'center', '14px auto 0 auto') : bar(56, P, 'left', '14px 0 0 0').replace(' align="left"', '')); // a la izquierda, sin align: una tabla con align flota y el texto de debajo se le pondría al lado
-      if (st === 'seccion') return '<p style="' + titleFont(d.text, 'ex60', 34, 38).replace('font-size:34px;line-height:38px;', 'font-size:' + C.h2 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';' + ta + 'padding-bottom:16px;word-break:break-word;">' + txt + '</p>' + (renderingWCH ? bar(40,P,'center','0 auto 16px auto').replace(/height="4"/g,'height="3"').replace(/height:4px/g,'height:3px') : '');
+      if (st === 'principal') return '<p style="' + titleFont(d.text, 'ex60', 38, 42).replace('font-size:38px;line-height:42px;', 'font-size:' + C.h1 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:' + align + ';' + (prev && prev.type === 'title' && titleStyle(prev.d || {}) === 'ante' ? 'padding-top:8px;' : '') + 'word-break:break-word;">' + txt + '</p>' + (align === 'center' ? bar(56, P, 'center', '14px auto 0 auto') : bar(56, P, 'left', '14px 0 0 0').replace(' align="left"', '')); // a la izquierda, sin align: una tabla con align flota y el texto de debajo se le pondría al lado
+      if (st === 'seccion') return '<p style="' + titleFont(d.text, 'ex60', 34, 38).replace('font-size:34px;line-height:38px;', 'font-size:' + C.h2 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';' + ta + 'padding-bottom:' + (renderingWCH ? 14 : 16) + 'px;word-break:break-word;">' + txt + '</p>'; // WCH: como sus ejemplos, a la izquierda y sin barra
+      // WCH (sus ejemplos): el saludo es una línea en negrita del tamaño de la introducción, pegada al texto.
+      if (st === 'saludo' && renderingWCH) return '<p style="' + F.bold + 'font-size:15px;line-height:25px;color:' + C.title + ';' + ta + (prev ? 'padding-top:20px;' : '') + 'word-break:break-word;">' + txt + '</p>';
       if (st === 'saludo') return '<p style="' + F.bold + 'font-size:28px;line-height:34px;color:' + C.title + ';' + ta + 'word-break:break-word;">' + txt + '</p>';
-      if (st === 'ante') return '<p style="' + SANS + 'font-size:12px;line-height:16px;color:' + (renderingProfile ? C.label : P) + ';letter-spacing:2px;text-transform:uppercase;' + ta + 'word-break:break-word;">' + txt + '</p>';
+      if (st === 'ante') return '<p style="' + SANS + 'font-size:' + (renderingWCH ? 11 : 12) + 'px;line-height:16px;color:' + (renderingProfile ? C.label : P) + ';letter-spacing:2px;text-transform:uppercase;' + ta + 'word-break:break-word;">' + txt + '</p>';
       return bar(80, A, 'center', '0 auto') + '<p style="' + titleFont(d.text, 'ex60', 36, 40) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;padding-top:18px;word-break:break-word;">' + txt + '</p>' + bar(80, A, 'center', '18px auto 0 auto');
     }
     if (s.type === 'text') {
       var afterTitle = prev && prev.type === 'title', small = d.size === 'small';
       paras(d.text).forEach(function (p, i) {
-        if (d.size === 'intro' || d.size === 'body') h += '<p style="' + F.reg + 'font-size:' + (d.size === 'intro' ? '15px;line-height:25px;' : '14px;line-height:23px;') + 'color:#000000;text-align:' + align + ';' + (i || prev ? 'padding-top:14px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
+        var afterGreeting = !i && renderingWCH && prev && prev.type === 'title' && titleStyle(prev.d || {}) === 'saludo';
+        if (d.size === 'intro' || d.size === 'body') h += '<p style="' + F.reg + 'font-size:' + (d.size === 'intro' ? '15px;line-height:25px;' : '14px;line-height:23px;') + 'color:#000000;text-align:' + align + ';' + ((i || prev) && !afterGreeting ? 'padding-top:14px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
         else if (align === 'center') h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;text-align:center;padding-top:' + (i ? 8 : (prev ? 20 : 0)) + 'px;word-break:break-word;">' + inline(p) + '</p>';
         else if (small) h += '<p style="' + F.reg + 'font-size:13px;line-height:21px;color:#000000;' + (i ? 'padding-top:7px;' : prev ? 'padding-top:10px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
         else h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;' + (i || prev ? 'padding-top:14px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
@@ -908,7 +967,7 @@
     // Botón dentro de una celda (tras un título o un texto): el estilo de botón del antiguo «Título centrado».
     var b = button(String(d.btn || '').trim(), String(d.url || '').trim() || '#', false);
     if (align === 'left') b = b.replace('align="center" style="margin:22px auto 0 auto;', 'align="left" style="margin:18px 0 0 0;');
-    if (d.btnStyle === 'dark') b = b.split('bgcolor="' + C.button + '" style="background-color:' + C.button).join('bgcolor="' + C.band + '" style="background-color:' + C.band).split('color:' + C.buttonText).join('color:#FFFFFF');
+    if (d.btnStyle === 'dark' || d.btnStyle === 'accent') { var bb = d.btnStyle === 'dark' ? C.band : A; b = b.split('bgcolor="' + C.button + '" style="background-color:' + C.button).join('bgcolor="' + bb + '" style="background-color:' + bb).split('color:' + C.buttonText).join('color:#FFFFFF'); }
     return b;
   }
   // Márgenes de la celda: arriba según la primera pieza; abajo según la última (y el estilo del título que abre la celda).
@@ -956,7 +1015,7 @@
     note: 'Debajo de un Título principal (y su texto) se une a ellos como en el antiguo «Título centrado». En cualquier otro sitio es un botón de 190 px.',
     fields: [
       { k: 'btn', label: 'Texto del botón', type: 'text', req: true, half: true }, { k: 'url', label: 'Enlace', type: 'url', req: true, half: true },
-      { k: 'btnStyle', label: 'Estilo', type: 'select', half: true, opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']] }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: [['', 'Como el texto de encima'], ['left', 'Izquierda'], ['center', 'Centrada']] }
+      { k: 'btnStyle', label: 'Estilo', type: 'select', half: true, opts: BTN_STYLES }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: [['', 'Como el texto de encima'], ['left', 'Izquierda'], ['center', 'Centrada']] }
     ],
     defaults: { btnStyle: 'gold' },
     build: function (d) { var s = { type: 'button', d: d }; return K.flowCell([s], flowAlign(s)); }
@@ -980,7 +1039,7 @@
       { k: 'imgW', label: 'Tamaño de la imagen', type: 'select', half: true, opts: [['', 'Mitad (275 px)'], ['small', 'Pequeña (200 px)'], ['large', 'Grande (340 px)']] },
       { k: 'valign', label: 'Alineación vertical', type: 'select', opts: [['middle', 'Centrados'], ['top', 'Arriba']] },
       { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true },
-      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']], showIf: function (d) { return has(d.btn); } }
+      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: BTN_STYLES, showIf: function (d) { return has(d.btn); } }
     ],
     defaults: { side: 'right', valign: 'middle', btnStyle: 'gold' },
     build: function (d) {
@@ -999,10 +1058,11 @@
   };
 
   // Imagen: de 1 a 3 por fila. Una = el antiguo «Imagen» (a sangre o con márgenes); tres = «Tres fotos en fila».
-  var IMGS = K.repeat({ prefix: 'f', countKey: 'fN', max: 3, keys: ['src', 'alt'], titleKey: 'src', titleName: 'enlace de imagen', noun: 'imagen',
+  var IMGS = K.repeat({ prefix: 'f', countKey: 'fN', max: 3, keys: ['src', 'alt'], allKeys: ['src', 'alt', 'url'], titleKey: 'src', titleName: 'enlace de imagen', noun: 'imagen',
     hint: 'Hasta 3 imágenes en fila. En móvil, una debajo de otra.',
     fields: function (n, show) {
-      return [{ k: 'f' + n + '_src', label: 'Imagen ' + n + ' · custom link de Cvent', type: 'url', req: n === 1, img: true, showIf: show }, { k: 'f' + n + '_alt', label: 'Imagen ' + n + ' · descripción (alt)', type: 'text', req: n === 1, showIf: show }];
+      return [{ k: 'f' + n + '_src', label: 'Imagen ' + n + ' · custom link de Cvent', type: 'url', req: n === 1, img: true, showIf: show }, { k: 'f' + n + '_alt', label: 'Imagen ' + n + ' · descripción (alt)', type: 'text', req: n === 1, half: true, showIf: show },
+        { k: 'f' + n + '_url', label: 'Imagen ' + n + ' · enlace al pulsarla (opcional)', type: 'url', half: true, showIf: show, ph: 'https://… o {[E-CUSTOM:Telegram]}' }];
     } });
   K.imagesCount = IMGS.count;
   M.images = {
@@ -1012,23 +1072,36 @@
       { k: 'scale', label: 'Escala (más pequeña, con más margen)', type: 'select', opts: SCALE_OPTS, hint: 'Reduce la imagen (o la fila) y la centra. En móvil mantiene la proporción.' }
     ]),
     defaults: { size: 'full' },
+    // Enlace opcional por imagen (badges de app, QR de Telegram, vídeos): envuelve su <img>. Sin enlace, el HTML de siempre.
     build: function (d) {
-      var its = IMGS.items(d), pct = scalePct(d.scale);
-      // Escala (opcional, nueva): la fila ocupa ese % de los 570 px útiles y se centra. Sin escala, el HTML de siempre.
-      if (pct) {
-        var list = its.length ? its : [{ src: d.f1_src, alt: d.f1_alt }], total = Math.round(570 * pct / 100), n = list.length, w = Math.floor((total - 12 * (n - 1)) / n);
-        var pics = list.map(function (it) { return '<td class="col2" width="' + w + '" valign="top" style="width:' + w + 'px;">' + scaledPic(it.src, it.alt, w, n === 3 ? 'border-radius:6px;' : '') + '</td>'; });
-        return section(cell('12px 40px', 'center', '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="' + total + '" align="center" style="width:100%;max-width:' + total + 'px;margin:0 auto;"><tbody><tr>' + pics.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
-      }
-      if (its.length <= 1) return M.imagen.build({ src: its.length ? its[0].src : d.f1_src, alt: its.length ? its[0].alt : d.f1_alt, size: d.size });
-      if (its.length === 3) return M.fotos3.build({ src1: its[0].src, alt1: its[0].alt, src2: its[1].src, alt2: its[1].alt, src3: its[2].src, alt3: its[2].alt });
-      var cells = its.map(function (it) {
-        var src = String(it.src || '').trim();
-        return '<td class="col2" width="279" valign="top" style="width:279px;">' + (isPh(src) ? phBlock(279, 210) : '<img src="' + attr(src) + '" alt="' + attr(it.alt) + '" title="' + attr(it.alt) + '" border="0" width="279" style="width:279px;max-width:100%;height:auto;display:block;" class="img-max" />') + '</td>';
+      var html = imagesBuild(d);
+      IMGS.items(d).forEach(function (it) {
+        var src = String(it.src || '').trim(), url = String(it.url || '').trim();
+        if (!url || !src || isPh(src)) return;
+        var at = html.indexOf('<img src="' + attr(src) + '"'); if (at < 0) return;
+        var end = html.indexOf('/>', at) + 2;
+        html = html.slice(0, at) + '<a href="' + attr(url) + '" target="_blank" style="text-decoration:none;">' + html.slice(at, end) + '</a>' + html.slice(end);
       });
-      return section(cell('12px 40px', 'center', TBL + '><tbody><tr>' + cells.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
+      return html;
     }
   };
+  // HTML de Imagen sin enlaces (1 a 3 imágenes, con o sin escala).
+  function imagesBuild(d) {
+    var its = IMGS.items(d), pct = scalePct(d.scale);
+    // Escala (opcional, nueva): la fila ocupa ese % de los 570 px útiles y se centra. Sin escala, el HTML de siempre.
+    if (pct) {
+      var list = its.length ? its : [{ src: d.f1_src, alt: d.f1_alt }], total = Math.round(570 * pct / 100), n = list.length, w = Math.floor((total - 12 * (n - 1)) / n);
+      var pics = list.map(function (it) { return '<td class="col2" width="' + w + '" valign="top" style="width:' + w + 'px;">' + scaledPic(it.src, it.alt, w, n === 3 ? 'border-radius:6px;' : '') + '</td>'; });
+      return section(cell('12px 40px', 'center', '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="' + total + '" align="center" style="width:100%;max-width:' + total + 'px;margin:0 auto;"><tbody><tr>' + pics.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
+    }
+    if (its.length <= 1) return M.imagen.build({ src: its.length ? its[0].src : d.f1_src, alt: its.length ? its[0].alt : d.f1_alt, size: d.size });
+    if (its.length === 3) return M.fotos3.build({ src1: its[0].src, alt1: its[0].alt, src2: its[1].src, alt2: its[1].alt, src3: its[2].src, alt3: its[2].alt });
+    var cells = its.map(function (it) {
+      var src = String(it.src || '').trim();
+      return '<td class="col2" width="279" valign="top" style="width:279px;">' + (isPh(src) ? phBlock(279, 210) : '<img src="' + attr(src) + '" alt="' + attr(it.alt) + '" title="' + attr(it.alt) + '" border="0" width="279" style="width:279px;max-width:100%;height:auto;display:block;" class="img-max" />') + '</td>';
+    });
+    return section(cell('12px 40px', 'center', TBL + '><tbody><tr>' + cells.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
+  }
 
 
   // ============================================================
@@ -1036,6 +1109,16 @@
   //   suave solo con texto = «Banda informativa» (con Título de sección encima = la banda con título)
   //   suave con etiqueta, título, fecha o botón = «Step» · con borde = «Llamada a la acción» · oscura = «Important»
   // ============================================================
+  // Pares etiqueta/valor (Caja suave, formato «Datos»): cada línea «Etiqueta: valor» → etiqueta pequeña en mayúsculas y el valor en negrita debajo,
+  // como el resumen de registro de los Camps. Una línea sin «:» sale como párrafo normal.
+  function pairLines(text) {
+    return paras(text).map(function (p, i) {
+      var m = p.match(/^([^:{}\[\]]{1,60}):\s+(.+)$/);
+      if (!m) return '<p style="' + F.reg + 'font-size:14px;line-height:22px;color:#000000;word-break:break-word;padding-top:' + (i ? 12 : 0) + 'px;">' + inline(p) + '</p>';
+      return '<p style="' + SANS + 'font-size:10px;line-height:14px;color:' + GREY + ';letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:' + (i ? 12 : 0) + 'px;">' + esc(m[1].replace(/\*\*/g, '').trim()) + '</p>' +
+        '<p style="' + F.bold + 'font-size:14px;line-height:20px;color:' + C.title + ';word-break:break-word;padding-top:2px;">' + inline(m[2].replace(/^\*\*(.*)\*\*$/, '$1')) + '</p>';
+    }).join('');
+  }
   function boxStyle(d) { return d.style === 'borde' || d.style === 'oscura' ? d.style : 'suave'; }
   var BOX_EMPTY = 'KSA_CAJA_VACIA';
   function boxSimple(d) { return d.density !== 'editorial' && boxStyle(d) === 'suave' && !has(d.label) && !has(d.title) && !has(d.deadline) && !has(d.btn); }
@@ -1046,19 +1129,23 @@
       { k: 'label', label: 'Etiqueta (opcional)', type: 'text', half: true, ph: 'Step 1 · IMPORTANT' }, { k: 'deadline', label: 'Fecha límite (etiqueta de color, opcional)', type: 'text', half: true, ph: 'Deadline: May 1', showIf: function (d) { return boxStyle(d) === 'suave'; } },
       { k: 'title', label: 'Título de la caja (opcional)', type: 'text', showIf: function (d) { return boxStyle(d) !== 'oscura'; } },
       { k: 'text', label: 'Texto', type: 'area', hint: TIP },
-      { k: 'fmt', label: 'Formato del texto', type: 'select', opts: [['', 'Párrafos'], ['puntos', 'Puntos (una línea, un punto)']], showIf: function (d) { return boxStyle(d) === 'suave'; } },
+      { k: 'fmt', label: 'Formato del texto', type: 'select', opts: [['', 'Párrafos'], ['puntos', 'Puntos (una línea, un punto)'], ['pares', 'Datos: una línea «Etiqueta: valor» (etiqueta pequeña encima del valor)']], showIf: function (d) { return boxStyle(d) === 'suave'; } },
       { k: 'line', label: 'Línea con enlace de Cvent (opcional)', type: 'text', ph: 'Register here: {[E-RSVP YES LINK]}', hint: 'Escribe el campo de Cvent suelto: genera su propio enlace.', showIf: function (d) { return boxStyle(d) === 'borde'; } },
       { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true, showIf: function (d) { return boxStyle(d) !== 'oscura'; } }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true, showIf: function (d) { return boxStyle(d) !== 'oscura'; } },
-      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: [['gold', 'Color principal (dorado en WCH)'], ['dark', 'Oscuro (carbón)']], showIf: function (d) { return boxStyle(d) !== 'oscura' && has(d.btn); } }
+      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: BTN_STYLES, showIf: function (d) { return boxStyle(d) !== 'oscura' && has(d.btn); } }
     ],
     defaults: { style: 'suave', btnStyle: 'gold' },
     build: function (d) {
       var st = boxStyle(d);
+      // «Datos» (etiqueta encima del valor) se pinta con la composición compacta, que admite etiqueta, título y botón.
+      if (d.fmt === 'pares' && st === 'suave' && d.density !== 'editorial') d = Object.assign({}, d, { density: 'editorial' });
       if (d.density === 'editorial' && st !== 'oscura') {
         var bordered = st === 'borde', align = bordered ? 'center' : 'left';
-        var content = (has(d.title) ? boxTitle(d.title,bordered ? 22 : 20,bordered ? 28 : 26,C.title,'text-align:'+align+';padding-bottom:10px;') : '') + (has(d.deadline) ? tag(d.deadline) : '') + (d.fmt === 'puntos' ? dotLines(d.text,14,23,0) : bodyText(d.text,bordered ? 15 : 14,bordered ? 24 : 23,'#000000',align,0)) + (has(d.line) ? bodyText(d.line,15,25,'#000000',align,12) : '') + optBtn(d,align);
-        var label = has(d.label) ? TBL+'><tbody><tr><td style="border-top:1px solid '+C.line+';padding-top:22px;padding-bottom:14px;">'+eyebrow(d.label,C.label,'line-height:16px;')+'</td></tr></tbody></table>' : '';
-        return section(cell(bordered ? '26px 40px 34px 40px' : '24px 40px 0 40px',align,label+TBL+' style="background-color:'+(bordered ? '#FFFFFF' : SOFT)+';'+(bordered ? 'border:2px solid '+C.edge : 'border-left:4px solid '+C.edge)+';"><tbody><tr><td style="padding:'+(bordered ? '22px 24px' : '18px 22px')+';text-align:'+align+';">'+content+'</td></tr></tbody></table>'));
+        var content = (has(d.title) ? boxTitle(d.title,bordered ? 22 : 20,bordered ? 28 : 26,C.title,'text-align:'+align+';padding-bottom:10px;') : '') + (has(d.deadline) ? tag(d.deadline) : '') + (d.fmt === 'puntos' ? dotLines(d.text,14,23,0) : d.fmt === 'pares' && !bordered ? pairLines(d.text) : bodyText(d.text,bordered ? 15 : 14,bordered ? 24 : 23,'#000000',align,0)) + (has(d.line) ? bodyText(d.line,15,25,'#000000',align,12) : '') + optBtn(d,align);
+        // WCH (sus emails de ejemplo): la etiqueta va dentro de la caja, encima del texto. Resto de kits: rótulo con línea encima.
+        var label = has(d.label) && !renderingWCH ? TBL+'><tbody><tr><td style="border-top:1px solid '+C.line+';padding-top:22px;padding-bottom:14px;">'+eyebrow(d.label,C.label,'line-height:16px;')+'</td></tr></tbody></table>' : '';
+        if (has(d.label) && renderingWCH) content = eyebrow(d.label, C.label, 'line-height:16px;text-align:'+align+';padding-bottom:8px;') + content;
+        return section(cell(bordered ? '26px 40px 34px 40px' : '24px 40px 0 40px',align,label+TBL+' style="background-color:'+(bordered ? '#FFFFFF' : SOFT)+';'+(bordered ? 'border:2px solid '+C.edge : 'border-left:4px solid '+C.edge)+';"><tbody><tr><td style="padding:'+(renderingWCH ? (bordered ? '15px 18px' : '17px 20px') : (bordered ? '22px 24px' : '18px 22px'))+';text-align:'+align+';">'+content+'</td></tr></tbody></table>'));
       }
       if (st === 'oscura') return M.important.build({ label: has(d.label) ? d.label : 'IMPORTANT', text: d.text });
       if (st === 'borde') return M.cta.build(d);
@@ -1098,7 +1185,7 @@
     var off = wch ? {} : (st.off || {});
     if (!off.header && t.header) add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : (kit ? (kit.header.name || kit.name) : (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name))));
     var banner = kit ? kit.mediaBanner.url : (t.club ? t.mediaBanner : K.CLIENT.mediaBanner);
-    if (st.mediaPackages && banner) add('BANNER', imgFull(banner, 'Media Packages - ' + t.name));
+    if (st.mediaPackages && banner) add('BANNER', imgFull(banner, 'Media Packages - ' + (t.club ? t.clubName + ' · ' + t.sectionKey : t.name))); // texto alternativo de siempre
     if (!off.franja) add('FRANJA', M.franja.build({ left: wch ? t.franjaLeft : st.franjaLeft, right: wch ? t.franjaRight : st.franjaRight }, t));
     var preview = !!(opts && opts.preview), pendingAt = preview && opts.pendingAt != null ? opts.pendingAt : -1;
     // Bloque nuevo aún sin tipo: solo en la vista previa, nunca en el email.
@@ -1120,26 +1207,36 @@
         add('OCULTO', '</tbody><tbody data-ksa-section="' + i + '" data-ksa-hidden="1"><tr><td style="padding:9px 24px;background:#F7F4FC;border:1px dashed #A5A0C4;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:16px;color:#6f6a85;">Oculto: <strong>' + esc(name) + '</strong> · no sale en el email</td></tr></tbody><tbody>');
       });
     }
-    K.flowGroups(secs, vPending).forEach(function (g) {
-      if (g.start === vPending) { hiddenUpTo(pendingAt); add('BLOQUE NUEVO', PENDING); }
+    // WCH (sus emails de ejemplo): un Título de sección solo y el bloque que lo sigue forman una unidad (14 px entre ellos, sin el mínimo de 20 px).
+    function setPad(html, side, value) {
+      return html.replace(/(class="wrapper"><tbody><tr><td[^>]*style="padding:)([^;]+)(;)/, function (all, a, padding, z) {
+        var v = padding.trim().split(/\s+/), top = v[0], right = v[1] || top, bottom = v[2] || top, left = v[3] || right;
+        if (side === 'top') top = value; else bottom = value;
+        return a + top + ' ' + right + ' ' + bottom + ' ' + left + z;
+      });
+    }
+    var groups = K.flowGroups(secs, vPending), tight = false;
+    groups.forEach(function (g, gi) {
+      if (g.start === vPending) { hiddenUpTo(pendingAt); add('BLOQUE NUEVO', PENDING); tight = false; }
       hiddenUpTo(map[g.start]);
       if (g.align) {
         // Piezas encadenadas: una sola celda. En la vista previa, cada pieza va en su propio <div> seleccionable.
-        var pieces = secs.slice(g.start, g.end + 1);
-        add(pieces.map(function (s) { return M[s.type].tag; }).join(' + '), content(K.flowCell(pieces, g.align, preview ? function (j, part) { return '<div data-ksa-section="' + map[g.start + j] + '">' + part + '</div>'; } : null)));
+        var pieces = secs.slice(g.start, g.end + 1), nextG = groups[gi + 1];
+        var cellHtml = K.flowCell(pieces, g.align, preview ? function (j, part) { return '<div data-ksa-section="' + map[g.start + j] + '">' + part + '</div>'; } : null);
+        tight = wch && pieces.length === 1 && pieces[0].type === 'title' && titleStyle(pieces[0].d || {}) === 'seccion' && !!nextG && !nextG.align && nextG.start !== vPending;
+        add(pieces.map(function (s) { return M[s.type].tag; }).join(' + '), tight ? setPad(cellHtml, 'bottom', '0') : content(cellHtml));
         return;
       }
       var s = secs[g.start], i = map[g.start], m = M[s.type]; if (!m) return;
-      var part = content(m.build(s.d || {}, t));
+      var built = m.build(s.d || {}, t); if (tight) built = setPad(built, 'top', '0'); tight = false;
+      var part = content(built);
       add(m.tag, preview ? '</tbody><tbody data-ksa-section="' + i + '">' + part + '</tbody><tbody>' : part);
     });
     if (vPending >= secs.length) { hiddenUpTo(pendingAt); add('BLOQUE NUEVO', PENDING); }
     else if (preview && !all.length) add('VACÍO', '</tbody><tbody data-ksa-empty="1"><tr><td align="center" style="padding:48px 24px;background:#F7F4FC;border:2px dashed #A5A0C4;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#48237E;">Arrastra aquí un bloque desde «＋ Añadir bloque»<br />o haz clic para elegir uno</td></tr></tbody><tbody>');
     hiddenUpTo(Infinity);
-    if (wch) {
-      if (!secs.some(function(s){return s.type==='contacto';})) add('CONTACTO', M.contacto.build({},t));
-      add('FIRMA', section(cell('0 40px 24px','center','<p style="'+F.reg+'font-size:14px;line-height:22px;color:'+C.title+';">{[P-FIRST NAME]} {[P-LAST NAME]}</p>', C.contactBg)));
-    }
+    // WCH: contacto y firma fijos, como en sus emails de ejemplo (si la newsletter tiene un bloque Contacto, ese bloque ya los pinta).
+    if (wch && !secs.some(function(s){return s.type==='contacto' && !s.hidden;})) add('CONTACTO', wchContact(t));
     if (t.footer && !off.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
     var title = (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name) + (has(st.name) ? ' – ' + st.name.trim() : '');
@@ -1211,7 +1308,7 @@
     if (!kit && !t.header && !off0.header) W('Header de ' + t.name + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del header.');
     if (t.provisional && !kit) W('Colores de ' + t.name + ' provisionales: faltan sus datos de diseño.');
     if (!kit && t.club && st.mediaPackages && !t.mediaBanner) W(t.clubName + ' no tiene banner de Media Packages: no se añade.');
-    if (K.Designs && K.Designs.active(st) && t.id==='rmf-wc' && !has(t.contact)) E('Contacto WCH pendiente: configura el email o campo de contacto del evento.');
+    if (K.Designs && K.Designs.active(st) && t.id==='rmf-wc' && !has(t.contact)) OK('Contacto WCH: teléfono del evento ({[E-CUSTOM:Event Phone Number]}). Puedes poner otro en «Contacto de esta newsletter».');
     if (t.club && !has(t.contact) && secs.some(function (x) { return x.type === 'contacto'; })) E('Caja de contacto: falta el email o custom field de contacto de ' + t.clubName + '. Sale «CONTACTO PENDIENTE».');
     if (!has(st.name)) W('Falta el nombre de la newsletter (título interno y nombre de archivo).');
     if (!t.footer && !off0.footer) W('Footer de imagen de ' + (kit ? kit.name : t.name) + ' PENDIENTE: la newsletter sale sin él. Necesito el custom link de Cvent del footer.');
@@ -1246,7 +1343,8 @@
             if (K.BrandKits) { try { K.BrandKits.url(v, true); validImage = true; } catch (e) { validImage = false; } }
             if (!validImage) E('Módulo ' + (i + 1) + ' (' + m.name + '): la imagen no es un custom link de Cvent válido.');
           }
-          if (!isImg && !/^(https?:\/\/|mailto:)/i.test(v.trim())) E('Módulo ' + (i + 1) + ' (' + m.name + '): el enlace debe empezar por https:// o mailto:.');
+          // Un campo de Cvent que genera un enlace (p. ej. {[E-CUSTOM:Telegram]}) también vale como enlace de botón.
+          if (!isImg && !/^(https?:\/\/|mailto:)/i.test(v.trim()) && !/^\{\[[^\]]+\]\}$/.test(v.trim())) E('Módulo ' + (i + 1) + ' (' + m.name + '): el enlace debe empezar por https:// o mailto:.');
         }
       });
       var d = s.d || {};
@@ -1298,8 +1396,9 @@
 
     // Campos Cvent
     var found = html.match(/\{\[[^\]]*\]\}/g) || [], bad = [];
-    found.forEach(function (f) { if (K.CVENT_FIELDS.indexOf(f) < 0 && bad.indexOf(f) < 0) bad.push(f); });
-    if (bad.length) E('Campo de Cvent no reconocido: ' + bad.join(', ') + '. Revisa que esté escrito exactamente igual.');
+    found.forEach(function (f) { if (!K.isCventField(f) && bad.indexOf(f) < 0) bad.push(f); });
+    // Aviso, no error: puede ser un campo real que aún no está en la lista (los de cada evento ya se aceptan por su forma).
+    if (bad.length) W('Campo de Cvent no reconocido: ' + bad.join(', ') + '. Comprueba en Cvent que esté escrito exactamente igual.');
     var body = html.slice(html.indexOf('<body'));
     if (/(^|[^{])\[(C|E|P)-[A-Z][^\]]*\](?!\})/.test(body) || /\{\[[^\]]*$/m.test(body.replace(/\{\[[^\]]*\]\}/g, ''))) E('Hay un campo de Cvent mal cerrado (debe ser {[...]}).');
     if (!bad.length) OK('Campos de Cvent correctos (' + found.length + ').');
@@ -1310,7 +1409,8 @@
     // Textos
     var txt = secs.map(function (s) { return Object.keys(s.d || {}).map(function (k) { return s.d[k]; }).join('\n'); }).join('\n');
     if (/surf cup spain/i.test(txt)) E('Aparece «Surf Cup Spain»: debe ser «Surf Cup» o «Surf Cup Tournament».');
-    if (/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(txt)) W('Hay emojis en el texto: no se usan en este estilo.');
+    // Con brand kit, los iconos que forman parte del contenido se conservan (instrucciones del kit): no se avisa.
+    if (!(K.Designs && K.Designs.active(st)) && /[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]/u.test(txt)) W('Hay emojis en el texto: no se usan en este estilo.');
     K.CLIENT.tournaments.forEach(function (o) {
       if (o.short && o.id !== t.id && new RegExp(o.short.replace(/ /g, '\\s+'), 'i').test(txt) && !(t.id === 'usacup' && o.id === 'surfcup' && false))
         W('El texto menciona «' + o.short + '» pero el torneo elegido es ' + t.name + '.');
@@ -1405,7 +1505,7 @@
   // Guía de composición común a las instrucciones de guion e importación: qué pieza usar para cada contenido.
   function composeGuide(L, tournamentId, context) {
     L.push('- GUÍA DE COMPOSICIÓN (qué pieza usar para cada contenido; respeta el orden del original):');
-    L.push('  · Saludo «Dear …» → title (saludo) + text. Titular grande de apertura → title (principal) + text; si el original lo alinea a la izquierda, "align":"left". Titular con botón → title (principal) + text + button.');
+    L.push('  · Saludo «Dear …» → title (saludo) + text; si en el original «Dear …» es el titular grande (letra de titular), es title (principal). Titular grande de apertura → title (principal) + text; si el original lo alinea a la izquierda, "align":"left". Titular con botón → title (principal) + text + button.');
     L.push('  · Saltos de línea dentro de un titular o de un dato (p. ej. «Your Week in Paris,» y en otra línea el nombre): escribe \\n en el texto.');
     L.push('  · 2 o 3 datos clave cortos en recuadros (fechas, hotel, pago) → glance (l1/v1… = etiqueta y dato; las dos primeras van en recuadro oscuro y la tercera, clara y destacada). Fecha, hora y lugar en una banda de color → datos (de 1 a 4: l1/v1…).');
     L.push('  · Agenda o programa día a día → title (ante) con el rótulo («Your week, day by day») + timeline con "fmt":"puntos": d = fecha («Nov 22»), s = etiqueta corta bajo la fecha («Arrival», «Training»), t = un punto por línea (\\n). Usa h solo si el día tiene un titular propio. De 1 a 8 hitos.');
@@ -1415,6 +1515,9 @@
     L.push('  · Notas finales («Good to know», «Please note», letra pequeña) → title (ante) + text con "size":"small".');
     L.push('  · Pregunta o llamada final con enlace de Cvent o botón → box (borde) con el title dentro y el texto en text (line solo para una línea suelta con un campo de Cvent).');
     L.push('  · Opciones, packs o precios paralelos → cards (de 1 a 8: c1_title, c1_price, c1_text…; si cada opción tiene foto, c1_img/c1_alt). Cada servicio con precio e imagen → producto (separador entre dos productos seguidos).');
+    L.push('  · Foto con 1 a 3 tarjetas apiladas a su lado (p. ej. una oscura y una clara) → cards con "sideImg", "sideAlt" y "side" ("left" si la foto va a la izquierda) más c1_*, c2_*… No lo separes en images + cards.');
+    L.push('  · Lista de datos con etiqueta y valor (resumen de registro: nombre, fecha de nacimiento, talla, confirmación…), sobre todo si son más de 4 → box (suave) con "fmt":"pares", el rótulo en label y una línea por dato «Etiqueta: valor» (copia la etiqueta literal y añade «: »).');
+    L.push('  · Imagen que enlaza a algo (badges de App Store/Google Play, QR de Telegram, vídeo) → images con su enlace en f1_url, f2_url… (también campos Cvent como {[E-CUSTOM:Telegram]}). No pierdas el enlace.');
     L.push('  · Párrafo (con titular o botón) junto a una foto, uno al lado del otro → textimg (label, title, text, img, alt; "side":"left" si la foto va a la izquierda). No lo separes en text + images.');
     L.push('  · Lista de puntos suelta, sin caja → title (seccion) + list. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra solo si el original tiene esa caja de compra; si tiene una caja suave, conserva box (suave) y el enlace en text o line. Cierre o despedida → title (entre) + text. Lo que no encaje → text.');
     L.push('  · Resumen de importes con etiquetas y valores en vertical dentro de caja clara → datos con "style":"summary", title como rótulo, l1/v1… y text para la nota. No convertirlo en list ni en cards.');
@@ -1430,18 +1533,18 @@
       L.push('COMPOSICIÓN OBLIGATORIA DEL KIT (prevalece sobre el aspecto del HTML antiguo):');
       L.push('- Primero identifica la función de cada fragmento, después elige módulos. Mantén el orden de los temas y conserva todas las palabras, cifras, campos, enlaces e imágenes de contenido. Puedes separar una frase del resto de un párrafo y darle jerarquía, sin reescribirla.');
       L.push('- Apertura: si la primera frase presenta el mensaje o interpela al destinatario, promuévela a title principal alineado a la izquierda, aunque en el HTML sea un párrafo normal. El resto de la introducción va en text size intro. No uses el título del documento como contenido nuevo.');
-      L.push('- Datos etiquetados de pagos, balances o importes → datos style summary, incluso cuando el original los presente como viñetas. Traslada literalmente las etiquetas a l1/l2/l3 y los valores a v1/v2/v3; el rótulo existente va en title. Conserva notas, paréntesis y puntuación en el valor o en text, sin duplicarlos.');
+      L.push('- Datos etiquetados de pagos, balances o importes → datos style summary, incluso cuando el original los presente como viñetas. Traslada literalmente las etiquetas a l1/l2/l3 y los valores a v1/v2/v3; el rótulo existente va en title. Conserva notas, paréntesis y puntuación en el valor o en text, sin duplicarlos. Si los importes van mezclados con datos de registro (nombre, talla, confirmación…) en un mismo resumen, usa una sola box (suave) con "fmt":"pares" para todo el resumen.');
       L.push('- Información sobre plazos, pagos o instrucciones agrupadas → box style suave, density editorial. Usa el titular existente si lo hay; si no, title vacío. No la dejes como una sucesión de text solo porque el HTML antiguo use párrafos.');
       L.push('- Datos de acceso (confirmación y email) → box style suave, density editorial. Conserva el titular existente y el contenido literal; mantén las frases de acceso y sus enlaces antes o después de la caja según su orden. No uses box borde para credenciales. Reserva borde para una llamada final de ayuda o acción.');
-      L.push('- INTERPRETAR DATOS: extrae 2–3 hechos clave de los párrafos y destácalos en glance density editorial, aunque no tengan etiquetas explícitas. Puedes redactar etiquetas breves en el idioma del envío. En un recordatorio de pago: importe del primer pago, fecha del primer pago y fecha del pago final. Conserva la cifra y la fecha exactas; no deduzcas un año ausente ni conviertas un saldo en precio. Si solo hay dos hechos, usa deadlines para dos fechas o datos; no inventes un tercero. Mantén los párrafos explicativos originales: repetir sus hechos en las tarjetas es un resumen visual permitido.');
+      L.push('- INTERPRETAR DATOS: extrae 2–3 hechos clave de los párrafos y destácalos en glance density editorial, aunque no tengan etiquetas explícitas. Puedes redactar etiquetas breves en el idioma del envío. En un recordatorio de pago: importe del primer pago, fecha del primer pago y fecha del pago final. Conserva la cifra y la fecha exactas; no deduzcas un año ausente ni conviertas un saldo en precio. Si solo hay dos hechos, usa deadlines para dos fechas o datos; no inventes un tercero. Mantén los párrafos explicativos originales: repetir sus hechos en las tarjetas es un resumen visual permitido. No crees un glance con datos que el original ya muestra en sus propias tarjetas, cajas o en el antetítulo.');
       L.push('- Separadores de apoyo → separador style neutral; evita líneas del color principal entre todos los párrafos. No hace falta añadir separadores junto a cajas que ya delimitan el contenido.');
       L.push('- PATRÓN ESTRUCTURAL de un recordatorio de pago (los marcadores entre < > se sustituyen por fragmentos literales del envío; nunca se exportan):');
       L.push(JSON.stringify({sections:[{type:'title',d:{style:'principal',align:'left',text:'<primera frase de apertura>'}},{type:'text',d:{size:'intro',text:'<resto de la introducción>'}},{type:'glance',d:{density:'editorial',l1:'<etiqueta breve del importe>',v1:'<importe literal extraído>',l2:'<etiqueta breve del primer plazo>',v2:'<fecha literal extraída>',l3:'<etiqueta breve del último plazo>',v3:'<fecha literal extraída sin completar un año ausente>'}},{type:'box',d:{style:'suave',density:'editorial',title:'',text:'<párrafos literales de pagos y plazos>'}},{type:'datos',d:{style:'summary',title:'<rótulo literal del resumen>',l1:'<etiqueta literal>',v1:'<valor o campo literal>'}},{type:'box',d:{style:'suave',density:'editorial',title:'<titular literal de acceso>',text:'<datos literales de acceso>'}}]}));
       if(profile.id.indexOf('arsenal')===0) L.push('- ARSENAL VIGENTE: franja siempre roja y texto compacto (Helvetica/Arial 10/14 px, negrita, espaciado 1 px); titulares Georgia 32/40 px con espaciado -0.5 px. Prevalece sobre instrucciones guardadas que aún mencionen franja negra. El generador aplica estos detalles automáticamente.');
       L.push('- ESPACIADO COMÚN: la app garantiza al menos 20 px de espacio inferior en cada bloque visual de contenido. No añadas módulos de texto vacíos para crear huecos.');
-      L.push('- REVISIÓN ANTES DE RESPONDER: una apertura que sigue siendo text, importes etiquetados que siguen como list o credenciales dentro de box borde indican una composición pendiente de normalizar. Si el envío contiene tres hechos clave claros y no has creado su glance, añádelo. Corrige esas elecciones antes de devolver el JSON. Comprueba después que no falta ni se ha añadido contenido.');
+      L.push('- REVISIÓN ANTES DE RESPONDER: una apertura que sigue siendo text, importes etiquetados que siguen como list o credenciales dentro de box borde indican una composición pendiente de normalizar. Si el envío contiene tres hechos clave claros que solo aparecen dentro de párrafos y no has creado su glance, añádelo. Corrige esas elecciones antes de devolver el JSON. Comprueba después que no falta ni se ha añadido contenido.');
       L.push('No añadas textos de ejemplo: usa solo el contenido recibido. Los widgets Cvent y sus campos son literales. Si el original aporta un email de contacto, inclúyelo en contactEmail; si falta, no lo inventes.');
-      if(profile.id==='rmf-wch') L.push('El contacto y la firma WCH se añaden automáticamente. No dupliques la firma como texto.');
+      if(profile.id==='rmf-wch') L.push('Contacto y firma WCH: la app añade sola, al final, la frase de contacto con el teléfono del evento ({[E-CUSTOM:Event Phone Number]}), «Sincerely,» y la firma. No los copies como texto (esto no cuenta como dejar contenido fuera). Si el original da otro contacto (un email), ponlo en "contactEmail".');
       return;
     }
     L.push('- EJEMPLO DE REFERENCIA (newsletter de club bien compuesta; imítala en la elección de piezas, no en los textos):');
@@ -1462,7 +1565,7 @@
     L.push('- Si un bloque DESCRIBE un contenido en vez de darlo escrito (p. ej. «texto sobre los horarios» o «aquí va el precio»), no lo redactes: pon en ese campo «PENDIENTE: » seguido de la descripción tal cual.');
     L.push('- No inventes hechos, precios, fechas ni enlaces. Puedes crear etiquetas cortas y descriptivas para datos extraídos del texto; no añadas promesas ni información nueva. Si un campo no tiene contenido en el guion, déjalo vacío ("").');
     L.push('- Campos de Cvent como {[C-FIRST NAME]} o {[E-MODIFY REG LINK]}: cópialos carácter a carácter.');
-    L.push('- Negritas: **así**. Cursiva: *así*. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
+    L.push('- Negritas: **así**. Cursiva: *así*. Palabra destacada con subrayado de color (p. ej. borde inferior dorado o rojo en el original): ++así++. Etiqueta de color: ==así==. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
     L.push('- Fotos o imágenes: si el guion da una URL de custom.cvent.com, úsala tal cual. Si solo dice «foto», «imagen» o la describe, usa el módulo images con "f1_src":"PLACEHOLDER" y pon en "f1_alt" la descripción del guion (o "" si no hay). Dos o tres fotos en fila → un solo images con f1_*, f2_*, f3_*.');
     L.push('- Botones: el texto del botón en su campo y el enlace solo si el guion lo da; si no, deja el enlace vacío. Botón bajo un titular → button justo después del title principal (y su text). Opciones paralelas con botón → cards (una tarjeta por opción: c1_*, c2_*…). No deduzcas el bloque por el campo Cvent: conserva el tratamiento visual del original, usando compra solo para su caja de compra correspondiente.');
     L.push('- NO incluyas header, footer de imagen ni línea de baja (opt-out): la app los pone sola. Si el guion indica la etiqueta de la franja identificadora, ponla en "franja"; si no, "".');
@@ -1503,9 +1606,9 @@
     L.push('- TEXTOS LITERALES: copia cada texto exactamente como está. No reescribas, resumas, traduzcas, corrijas ni añadas nada. Si ves una errata, déjala.');
     L.push('- No inventes hechos, precios, fechas ni enlaces. Puedes crear etiquetas cortas y descriptivas para datos extraídos del texto; no añadas promesas ni información nueva. Si un campo no tiene contenido en el original, déjalo vacío ("").');
     L.push('- Campos de Cvent como {[C-FIRST NAME]} o {[E-MODIFY REG LINK]}: cópialos carácter a carácter.');
-    L.push('- Negritas: **así**. Cursiva: *así*. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
+    L.push('- Negritas: **así**. Cursiva: *así*. Palabra destacada con subrayado de color (p. ej. borde inferior dorado o rojo en el original): ++así++. Etiqueta de color: ==así==. Enlaces dentro de un texto: [texto](https://...). Varios párrafos o puntos de lista en un mismo campo: sepáralos con \\n.');
     L.push('- Títulos: escríbelos como texto normal, sin HTML. Si un producto se llama "Título – Subtítulo", pon cada parte en su campo, sin el guion.');
-    L.push('- NO incluyas el header, el footer de imagen ni la línea de baja (opt-out): la app los pone sola.');
+    L.push('- NO incluyas el header, el footer de imagen ni la línea de baja (opt-out): la app los pone sola. El footer de imagen es el banner a todo el ancho justo antes de la línea de baja (p. ej. «See You In …»).');
     L.push('- Franja identificadora (la línea pequeña bajo el header, con una etiqueta a la izquierda y el torneo a la derecha): no es un módulo. Pon solo su etiqueta izquierda en "franja". El torneo de la derecha lo pone la app, salvo que el original tenga otra etiqueta a la derecha ("franjaRight").');
     if(K.Designs && K.Designs.forSection(tournamentId)) L.push('- Conserva los iconos que forman parte del contenido (por ejemplo, normas del camp). No inventes símbolos ni copies controles del editor.');
     else L.push('- NO copies iconos, emojis ni símbolos decorativos del original (ni como texto ni como imagen). Quítalos y deja el resto del texto igual.');
@@ -1513,14 +1616,15 @@
     L.push('- Imágenes: solo las que estén en el original y con su URL de custom.cvent.com tal cual. Si no hay URL, no pongas el módulo.');
     L.push('- PIEZAS: cada titular es un módulo title ("style": principal para titulares grandes, seccion para el título de una lista o sección, saludo para «Dear …», entre para la frase de despedida, ante para un rótulo pequeño en mayúsculas); elige la pieza por su función: párrafos narrativos → text; información agrupada → box; etiquetas con valores → datos; lista narrativa suelta → list; botón → button. No conviertas automáticamente cada párrafo en text ni cada lista HTML en list.');
     composeGuide(L, tournamentId, context);
-    L.push('- No uses el mismo recurso dos veces seguidas y no dejes fuera ningún texto del original.');
+    L.push('- No pongas dos text ni dos datos seguidos: une su contenido en un solo módulo. Varias cajas (box) seguidas sí están bien si son temas distintos. No dejes fuera ningún texto del original.');
     L.push('');
     L.push('TORNEOS ("tournament"): ' + K.CLIENT.tournaments.map(function (t) { return t.id + ' = ' + t.name; }).join(' · '));
+    if (K.tournament(tournamentId)) L.push('Se importa en la sección ' + K.tournament(tournamentId).name + ': usa "tournament":"' + tournamentId + '" salvo que el original sea claramente de otra (no adivines USA o Canada).');
     L.push('');
     moduleList(L);
     L.push('');
     L.push('RESPUESTA: devuelve SOLO el JSON, en un bloque de código, sin explicaciones, con esta forma:');
-    L.push('{"tournament":"surfcup","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"Etiqueta izquierda","mediaPackages":false,"sections":[{"type":"title","d":{"text":"Dear {[C-FIRST NAME]},","style":"saludo"}},{"type":"text","d":{"text":"..."}}]}');
+    L.push('{"tournament":"' + (K.tournament(tournamentId) ? tournamentId : 'surfcup') + '","name":"Nombre de la newsletter","desc":"nombre_de_archivo","franja":"Etiqueta izquierda","mediaPackages":false,"sections":[{"type":"title","d":{"text":"Dear {[C-FIRST NAME]},","style":"saludo"}},{"type":"text","d":{"text":"..."}}]}');
     L.push('');
     L.push('NEWSLETTER A CONVERTIR:');
     L.push('');

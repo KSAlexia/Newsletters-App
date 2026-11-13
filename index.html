@@ -10,12 +10,17 @@
 <header class="top">
   <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">Kaptiva · v0.3</span><button id="back" class="ed">← Newsletters</button><button id="switch" class="ed" title="Ir a otra newsletter (Ctrl/⌘ + K)">Ir a otra newsletter…</button><button id="history" class="ed" title="Versiones guardadas de esta newsletter. Ctrl/⌘ + Z deshace y Ctrl/⌘ + Shift + Z rehace">Historial</button></div>
   <div class="actions ed">
-    <select id="recipe" title="Empezar desde una receta"></select>
-    <button id="import">Importar</button>
-    <button id="save" class="ghost">Exportar proyecto</button>
+    <details id="more-actions" class="more-menu">
+      <summary>Más acciones</summary>
+      <div class="more-menu-list">
+        <button id="import">Importar desde ChatGPT…</button>
+        <select id="recipe" title="Sustituir el contenido por una receta"></select>
+        <button id="save" class="ghost">Exportar proyecto (.json)</button>
+        <button id="dl-html">Descargar .html (vista previa)</button>
+      </div>
+    </details>
     <input type="file" id="file" accept=".json" hidden>
     <button id="dl-txt" class="primary">Descargar .txt (Cvent)</button>
-    <button id="dl-html">Descargar .html</button>
   </div>
 </header>
 
@@ -80,17 +85,19 @@
 <main id="editor-layout">
   <div id="editor-resize" role="separator" tabindex="0" aria-label="Ancho del panel de edición" aria-orientation="vertical" aria-controls="editor-panel" title="Arrastra para ajustar el panel. Flechas para cambiar el ancho; doble clic para restablecer."></div>
   <section id="editor-panel" class="editor" aria-label="Panel de edición">
-    <div class="card settings">
-      <label>Torneo<select id="tournament"></select></label>
+    <details id="settings-box" class="card settings-box" open>
+    <summary><span class="settings-title">Datos de la newsletter</span><span id="settings-summary" class="settings-summary"></span></summary>
+    <div class="settings">
+      <label>Torneo o sección<select id="tournament"></select></label>
       <label>Brand kit<select id="brand-kit"></select></label>
       <details id="kit-guidelines" class="kit-guidelines"><summary>Instrucciones del brand kit</summary><p id="kit-design-status"></p><pre id="kit-guidelines-text"></pre></details>
       <small>El kit automático comparte los ajustes de su marca. Un kit independiente se guarda como copia en esta newsletter.</small>
       <button id="brand-kits-editor" type="button" class="btn ghost2">Gestionar brand kits</button>
       <label><span id="contact-caption">Contacto de esta newsletter (opcional)</span><input id="contact-email" type="text" placeholder="Email o campo de Cvent"><small>Se usa en la caja de contacto; no cambia el contacto de otros eventos.</small></label>
-      <label>Nombre de la newsletter<input id="name" type="text" placeholder="Media Packages"></label>
-      <label>Nombre de archivo<input id="desc" type="text" placeholder="media_packages"><small id="filename"></small></label>
+      <label>Nombre de la newsletter<input id="name" type="text" placeholder="p. ej. Registration Confirmation"></label>
+      <label>Nombre de archivo<input id="desc" type="text" placeholder="p. ej. registration_confirmation"><small id="filename"></small></label>
       <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner del kit bajo el header)</label>
-      <label>Franja identificadora · etiqueta izquierda *<input id="franja" type="text" placeholder="Media Packages"></label>
+      <label>Franja identificadora · etiqueta izquierda *<input id="franja" type="text" placeholder="p. ej. Registration Confirmation"></label>
       <label>Franja · etiqueta derecha (opcional)<input id="franja-right" type="text" placeholder="Por defecto, el torneo o la marca"></label>
       <p class="fixed">Automático: header y footer del kit elegido, franja identificadora y footer legal con la baja.</p>
       <details class="more">
@@ -101,7 +108,8 @@
         <small>Solo para casos puntuales: se aplica a este proyecto y la revisión lo avisa. El footer legal con la baja no se puede quitar.</small>
       </details>
     </div>
-    <details id="image-panel" class="card image-panel" open>
+    </details>
+    <details id="image-panel" class="card image-panel">
       <summary>Imágenes y banners del brand kit</summary>
       <p class="image-panel-note">Arrastra una imagen, un banner o el placeholder hasta un bloque (abierto o plegado). Arrastra la miniatura de un bloque a otro para intercambiar sus imágenes.</p>
       <h3 class="image-panel-group">Imágenes</h3>
@@ -163,6 +171,12 @@
 </main>
 </div>
 </div>
+
+<dialog id="notice-dialog" aria-labelledby="notice-title">
+  <h2 id="notice-title"></h2>
+  <div id="notice-body" class="notice-body"></div>
+  <div class="dlg-actions"><button id="notice-review" type="button" class="btn ghost2">Ver la revisión</button><button id="notice-ok" type="button" class="btn">Entendido</button></div>
+</dialog>
 
 <dialog id="dlg">
   <h2>Importar una newsletter</h2>
