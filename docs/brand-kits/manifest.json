@@ -1,0 +1,408 @@
+{
+  "status": "implemented",
+  "normalization": "majority_unless_user_override",
+  "shared_kit_groups": [
+    {
+      "kit": "psg-camps",
+      "sections": [
+        "psg-usa",
+        "psg-canada"
+      ],
+      "status": "shared_runtime"
+    },
+    {
+      "kit": "arsenal-camps",
+      "sections": [
+        "arsenal-usa",
+        "arsenal-canada"
+      ],
+      "status": "shared_runtime"
+    },
+    {
+      "kit": "rmf-camps",
+      "sections": [
+        "rmf-usa",
+        "rmf-canada"
+      ],
+      "status": "shared_runtime"
+    }
+  ],
+  "section_to_kit": {
+    "psg-exp": "psg-experiences",
+    "psg-usa": "psg-camps",
+    "psg-canada": "psg-camps",
+    "arsenal-exp": "arsenal-experiences",
+    "arsenal-usa": "arsenal-camps",
+    "arsenal-canada": "arsenal-camps",
+    "rmf-exp": "rmf-experiences",
+    "rmf-usa": "rmf-camps",
+    "rmf-canada": "rmf-camps",
+    "rmf-wc": "rmf-wch"
+  },
+  "kits": [
+    {
+      "id": "psg-experiences",
+      "name": "PSG Experiences",
+      "sections": [
+        "psg-exp"
+      ],
+      "guide": "psg-experiences.md",
+      "header": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/2c5043ece01d4a9a8ae79d29943bad1a.png",
+      "footer": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/1abe18827cfe4f5e9e62da2599c16442.png",
+      "references": [
+        {
+          "file": "referencias/psg-experiences/01.html",
+          "source_attachment_id": "cc1db099-767f-405e-8c64-895adbb0b4a5",
+          "sha256": "a85ea70177bff09ad25a971c894ae587344d7eef40cc16f8c64645d178141380"
+        },
+        {
+          "file": "referencias/psg-experiences/02.html",
+          "source_attachment_id": "bd933fec-b261-405e-a0d3-c5ffcdb906d5",
+          "sha256": "ba9301fd884589cc34d43092e88e94eedf24cbe7ac31e6b624715ff4202e6aa7"
+        },
+        {
+          "file": "referencias/psg-experiences/03.html",
+          "source_attachment_id": "56f64855-0569-400d-8710-8e8c4ea4605b",
+          "sha256": "e61da30ed0d2368da27e09cd3907ad49fe683fdd04cbd2e2b731f5486f12f71b"
+        },
+        {
+          "file": "referencias/psg-experiences/04.html",
+          "source_attachment_id": "24a03a94-51d8-41e2-b271-40a96bd865f3",
+          "sha256": "0f84a865f0cca89ccc2936c52cb5b49647b852653a7e286a2838e3fcc19e1696"
+        },
+        {
+          "file": "referencias/psg-experiences/05.html",
+          "source_attachment_id": "e306bbd6-220b-4ff4-b591-fda33aa9e454",
+          "sha256": "98532e413be1f553e85b47f67cca559425eb48db0924fc7844de4cefcf1ba786"
+        }
+      ]
+    },
+    {
+      "id": "psg-camps",
+      "name": "PSG Camps · USA y Canada",
+      "sections": [
+        "psg-usa",
+        "psg-canada"
+      ],
+      "guide": "psg-camps.md",
+      "header": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/2c5043ece01d4a9a8ae79d29943bad1a.png",
+      "footer": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/c09d6bae9864490ca533ea605b59cb6d.png",
+      "references": [
+        {
+          "file": "referencias/psg-camps/01.html",
+          "source_attachment_id": "14afe77d-2d22-4378-bab7-63f16adb51bc",
+          "sha256": "2b471c7d3d0d6113793907bc5d3b0ecbedc3bddbc657bb8e6c592230d11bf0e5"
+        },
+        {
+          "file": "referencias/psg-camps/02.html",
+          "source_attachment_id": "b99501ba-2f99-4860-b074-7e6caf74f3da",
+          "sha256": "a4356f60f452bd2816a2b85594c76bf0ff332349ed5df6ea403d1ea955430df8"
+        },
+        {
+          "file": "referencias/psg-camps/03.html",
+          "source_attachment_id": "05366e13-3739-42f0-8339-3aabcc12cee4",
+          "sha256": "234790486ab2afedb6f4063ab77c0396a6045cc381ef7605378e095e3dde628d"
+        },
+        {
+          "file": "referencias/psg-camps/04.html",
+          "source_attachment_id": "9ca949c5-ea0d-433c-8d00-d351030d63c7",
+          "sha256": "e3c7d510f215c802e2aaf02022da4e2eccb6997b4465a8115c80c5f95306b408"
+        },
+        {
+          "file": "referencias/psg-camps/05.html",
+          "source_attachment_id": "2f2eb758-432c-4069-8a15-9963561c8b92",
+          "sha256": "caf986b6312a0cfb58d74917a4728d1b8d9a3ec6962742fdabc8ef7ef1d083a2"
+        },
+        {
+          "file": "referencias/psg-camps/06.html",
+          "source_attachment_id": "9e134f5d-4af3-4814-9553-210fe8ab0ff2",
+          "sha256": "990491d07ff67e3a0f6cee777f270e091b0fa071aefa07951a3745bf72df57ec"
+        },
+        {
+          "file": "referencias/psg-camps/07.html",
+          "source_attachment_id": "01070053-b3a4-426d-9fff-82d9f03f0ec1",
+          "sha256": "1b91f32543c1113efb8bf5b7471d36089d0e750cd16525bba0d32c1839a6c99b"
+        },
+        {
+          "file": "referencias/psg-camps/08.html",
+          "source_attachment_id": "3ddd427c-4cec-4d92-b565-aa98987a34b8",
+          "sha256": "22b8cd2693a1ba7cdbd92713877c2d9496850d35bced61369c2bd79e434cb0f6"
+        }
+      ]
+    },
+    {
+      "id": "arsenal-experiences",
+      "name": "Arsenal Experiences",
+      "sections": [
+        "arsenal-exp"
+      ],
+      "guide": "arsenal-experiences.md",
+      "header": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/d0dda35e9eef4fc5bc22f768749c292a.png",
+      "footer": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/e1baea18930047838d4054ffe1d0f262.png",
+      "references": [
+        {
+          "file": "referencias/arsenal-experiences/01.html",
+          "source_attachment_id": "c7a83a4f-9b69-4f90-9e66-72bacdd91fb9",
+          "sha256": "e66144497aab2545fd6213c9aee1970ed1bd34118643e2184587d5ec6b288968"
+        },
+        {
+          "file": "referencias/arsenal-experiences/02.html",
+          "source_attachment_id": "97fc4973-a4ab-4286-bac2-6fce2dc42783",
+          "sha256": "93980230a6ccfa60d96c07c143b3b89b2679a1b2ffe7859d4f767daf0d235555"
+        },
+        {
+          "file": "referencias/arsenal-experiences/03.html",
+          "source_attachment_id": "d712e250-abac-4a30-b49c-78eb65c94486",
+          "sha256": "08509089492e8b2a47a50cccfdfd39e960a6fd990b2cc0bfae333529b4abc428"
+        },
+        {
+          "file": "referencias/arsenal-experiences/04.html",
+          "source_attachment_id": "00d62518-4c19-4d82-bad2-dc712b3c9f44",
+          "sha256": "c4a948c7246a548f9db69cab13d80e32520f344bb788f990337066d5d1a5c957"
+        },
+        {
+          "file": "referencias/arsenal-experiences/05.html",
+          "source_attachment_id": "4df07e1a-dc87-4b7e-be6e-e36bd9b78a35",
+          "sha256": "aad95bb014cafb555fa2ca8903515427f40a9480e672f95a72d17d3dd3ed6cc9"
+        },
+        {
+          "file": "referencias/arsenal-experiences/06.html",
+          "source_attachment_id": "66ef2d06-a40e-4250-aa40-deb5cc5da4d6",
+          "sha256": "c5f478fa79e35aebecbbcde875645da2e246a4ba1a16aa8d03131e2496b3ebce"
+        },
+        {
+          "file": "referencias/arsenal-experiences/07.html",
+          "source_attachment_id": "9c17a07e-c067-45ba-8f80-0242705f3569",
+          "sha256": "ad3cbbd052216b9173d4b7fe7a68592dea439b9192208e2b97ab27e681fe8cb6"
+        }
+      ]
+    },
+    {
+      "id": "arsenal-camps",
+      "name": "Arsenal Camps · USA y Canada",
+      "sections": [
+        "arsenal-usa",
+        "arsenal-canada"
+      ],
+      "guide": "arsenal-camps.md",
+      "header": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/d0dda35e9eef4fc5bc22f768749c292a.png",
+      "footer": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/98f6f8c33f6d4fedb45231509e6f0fc5.png",
+      "references": [
+        {
+          "file": "referencias/arsenal-camps/01.html",
+          "source_attachment_id": "482548e8-f552-4c42-8ddf-52b2c7e0ab1f",
+          "sha256": "fb935c4b0b2aed9e6897afdbb7542a4f4cd4ddf21fc6471beb0c725d269ce972"
+        },
+        {
+          "file": "referencias/arsenal-camps/02.html",
+          "source_attachment_id": "5c5c660d-8bd8-466d-8a28-e56dd818d0af",
+          "sha256": "c58ed63bd2142e6f15b2bf5670b2557700257ba11d59abe473e6b16deb27ca41"
+        },
+        {
+          "file": "referencias/arsenal-camps/03.html",
+          "source_attachment_id": "612ebfb2-3641-4872-a467-9f5a3ca7613e",
+          "sha256": "47e224003db9221db1538eb01acb88b52009d104673ef95e516c9a79ba216182"
+        },
+        {
+          "file": "referencias/arsenal-camps/04.html",
+          "source_attachment_id": "a6935e24-0818-4821-a5bc-05efc8078b19",
+          "sha256": "4225c1912718d485d8f5516aa11d137624533eb2f4b9fc9bd94a8b7ffee6d75f"
+        },
+        {
+          "file": "referencias/arsenal-camps/05.html",
+          "source_attachment_id": "222c1372-ba00-4373-82a7-68f35fe1235b",
+          "sha256": "9a7dc1e4392d7b2f1ae0435ca25ec49d2de16801dad88d7d757e45444357eb2b"
+        },
+        {
+          "file": "referencias/arsenal-camps/06.html",
+          "source_attachment_id": "48b44ba8-388c-422e-838f-150ebe86c14e",
+          "sha256": "f29bd543a607022fd5e8bd97a42b7d74f17559ff45f454ce28db85baf0554290"
+        },
+        {
+          "file": "referencias/arsenal-camps/07.html",
+          "source_attachment_id": "a6a1d1a8-7cf7-4c37-aec7-ae44b4417185",
+          "sha256": "93d335e8109e93d4b718ba38fdc6af72c4fd99972a2f471753047f5b806c064d"
+        },
+        {
+          "file": "referencias/arsenal-camps/08.html",
+          "source_attachment_id": "5e23adac-eca5-44cb-a959-43d71281e639",
+          "sha256": "a1899b1eebd8242fa13362eb6664baafc86625a32ae20f011b6f432e1649d07e"
+        },
+        {
+          "file": "referencias/arsenal-camps/09.html",
+          "source_attachment_id": "92aafa85-ef17-4680-853e-c8698d8390c0",
+          "sha256": "612dd214845608b42f8884106b34e9669d39e7085f75ed53b44561fe092569e8"
+        },
+        {
+          "file": "referencias/arsenal-camps/10.html",
+          "source_attachment_id": "9a2ad4db-e6bb-4200-888e-561dd4eae2f3",
+          "sha256": "25b796de43287be71614049ce20295918722ed61e4daac5a05d150c57700066b"
+        },
+        {
+          "file": "referencias/arsenal-camps/11.html",
+          "source_attachment_id": "d9e1d3b3-d688-4930-9786-627e2a39c150",
+          "sha256": "bfade90f77968d875fbbeb1f2b31323aa9063a9927f94768352852b799305c04"
+        },
+        {
+          "file": "referencias/arsenal-camps/12.html",
+          "source_attachment_id": "f5f4acb6-c1ae-4df1-aedd-fb140fd97bd7",
+          "sha256": "0fcdbda280851e73c2188ae7ded691b571637be38cc5789c2f57cbdd963d8744"
+        }
+      ]
+    },
+    {
+      "id": "rmf-experiences",
+      "name": "Real Madrid Foundation Experiences",
+      "sections": [
+        "rmf-exp"
+      ],
+      "guide": "rmf-experiences.md",
+      "header": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/0680e31902b84ed88b7a08dcaa246d83.png",
+      "footer": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/6ca9b3ea03a54f20b3e76a29e1bbb500.png",
+      "references": [
+        {
+          "file": "referencias/rmf-experiences/01.html",
+          "source_attachment_id": "a2ef2364-a5cd-49b7-9dc0-2e68fbc06f61",
+          "sha256": "0e028a2c957c646cf58a2969838f133143dc87d5656a0dcb602824004402c601"
+        },
+        {
+          "file": "referencias/rmf-experiences/02.html",
+          "source_attachment_id": "d0deb324-c8e4-4a9e-9e06-7807dd1de531",
+          "sha256": "b1ceeb7140bd46d5d6bdb2a66476b1508fdc659d5c33ee4e0023e4d541e553cf"
+        },
+        {
+          "file": "referencias/rmf-experiences/03.html",
+          "source_attachment_id": "a613e395-eaee-4477-a3c5-93ca54dabfda",
+          "sha256": "603df4da42f7ce4aedfc337c99627c7bce8fc9b258ac126e42516927b9ae4c08"
+        },
+        {
+          "file": "referencias/rmf-experiences/04.html",
+          "source_attachment_id": "8e502f1b-7325-459a-a49f-3c5c9709fea7",
+          "sha256": "ba128c671fc779097454877bca597c5e87b5b8d93f45c2ff92d93720f9e648c6"
+        },
+        {
+          "file": "referencias/rmf-experiences/05.html",
+          "source_attachment_id": "8b548e2c-a10b-4b6e-aae0-c50d2bd809ea",
+          "sha256": "ff294473159ba44c05d148d1d6436d6d5ca8e425adb604ce094101f687cbf1ce"
+        },
+        {
+          "file": "referencias/rmf-experiences/06.html",
+          "source_attachment_id": "73f66d00-14bb-4453-9dc1-826993fbb4e0",
+          "sha256": "f204af289eb2ba210ee4872ad5db42e5e5919f708a898b895d2f02515099ad93"
+        },
+        {
+          "file": "referencias/rmf-experiences/07.html",
+          "source_attachment_id": "c387645b-0a19-4748-af66-fda8dd2502c9",
+          "sha256": "de0604613e06c4d4491032c8913346b014d4e0180bd844aa0010ad2476c73914"
+        },
+        {
+          "file": "referencias/rmf-experiences/08.html",
+          "source_attachment_id": "deb703b1-a214-439c-9e46-16ae8cd9aed0",
+          "sha256": "ff294473159ba44c05d148d1d6436d6d5ca8e425adb604ce094101f687cbf1ce",
+          "duplicate_of": "referencias/rmf-experiences/05.html"
+        }
+      ]
+    },
+    {
+      "id": "rmf-camps",
+      "name": "Real Madrid Foundation Camps · USA y Canada",
+      "sections": [
+        "rmf-usa",
+        "rmf-canada"
+      ],
+      "guide": "rmf-camps.md",
+      "header": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/0680e31902b84ed88b7a08dcaa246d83.png",
+      "footer": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/db9333ea4c694dcd954c90570f8d30f4.png",
+      "references": [
+        {
+          "file": "referencias/rmf-camps/01.html",
+          "source_attachment_id": "4c1bc170-0687-45b5-bdf5-0d7ecc08311b",
+          "sha256": "29894d23dedb6ddc577b5432a0f793bb5f781e33dc8b40433e92d0d118bc039a"
+        },
+        {
+          "file": "referencias/rmf-camps/02.html",
+          "source_attachment_id": "915990bc-cc52-4d33-b397-bfdb365cfacb",
+          "sha256": "2ba746477a1a1dc812b98172e8e15a98fea944c81a8cd35dba572ce1baa04f68"
+        },
+        {
+          "file": "referencias/rmf-camps/03.html",
+          "source_attachment_id": "dec69c00-25f1-4b39-82e7-24f67045782b",
+          "sha256": "4d18573eabb201c25dfb36da29a3b9de2425807efae5148ac82476e469e60f42"
+        },
+        {
+          "file": "referencias/rmf-camps/04.html",
+          "source_attachment_id": "9faf91cb-070b-48d0-8c90-e99667bb1aec",
+          "sha256": "4d18573eabb201c25dfb36da29a3b9de2425807efae5148ac82476e469e60f42",
+          "duplicate_of": "referencias/rmf-camps/03.html"
+        },
+        {
+          "file": "referencias/rmf-camps/05.html",
+          "source_attachment_id": "2066f423-2d37-4ec4-bec7-cdae45da195f",
+          "sha256": "3c0df123aac9f64ded91a5c7cd0f86115296a86be66ffdaade830eb39219e663"
+        },
+        {
+          "file": "referencias/rmf-camps/06.html",
+          "source_attachment_id": "dd7450f2-7604-48b8-a29f-9db8d8a6366e",
+          "sha256": "83bd67d6c13d55e1109874c377677ec38393c7e9d8692a63196bec00764b8ff2"
+        },
+        {
+          "file": "referencias/rmf-camps/07.html",
+          "source_attachment_id": "124e0a26-6cf9-4a30-99f0-4853b3aa66ff",
+          "sha256": "0793602f6dbe30d50d99f7c2a2951924f04248a076a84c5d9a4fca71f309b7c5"
+        },
+        {
+          "file": "referencias/rmf-camps/08.html",
+          "source_attachment_id": "3e009d0f-08ec-4db4-a562-49141aa09d5c",
+          "sha256": "e5e0ab9e7def418cb8c64f8749dbb090d6deb8f2267787471cd543cd6bf67a06"
+        },
+        {
+          "file": "referencias/rmf-camps/09.html",
+          "source_attachment_id": "291f4fa5-e791-4dfe-9a2b-b2f1e49aa13d",
+          "sha256": "ab365fe88a85ddfe11d92eba5f29791379913af4edc2d51a5940d37f1d0eef39"
+        },
+        {
+          "file": "referencias/rmf-camps/10.html",
+          "source_attachment_id": "fb48a02c-fdfe-437c-a7f9-4535133185ad",
+          "sha256": "93553ca58c605f40d2d269ac750027710937234ea73f5ce939ce23dfe7d964ac"
+        },
+        {
+          "file": "referencias/rmf-camps/11.html",
+          "source_attachment_id": "ab80024e-6edf-4672-acff-e38ad497dafd",
+          "sha256": "c9d5555165c14b39803ec21cae74f34067be0e0c0ec5477a914d377cae9e742f"
+        },
+        {
+          "file": "referencias/rmf-camps/12.html",
+          "source_attachment_id": "ada2622f-ccb1-49f0-b675-6811bb426ccf",
+          "sha256": "9e0e465afbfa01aebef67e4445ec5e2a0c6bc8cd1af64e7715cc5d32f1dcc043"
+        },
+        {
+          "file": "referencias/rmf-camps/13.html",
+          "source_attachment_id": "8b05f9af-f20b-499a-8836-47d1cdb079e2",
+          "sha256": "2a66536f38a3839f5ac974cb284bb7a37c5417a93607a42cd60aa7fcc50fa06e"
+        }
+      ]
+    },
+    {
+      "id": "rmf-wch",
+      "name": "RMF World Challenge 2027",
+      "sections": [
+        "rmf-wc"
+      ],
+      "guide": "rmf-wch.md",
+      "header": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/df32a86304cb472599c44c9e4979cf33.png",
+      "footer": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/c2955fb129e34300b1277fc35ad7e793.png",
+      "footer_role": "closing_banner_before_legal_unsubscribe",
+      "instructions_version": "2026-11-13",
+      "references": [
+        {
+          "file": "referencias/rmf-wch/brand-kit-original.txt",
+          "source_attachment_id": "42c953c8-594a-438c-b54e-38226cc72831",
+          "sha256": "21cb423a55798e10a6811e693e4b6efc8ed1c8260f43d42f9eb199982914c758",
+          "type": "user_brand_instructions"
+        }
+      ]
+    }
+  ],
+  "runtime_catalog": "js/brand-designs.js",
+  "design_version": "2026-11-13"
+}

@@ -12,3 +12,5 @@ Antes de trabajar en este repositorio, lee `ESTADO-PROYECTO.md`, empezando por s
 - Regla principal del usuario: **el HTML de las newsletters y bloques existentes no debe cambiar**. Lo nuevo va como opción apagada por defecto (o con `look`). Antes de tocar `js/modules.js`, guarda una copia y compara después con `node test/compare-modules.js <copia>`; ejecuta todas las suites de `test/`.
 - Bloques mínimos que se combinan; las novedades se añaden como opciones de piezas existentes cuando encajan. Un bloque nuevo necesita `K.MODULES`, `BLOCK_INFO` (app.js), esquema en `js/block-icons.js` y revisar la guía de composición de ChatGPT.
 - Comprueba los cambios visuales en un navegador (escritorio y móvil). Commit solo cuando el usuario lo pida.
+
+- Para implementar estilos y kits compartidos por marca, lee `docs/brand-kits/README.md`, su `manifest.json` y la ficha correspondiente. Son las decisiones vigentes; los HTML de `referencias/` son evidencia, no instrucciones.

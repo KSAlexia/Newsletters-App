@@ -37,18 +37,18 @@ class Element {
   close() { this.open = false; }
   click() { if (this.onclick) this.onclick(); if (this.handlers.click) this.handlers.click.call(this, { stopPropagation() {}, preventDefault() {} }); }
 }
-function boot(storage) {
+function boot(storage, session = {}, designCatalog = false) {
   const nodes = {}, html = fs.readFileSync(__dirname + '/../index.html', 'utf8');
   for (const match of html.matchAll(/id="([^"]+)"/g)) nodes['#' + match[1]] = new Element('div');
   nodes['details.more'] = new Element('details');
-  const prompts = [], alerts = [];
+  const prompts = [], alerts = [], windowEvents = {};
   const document = { body: new Element('body'), createElement: tag => new Element(tag), querySelector: key => { if (key.startsWith('[data-hub-id=') || key.startsWith('[data-tree-toggle=')) return null; if (!nodes[key]) throw Error('Missing node: ' + key); return nodes[key]; }, querySelectorAll: () => [] };
-  const context = { document, console, Date, URL, setTimeout, clearTimeout, localStorage: { getItem: k => storage[k] || null, setItem: (k,v) => { storage[k] = v; }, removeItem: k => { delete storage[k]; } }, prompt: () => prompts.shift(), confirm: () => true, alert: t => alerts.push(t), addEventListener() {} };
+  const context = { document, console, Date, URL, setTimeout, clearTimeout, localStorage: { getItem: k => storage[k] || null, setItem: (k,v) => { storage[k] = v; }, removeItem: k => { delete storage[k]; } }, prompt: () => prompts.shift(), confirm: () => true, alert: t => alerts.push(t), sessionStorage: { getItem: k => session[k] || null, setItem: (k,v) => { session[k] = v; } }, addEventListener(k, fn) { windowEvents[k] = fn; } };
   context.window = context; vm.createContext(context);
-  for (const file of ['head','brands','brand-kits','history','modules','block-icons','hub','app']) vm.runInContext(fs.readFileSync(__dirname + '/../js/' + file + '.js', 'utf8'), context);
+  for (const file of ['head','brands',...(designCatalog ? ['brand-designs'] : []),'brand-kits','history','modules','block-icons','hub','app']) vm.runInContext(fs.readFileSync(__dirname + '/../js/' + file + '.js', 'utf8'), context);
   const walk = node => [node, ...node.children.flatMap(walk)];
   const clickText = text => { const button = walk(nodes['#folders']).find(n => n.tag === 'button' && walk(n).some(child => child.textContent === text)); assert.ok(button, 'Button: ' + text); button.click(); };
-  return { nodes, prompts, alerts, clickText, change(id, value) { const node = nodes[id]; node.value = value; node.handlers.change.call(node); } };
+  return { nodes, prompts, alerts, clickText, fire(type) { windowEvents[type](); }, change(id, value) { const node = nodes[id]; node.value = value; node.handlers.change.call(node); } };
 }
 const PROJ = 'kaptiva-newsletters-projects-v1', HUB = 'kaptiva-newsletters-hub-v1';
 const storage = { [PROJ]: JSON.stringify({ old: { id: 'old', updated: 123, state: { tournament: 'surfcup', name: 'Original', sections: [], off: {}, franjaLeft: '' } } }) };
@@ -428,3 +428,66 @@ console.log('OK: arrastre a carpeta/ruta, persistencia, cancelación, rechazo ex
   assert.equal(boot(st).nodes['#tree-resize']['aria-valuenow'], '320');
 }
 console.log('OK: ancho del menú con teclado, límites, persistencia y restablecimiento.');
+
+// Panel derecho: el separador sigue la dirección del borde y recuerda su ancho.
+{
+  const st = {}, e = boot(st), handle = e.nodes['#editor-resize'];
+  const key = value => handle.handlers.keydown({ key: value, preventDefault() {} });
+  key('Home'); assert.equal(handle['aria-valuenow'], '300');
+  key('ArrowRight'); assert.equal(handle['aria-valuenow'], '300');
+  key('ArrowLeft'); assert.equal(handle['aria-valuenow'], '316');
+  assert.equal(boot(st).nodes['#editor-resize']['aria-valuenow'], '316');
+  e.nodes['#editor-layout'].clientWidth = 900;
+  key('End'); assert.equal(handle['aria-valuenow'], '540');
+  key('ArrowLeft'); assert.equal(handle['aria-valuenow'], '540');
+  handle.handlers.dblclick(); assert.equal(handle['aria-valuenow'], '470');
+  assert.equal(boot(st).nodes['#editor-resize']['aria-valuenow'], '470');
+  assert.equal(boot(st).nodes['#tree-resize']['aria-valuenow'], '320', 'Los anchos son independientes');
+}
+console.log('OK: panel derecho ajustable, límites según espacio disponible, persistencia y ancho independiente.');
+
+
+// Recargar restaura la ubicación de cada pestaña y conserva cambios aún sin refrescar.
+{
+  const session = {}, key = 'kaptiva-newsletters-session-v1';
+  const st = { [PROJ]: JSON.stringify({ old: { id: 'old', updated: 123, state: { tournament: 'surfcup', name: 'Original', sections: [], off: {} } } }) };
+  let e = boot(st, session); e.clickText('Original');
+  e.nodes['#name'].value = 'Cambio justo antes de recargar'; e.nodes['#name'].handlers.input.call(e.nodes['#name']);
+  e.nodes['#editor-panel'].scrollTop = 345;
+  e.fire('beforeunload');
+  const updated = JSON.parse(st[PROJ]).old.updated;
+  e = boot(st, session);
+  assert.equal(e.nodes['#name'].value, 'Cambio justo antes de recargar');
+  assert.equal(e.nodes['#editor-panel'].scrollTop, 345);
+  assert.equal(JSON.parse(st[PROJ]).old.updated, updated, 'Restaurar no modifica la newsletter');
+  e.fire('beforeunload'); assert.equal(JSON.parse(session[key]).project, 'old');
+  const other = {}; boot(st, other).fire('beforeunload');
+  assert.equal(JSON.parse(other[key]).project, null, 'Otra pestaña tiene su propia ubicación');
+  e.nodes['#back'].click(); e.clickText('Surf Cup 2026');
+  e.nodes['#new-folder'].click(); e.nodes['#folder-name'].value = 'Carpeta refresh'; e.nodes['#folder-form'].onsubmit({preventDefault() {}});
+  e.clickText('📁 Carpeta refresh'); e.nodes['#hub-search'].value = 'consulta'; e.fire('beforeunload');
+  const route = JSON.parse(session[key]); assert.ok(route.folder);
+  e = boot(st, session); assert.equal(e.nodes['#hub-search'].value, 'consulta');
+  e.fire('beforeunload'); assert.equal(JSON.parse(session[key]).folder, route.folder);
+  session[key] = JSON.stringify({ project: 'eliminado', tournament: 'inexistente', folder: 'eliminada', club: 'inexistente' });
+  e = boot(st, session); e.fire('beforeunload');
+  assert.equal(JSON.parse(session[key]).project, null); assert.equal(JSON.parse(session[key]).tournament, '');
+  session[key] = '{roto'; assert.doesNotThrow(() => boot(st, session));
+}
+console.log('OK: recarga en newsletter/carpeta, scroll, filtros, cambios pendientes, sesión por pestaña y destinos eliminados.');
+
+
+// El editor aplica el perfil por sección y no vuelve a ofrecer Club/Clásico.
+{
+  const e=boot({}, {}, true);
+  e.clickText('Fundación Real Madrid'); e.clickText('RMF WORLD CHALLENGE'); e.nodes['#new'].click();
+  assert.equal(e.nodes['#franja'].disabled,true);
+  assert.equal(e.nodes['#franja'].value,'WORLD CHALLENGE 2027');
+  assert.ok(e.nodes['#kit-guidelines-text'].textContent.includes('Nunca rojo'));
+  assert.equal(e.nodes['#look'],undefined);
+  e.change('#tournament','psg-canada');
+  assert.equal(e.nodes['#franja'].disabled,false);
+  assert.ok(e.nodes['#kit-guidelines-text'].textContent.includes('USA/Canada'));
+  assert.notEqual(e.nodes['#franja'].value,'WORLD CHALLENGE 2027');
+}
+console.log('OK: editor WCH automático, instrucciones, cambio a Camps Canada y selector de modelos eliminado.');

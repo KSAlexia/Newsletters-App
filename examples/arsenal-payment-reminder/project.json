@@ -1,0 +1,89 @@
+{
+  "tournament": "arsenal-exp",
+  "name": "Payment Reminder",
+  "desc": "arsenal-payment-reminder",
+  "franja": "Arsenal Football Development · Payment Reminder",
+  "franjaRight": "Payment information",
+  "mediaPackages": false,
+  "sections": [
+    {
+      "type": "title",
+      "d": {
+        "style": "principal",
+        "align": "left",
+        "text": "Payment reminder,\n{[C-FIRST NAME:TC]}"
+      }
+    },
+    {
+      "type": "text",
+      "d": {
+        "size": "intro",
+        "text": "Here’s a quick reminder about the payments for {[E-TITLE]}, along with your current balance and the details you need to access your registration."
+      }
+    },
+    {
+      "type": "glance",
+      "d": {
+        "density": "editorial",
+        "l1": "First payment",
+        "v1": "$1,500",
+        "l2": "First payment due",
+        "v2": "August 1\n2026",
+        "l3": "Final payment due",
+        "v3": "September 1\n2026"
+      }
+    },
+    {
+      "type": "box",
+      "d": {
+        "density": "editorial",
+        "style": "suave",
+        "label": "Payment schedule",
+        "title": "Important payment information",
+        "fmt": "puntos",
+        "text": "If you have not yet made your **first payment of $1,500**, please note that its deadline was **August 1, 2026**.\nIf you have already made this payment, thank you for keeping your registration up to date.\nThe final payment deadline was **September 1, 2026**. This payment serves as the final confirmation for your travel."
+      }
+    },
+    {
+      "type": "datos",
+      "d": {
+        "style": "summary",
+        "title": "Your payment summary",
+        "l1": "Current amount ordered",
+        "v1": "{[C-AMOUNT ORDERED]}",
+        "l2": "Current amount paid",
+        "v2": "{[C-AMOUNT PAID]}",
+        "l3": "Current balance",
+        "v3": "{[C-BALANCE DUE]}",
+        "text": "The trip deposit has already been subtracted from the balance shown above."
+      }
+    },
+    {
+      "type": "box",
+      "d": {
+        "density": "editorial",
+        "style": "suave",
+        "label": "Access your registration",
+        "title": "Your registration details",
+        "fmt": "puntos",
+        "text": "**Confirmation number:** {[C-CONFIRMATION NUM]}\n**Email used for registration:** {[C-EMAIL]}"
+      }
+    },
+    {
+      "type": "text",
+      "d": {
+        "size": "intro",
+        "text": "To review or update your reservation and continue your payments, use your personal registration link: {[E-MODIFY REG LINK]}"
+      }
+    },
+    {
+      "type": "box",
+      "d": {
+        "density": "editorial",
+        "style": "borde",
+        "title": "Need help with your payment?",
+        "text": "Simply reply to this email and our team will be happy to help."
+      }
+    }
+  ]
+}

@@ -77,13 +77,16 @@
 <p id="sync-note" role="status" hidden></p>
 <p id="history-toast" role="status" hidden></p>
 <p id="storage-error" role="alert" hidden>No se han podido guardar los últimos cambios en este navegador. No cierres la app; exporta las newsletters que hayas editado para conservar su contenido.</p>
-<main>
-  <section class="editor">
+<main id="editor-layout">
+  <div id="editor-resize" role="separator" tabindex="0" aria-label="Ancho del panel de edición" aria-orientation="vertical" aria-controls="editor-panel" title="Arrastra para ajustar el panel. Flechas para cambiar el ancho; doble clic para restablecer."></div>
+  <section id="editor-panel" class="editor" aria-label="Panel de edición">
     <div class="card settings">
       <label>Torneo<select id="tournament"></select></label>
       <label>Brand kit<select id="brand-kit"></select></label>
-      <small>El kit aplicado se guarda con esta newsletter. Editar la biblioteca no modifica esta copia.</small>
+      <details id="kit-guidelines" class="kit-guidelines"><summary>Instrucciones del brand kit</summary><p id="kit-design-status"></p><pre id="kit-guidelines-text"></pre></details>
+      <small>El kit automático comparte los ajustes de su marca. Un kit independiente se guarda como copia en esta newsletter.</small>
       <button id="brand-kits-editor" type="button" class="btn ghost2">Gestionar brand kits</button>
+      <label><span id="contact-caption">Contacto de esta newsletter (opcional)</span><input id="contact-email" type="text" placeholder="Email o campo de Cvent"><small>Se usa en la caja de contacto; no cambia el contacto de otros eventos.</small></label>
       <label>Nombre de la newsletter<input id="name" type="text" placeholder="Media Packages"></label>
       <label>Nombre de archivo<input id="desc" type="text" placeholder="media_packages"><small id="filename"></small></label>
       <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner del kit bajo el header)</label>
@@ -92,8 +95,6 @@
       <p class="fixed">Automático: header y footer del kit elegido, franja identificadora y footer legal con la baja.</p>
       <details class="more">
         <summary>Más opciones</summary>
-        <label>Estilo de la newsletter<select id="look"><option value="auto">Automático (clubs: estilo de club)</option><option value="classic">Clásico (el de siempre)</option></select></label>
-        <small id="look-note"></small>
         <label class="check"><input id="on-header" type="checkbox"> Mostrar el header del kit</label>
         <label class="check"><input id="on-franja" type="checkbox"> Mostrar la franja identificadora</label>
         <label class="check"><input id="on-footer" type="checkbox"> Mostrar el footer de imagen</label>
@@ -251,6 +252,7 @@
 <script src="js/hub.js"></script>
 <script src="js/head.js"></script>
 <script src="js/brands.js"></script>
+<script src="js/brand-designs.js"></script>
 <script src="js/brand-kits.js"></script>
 <script src="js/history.js"></script>
 <script src="js/modules.js"></script>

@@ -6,6 +6,10 @@ Actualizado: 12 de noviembre de 2026. Documento compartido para Codex, Claude y 
 
 ## 0. Estado actual · resumen para retomar (12/11/2026)
 
+### Estilos por kit implementados (13/11/2026)
+
+Leer `docs/brand-kits/README.md`, `manifest.json` y las siete fichas: instrucciones vigentes y referencias HTML archivadas para PSG, Arsenal y RMF. Camps USA/Canada comparten un kit por marca, manteniendo sus secciones. Siete perfiles automáticos en `js/brand-designs.js`; Camps USA/Canada comparten una ficha por marca. Se migra la biblioteca con copias recuperables y se conserva el HTML de newsletters anteriores.
+
 ### Qué es
 
 App estática (HTML + CSS + JS sin framework, sin compilación ni backend) para montar newsletters de Kaptiva y exportarlas a Cvent (`.txt`/`.html`). Se abre `index.html`; Node solo para pruebas. Todo se guarda en `localStorage`. Interfaz y documentación en español.
@@ -31,7 +35,7 @@ Claves de `localStorage`: `kaptiva-newsletters-projects-v1` (newsletters), `-hub
 
 `{ tournament, name, desc, franjaLeft, franjaRight, mediaPackages, headerAlt, look, brandKit?, off: {header, franja, footer}, sections: [{ id, type, d: {campos}, open, hidden? }] }`
 
-- `look`: `'auto'` (nuevas: estilo de club en los clubs) o `'classic'` (las guardadas antes; `K.normalize` lo pone si falta).
+- `designVersion: '2026-11-13'`: nuevas recetas/importaciones/guiones; activa el perfil preparado según la sección. `look` se conserva internamente para el HTML anterior; ya no tiene selector en la UI.
 - `hidden: true`: bloque oculto con el ojo; no sale en el email ni se revisa.
 
 ### Bloques
@@ -843,3 +847,198 @@ Problema: la newsletter de PSG importada desde el JSON de ChatGPT no se parecía
 - Las filas permiten partir nombres largos, mantienen iconos/contadores dentro y limitan la sangría a 42 px incluso con muchos niveles. El contenedor no genera scroll horizontal. Cambios solo en la interfaz, sin tocar el generador de email.
 - Comprobado en Chrome real sobre copia en origen local aislado: arrastre 240 → 390 px, persistencia tras recarga, teclado y doble clic, plegado, tamaños de 1280, 801, 390 y 320 px, y 18 carpetas anidadas con nombres largos/palabras sin espacios. Medidas del DOM confirman `scrollWidth === clientWidth` y ningún control/texto/icono fuera del menú en los casos revisados.
 - Todas las suites `test/*.test.js`, sintaxis y comparación BASE ejecutadas; la BASE conserva únicamente la diferencia conocida `?d=650`. Añadida prueba del ancho por teclado, sus límites, persistencia y restablecimiento. Capturas en `test/capturas-hub/menu-responsive-escritorio.png` y `menu-responsive-movil.png`.
+
+## Panel derecho ajustable y responsive (12/11/2026)
+
+- Aclaración del usuario: el panel que necesitaba ajustar era el de edición de la derecha. Se mantiene también la mejora del menú izquierdo, aprobada por el usuario.
+- Separador con asa en el borde izquierdo del panel derecho: arrastrar cambia su ancho; doble clic vuelve a 470 px. Admite teclado (flechas, Inicio/Fin) y valor accesible. Preferencia `view.editorWidth` independiente de `view.treeWidth`, guardada en la misma clave de vista.
+- Ancho de 300 a 720 px, limitado al 60 % del espacio del editor. Un ResizeObserver adapta los límites al abrir una newsletter, redimensionar la ventana o ajustar/plegar el menú izquierdo sin sustituir el ancho preferido.
+- Cuando el espacio real de trabajo baja a 760 px, panel y resultado se apilan en dos áreas con desplazamiento propio. Se usan consultas de contenedor: no depende solamente del ancho de pantalla. Dentro del panel, los campos dobles se apilan y las herramientas de los bloques pasan a otra fila por debajo de 380 px. Se permite partir textos largos, se limitan anchos mínimos de campos y se contiene el desplazamiento horizontal de imágenes dentro de su carrusel.
+- La barra superior puede repartir sus controles en varias líneas para no forzar desbordamiento en pantallas pequeñas. El HTML exportado de los emails no se modifica.
+- Validación real en Chrome, copia aislada en otro origen local: arrastre 300 → 500 px, persistencia al recargar y reabrir, teclado, doble clic, los 16 bloques del catálogo abiertos con panel de 300 px y pantalla móvil de 320 px. Sin controles fuera del panel y `scrollWidth === clientWidth`; sin errores de consola capturados. A 1024 px con menú izquierdo abierto quedan 704 px de trabajo y el editor se apila; a 1100 px conserva columnas, ampliadas al plegar el menú izquierdo.
+- Todas las suites `test/*.test.js`, sintaxis de `js/app.js` y comparación BASE ejecutadas correctamente (la BASE mantiene la diferencia conocida `?d=650`). Prueba adicional de teclado, límites según espacio, persistencia, restablecimiento e independencia de ambos anchos. Capturas: `test/capturas-hub/panel-derecho-escritorio.png` y `panel-derecho-movil.png`.
+
+## Recargar sin volver al inicio (12/11/2026)
+
+- La app guarda la ubicación de esta pestaña antes de recargar o salir (`beforeunload`/`pagehide`) y la restaura al terminar el montaje. Usa `sessionStorage`, clave `kaptiva-newsletters-session-v1`, para que cada pestaña mantenga su propia navegación.
+- Se restaura la newsletter abierta o ubicación del hub (torneo/sección, club, carpeta), búsqueda/filtros, pestaña de resultado (Vista previa/Revisión/Código), modo escritorio/móvil, comparación, selección de bloque, panel de imágenes/Más opciones y desplazamientos del hub, panel de edición, resultado, textarea de código e iframe. Los bloques abiertos/cerrados ya se guardaban con la newsletter.
+- La restauración valida newsletter, torneo, club y carpeta. Si se eliminaron o la sesión es ilegible/no está disponible, vuelve a una ubicación válida sin bloquear la app. Restaurar una newsletter no cambia su fecha de modificación. Se conserva el guardado de contenido antes de recargar. Los diálogos y borradores de código sin aplicar no se restauran como ediciones aplicadas.
+- Comprobado en Chrome real con datos aislados: recargar dentro de la carpeta QA Refresh; recargar una newsletter desde Código manteniendo nombre y pestaña; recargar en vista móvil conservando scroll del panel (874 → 874 px); recargar con ventana de 390 px manteniendo newsletter y modo móvil. Captura: `test/capturas-hub/recarga-misma-newsletter.png`.
+- Prueba automática adicional: edición inmediatamente antes de recargar, newsletter y fecha, carpeta/filtros/scroll, independencia entre sesiones, destino eliminado y sesión corrupta. Suites `test/*.test.js`, sintaxis y comparación BASE ejecutadas; diferencia conocida `?d=650` conservada. No se toca el generador del email.
+
+
+## Referencias de estilo por sub-brand · PSG (12/11/2026, análisis previo a implementación)
+
+Objetivo del usuario: cada marca/sub-brand debe tener su propio estilo aplicado automáticamente; eliminar la elección confusa «Automático/Clásico». Se están reuniendo referencias. No se ha cambiado el generador ni migrado newsletters guardadas. Sigue pendiente concretar el tratamiento de las existentes.
+
+### PSG Experiences · decisiones confirmadas
+
+- Las cinco referencias aportadas son válidas: Essential Pack Information, Important Clinic Information, Extra Activities, Flight and Arrival Information y Essential Pack Check-in Information.
+- El usuario confirma normalizar al máximo márgenes, jerarquía y piezas para conseguir un estándar coherente.
+- Header fijo: `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/2c5043ece01d4a9a8ae79d29943bad1a.png` (presente en cuatro referencias). Descartar como header de Experiences el alternativo de Extra Activities `8a7e3c25ddbb48239a929b9525a9d45a.png`.
+- Footer común Experiences: `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/1abe18827cfe4f5e9e62da2599c16442.png`.
+- Patrones del HTML: azul #004070, rojo #E30613, cuerpo #444444 y fondos #F5F7FB; título principal 32/40 px, contenidos a 650 px y márgenes habituales de 40 px; cajas informativas con borde lateral, agenda, plazos, hotel con imagen y actividades con precio. Alias PSG/Virage apuntan a los mismos tres archivos de fuente: 2d7daec633b4437d99ea6d638c5bc5a8.ttf (400), 6d0ea52a58b145fe9b8c2077cddba5d6.otf (700 cursiva), f7af6f3c0aeb49dd880cd60fe6a07804.otf (800), bajo el directorio Cvent `/files/`.
+- Adjuntos originales (bajo `/Users/agkaptiva/.codex/attachments/<id>/Texto pegado.txt`): cc1db099-767f-405e-8c64-895adbb0b4a5; bd933fec-b261-405e-a0d3-c5ffcdb906d5; 56f64855-0569-400d-8710-8e8c4ea4605b; 24a03a94-51d8-41e2-b271-40a96bd865f3; e306bbd6-220b-4ff4-b591-fda33aa9e454. El segundo contiene texto ajeno al email después de `</html>` (interfaz de ChatGPT/1Password): excluirlo al importar.
+
+### PSG Camps USA · ocho referencias recibidas y analizadas
+
+- Registration Confirmation, Early Drop-Off and Late Pick-Up, 100 Days To Go, 30 Days To Go, 4 Days To Go, 10 Days To Go, Cancellation Confirmation y 2 Days To Go.
+- Las ocho comparten el header principal de PSG anterior y un footer propio de Camps: `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/c09d6bae9864490ca533ea605b59cb6d.png`.
+- Comparten los tres archivos de fuente de Experiences, aunque aquí el peso 800 se llama «PSG UltraBold». Azul #004070, cuerpo #444444, fondos #F5F7FB y rojo #E20613 en los botones Telegram de las referencias; no confundir la pequeña variación de rojo con un modelo distinto. Propuesta pendiente de implementar: base común PSG con reglas específicas de USA Camps, aplicadas por sección.
+- Rasgos propios: franja con asunto a la izquierda y PSG Summer Camps a la derecha; fichas compactas etiqueta/valor para datos del camp; botones rojos; banners opcionales de cuenta atrás/Telegram; paneles azules de normas con texto blanco, títulos en mayúsculas e iconos; QR y wallets; información de registro/pagos de Cvent.
+- Los banners 100/30/10 Days o Join Telegram son contenido opcional, no estilos alternativos. La referencia 4 Days no obliga a generar un banner «4 días» que no se ha aportado. La de 2 Days tampoco contiene banner de cuenta atrás.
+- La confirmación de registro contiene un widget dinámico Cvent y filas Example… de su muestra. No convertir esas filas en datos reales ni reescribir campos dinámicos; preservar los widgets y distinguir la muestra del contenido editorial en la implementación.
+- Adjuntos originales, en el mismo directorio base: 14afe77d-2d22-4378-bab7-63f16adb51bc; b99501ba-2f99-4860-b074-7e6caf74f3da; 05366e13-3739-42f0-8339-3aabcc12cee4; 9ca949c5-ea0d-433c-8d00-d351030d63c7; 2f2eb758-432c-4069-8a15-9963561c8b92; 9e134f5d-4af3-4814-9553-210fe8ab0ff2; 01070053-b3a4-426d-9fff-82d9f03f0ec1; 3ddd427c-4cec-4d92-b565-aa98987a34b8.
+
+Análisis basado en el HTML adjunto; estas referencias todavía no se han renderizado ni validado en clientes de correo en esta fase.
+
+
+### PSG · referencias completas y alcance confirmado (12/11/2026)
+
+- El usuario confirma que PSG Camps USA y PSG Camps Canada tienen el mismo estilo: utilizar las ocho referencias de USA Camps para ambas secciones, sin pedir referencias adicionales de Canada.
+- Recopilación de referencias de PSG terminada. Dos estilos de sub-brand a implementar: **PSG Experiences** y **PSG Camps** (compartido por USA/Canada). La sección elegida debe aplicar el estilo correspondiente automáticamente, sin elección «Club/Clásico».
+- Se mantienen las decisiones confirmadas para Experiences: cinco referencias válidas, normalización máxima y header principal común a cuatro, descartando el alternativo de Extra Activities. Para Camps se usa el conjunto de ocho referencias ya registrado arriba.
+- Este cierre completa la recopilación de PSG; no acredita implementación ni migración de newsletters existentes. El código del generador sigue sin modificarse en esta fase.
+
+
+## Referencias Arsenal Experiences (12/11/2026, análisis previo a implementación)
+
+- Siete HTML recibidos: Essential Pack Information; Key Reminders · Essential Pack; Extra Activities; Media Packs; dos versiones tituladas Premium Pack Information; Sports Psychology Programme.
+- Identidad propia observada: rojo #B4001E, negro #0C0C0C, rojo oscuro #8B0015, fondo suave #FDF5F5 y texto #444444. Titulares Georgia en negrita y cuerpo Helvetica/Arial; no hay declaraciones @font-face en estas siete referencias. Ancho 650 px y márgenes habituales de 40 px. Franja negra; rojo para etiquetas, énfasis, precios y bordes de cajas. Estos patrones no se deben sustituir por el tema genérico derivado de PSG.
+- Piezas presentes: resumen de tres datos, agenda con fecha roja sobre texto claro, cajas de aviso/listas, dos plazos, galerías, fichas de actividades con imagen lateral/fecha/hora/precio, paquete recomendado y opciones de media, hotel con imagen, botones Telegram y acceso a registro Cvent. Son variaciones de contenido dentro de Experiences, no modelos para elegir manualmente.
+- Cinco referencias comparten header `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/d0dda35e9eef4fc5bc22f768749c292a.png` y footer `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/e1baea18930047838d4054ffe1d0f262.png`.
+- Las dos referencias Premium Pack Information usan header alternativo `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/ac1135b0a4bc4aac8346bb9e5a39e43a.png?d=650`, más contenido como banners de 570 px y cierres diferentes. Pendiente confirmar si el header/footer de las otras cinco será el estándar único también para estas.
+- Las dos Premium tienen el mismo título pero contenido distinto: una indica que el alojamiento no está incluido y la otra aporta check-in/check-out y lavandería. No deducir prestaciones a partir del título ni fusionar sus textos como si fueran duplicados.
+- Algunas imágenes de referencia usan custom links bajo `/files/` además de `/pix/`; conservar ambas rutas. No inventar ni sustituir assets al normalizar el estilo.
+- Adjuntos bajo `/Users/agkaptiva/.codex/attachments/<id>/Texto pegado.txt`, en orden de recepción: c7a83a4f-9b69-4f90-9e66-72bacdd91fb9; 97fc4973-a4ab-4286-bac2-6fce2dc42783; d712e250-abac-4a30-b49c-78eb65c94486; 00d62518-4c19-4d82-bad2-dc712b3c9f44; 4df07e1a-dc87-4b7e-be6e-e36bd9b78a35; 66ef2d06-a40e-4250-aa40-deb5cc5da4d6; 9c17a07e-c067-45ba-8f80-0242705f3569.
+- Análisis del HTML adjunto, sin renderizado de estas referencias en esta fase ni cambios en el generador. La equivalencia USA/Canada confirmada para PSG no debe suponerse automáticamente para Arsenal.
+
+
+## Regla de normalización y Arsenal Camps (12/11/2026, referencias completas)
+
+### Regla general confirmada por el usuario
+
+- «Siempre haz un standard basado en la mayoría a menos que diga lo contrario». Aplicar el patrón predominante entre elementos comparables de cada marca/sub-brand (cabecera, pie, fuentes, colores, márgenes y jerarquía). No volver a preguntar por variantes minoritarias cuando la mayoría sea clara.
+- La regla normaliza el diseño, no autoriza modificar textos, prestaciones, fechas, precios, enlaces, campos Cvent ni eliminar funciones que solo aparecen en un tipo de envío. Una mayoría de newsletters sin QR, por ejemplo, no elimina el QR de un mensaje de check-in.
+- Arsenal Experiences: confirmados como estándar el header `d0dda35e9eef4fc5bc22f768749c292a.png` y footer `e1baea18930047838d4054ffe1d0f262.png`, comunes a cinco de las siete referencias. Cabeceras/cierres alternativos de las dos Premium se normalizarán a este estándar de marca; sus contenidos distintos se conservan.
+
+### Arsenal Camps USA y Canada
+
+- El usuario confirma expresamente que las doce referencias sirven tanto para USA como para Canada. Un único estilo **Arsenal Camps** aplicado automáticamente en ambas secciones.
+- Referencias: Registration Confirmation; Registration Modification; Early Drop-Off and Late Pick-Up; Camp Update (cancelación del camp); 100 Days To Go; 50 Days To Go; 30 Days To Go; 15 Days To Go; 10 Days To Go; 4 Days To Go; 2 Days To Go; Access to OnArrival (equipo de trabajo).
+- Las doce tienen el header `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/d0dda35e9eef4fc5bc22f768749c292a.png`. Once usan footer `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/98f6f8c33f6d4fedb45231509e6f0fc5.png`; Camp Update no contiene imagen de pie. Header/footer mayoritarios quedan como estándar de Camps.
+- Patrones: Georgia en negrita para titulares, Helvetica/Arial en texto, sin @font-face externo. Rojo #B4001E, negro #0C0C0C, rojo oscuro #8B0015, fondos suaves #FDF5F5, cuerpo #444444. Ancho 650 px, márgenes interiores habituales 40 px, franja negra con asunto y Arsenal Summer Camp.
+- Componentes propios de los ejemplos: fichas compactas etiqueta/valor de registro y camp; servicios y precios; botones Telegram/certificado regalo; banners opcionales de cuenta atrás o Telegram; normas sobre fondo rojo con títulos/texto/iconos blancos; QR, Apple/Google Wallet; listas de instrucciones; acceso OnArrival y enlaces para calendario. El footer difiere del de Experiences aunque comparten header y base tipográfica/cromática.
+- Conservar los widgets y campos Cvent de confirmación/modificación sin convertir sus Example… en contenido real. OnArrival es un mensaje para personal, no una receta para familias; conservar el propósito y enlaces específicos sin trasladarlos como valores por defecto a otros emails.
+- No generalizar como predeterminados los horarios/precios/Tax ID de una referencia: son contenido de cada envío. Los textos legales/logísticos distintos tampoco se sustituyen por el más frecuente.
+- Adjuntos originales bajo `/Users/agkaptiva/.codex/attachments/<id>/Texto pegado.txt`, en orden: 482548e8-f552-4c42-8ddf-52b2c7e0ab1f; 5c5c660d-8bd8-466d-8a28-e56dd818d0af; 612ebfb2-3641-4872-a467-9f5a3ca7613e; a6935e24-0818-4821-a5bc-05efc8078b19; 222c1372-ba00-4373-82a7-68f35fe1235b; 48b44ba8-388c-422e-838f-150ebe86c14e; a6a1d1a8-7cf7-4c37-aec7-ae44b4417185; 5e23adac-eca5-44cb-a959-43d71281e639; 92aafa85-ef17-4680-853e-c8698d8390c0; 9a2ad4db-e6bb-4200-888e-561dd4eae2f3; d9e1d3b3-d688-4930-9786-627e2a39c150; f5f4acb6-c1ae-4df1-aedd-fb140fd97bd7.
+- Recopilación de Arsenal completa: **Arsenal Experiences** y **Arsenal Camps USA/Canada**. Análisis basado en HTML, sin renderizado ni cambios del generador en esta fase. La implementación y el tratamiento de newsletters ya guardadas siguen pendientes.
+
+
+## Real Madrid Foundation Experiences (12/11/2026, referencias)
+
+- Ocho adjuntos recibidos: Essential Pack Information; Premium Pack Information; All-In Pack Information (hotel/Telegram); Essential Pack Information (hotel/Telegram); Schedule & Extra Activities; All-In Pack Arrival Information; Premium Pack Arrival Information; Schedule & Extra Activities. El quinto y octavo son idénticos byte a byte: siete referencias únicas; no dar doble peso a ese diseño al determinar la mayoría.
+- Header indicado expresamente por el usuario (prevalece sobre cualquier alternativo): `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/0680e31902b84ed88b7a08dcaa246d83.png`. Seis adjuntos ya lo usan. El alternativo de Schedule & Extra Activities (`5b29266273624b748ebbcf23af298a1f.png?d=650`) no será el estándar.
+- Footer común a los ocho: `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/6ca9b3ea03a54f20b3e76a29e1bbb500.png` (las dos copias Schedule llevan `?d=620`; conservar el enlace exacto al trabajar con contenido existente, usar el mayoritario sin parámetro como asset predeterminado de marca).
+- Patrón mayoritario: azul oscuro #1A1D4F, dorado #BF873C, fondo suave #F6F5F0, cuerpo #444444. Titulares Georgia en negrita (principal 32/40 px), texto Helvetica/Arial, sin @font-face externo. Ancho 650 px, márgenes habituales 40 px. Franja azul, detalles/barras/etiquetas dorados, cajas claras con borde lateral, fechas oscuras con texto blanco y etiquetas doradas.
+- Schedule & Extra Activities introduce 30/38 px en el principal, texto #2D2F30, fondo #FDFAF3 y otros cambios menores: normalizar al patrón mayoritario, conservando las piezas de actividades (imagen, descripción, lista de inclusiones, fecha, precio y promoción) cuando procedan.
+- Componentes observados: resumen de tres datos, agenda, alojamiento/punto de encuentro, comidas, plazos, galerías de tres fotos, aviso destacado, hotel con imagen, Telegram con enlace y QR, traslados, pasos de llegada/check-in, QR de participante y wallets, horarios como imágenes y fichas de excursiones incluidas/de pago.
+- Essential, Premium y All-In son paquetes de contenido dentro de Experiences, no estilos adicionales. No unificar ni deducir prestaciones, fechas, horarios o alojamiento al normalizar el diseño. Mantener literal el contenido y campos Cvent de cada envío. El QR fijo para Telegram y el QR dinámico del participante tienen funciones distintas.
+- Esta definición corresponde a Experiences; no inferir todavía el estilo de Camps o RMF World Challenge a partir de estas referencias. Se mantiene la regla general de mayoría salvo excepción expresa.
+- Adjuntos bajo `/Users/agkaptiva/.codex/attachments/<id>/Texto pegado.txt`, en orden: a2ef2364-a5cd-49b7-9dc0-2e68fbc06f61; d0deb324-c8e4-4a9e-9e06-7807dd1de531; a613e395-eaee-4477-a3c5-93ca54dabfda; 8e502f1b-7325-459a-a49f-3c5c9709fea7; 8b548e2c-a10b-4b6e-aae0-c50d2bd809ea; 73f66d00-14bb-4453-9dc1-826993fbb4e0; c387645b-0a19-4748-af66-fda8dd2502c9; deb703b1-a214-439c-9e46-16ae8cd9aed0.
+- Análisis del HTML adjunto sin renderizado en esta fase. Registradas definición y excepción de header; generador y newsletters existentes sin cambios.
+
+
+## RMF Camps USA y Canada (12/11/2026, referencias)
+
+- El usuario confirma que RMF USA y Canada comparten estilo; usar este conjunto para ambas secciones automáticamente.
+- Trece adjuntos: Camp Cancellation; Summer Camp USA Confirmation; Early Drop-Off & Late Pick-Up (dos copias idénticas); 100, 50, 30, 15, 10, 4 y 2 Days To Go; OnArrival Team Member; Cancellation Confirmation. Doce referencias únicas: deduplicar las copias de servicios antes de ponderar el diseño mayoritario.
+- Header común a los trece: `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/0680e31902b84ed88b7a08dcaa246d83.png`. Aunque coincide con el elegido para Experiences, aquí queda confirmado por las propias referencias de Camps.
+- Footer estándar mayoritario (doce adjuntos; falta en Camp Cancellation): `https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/db9333ea4c694dcd954c90570f8d30f4.png` («See You At Camp»). Es diferente del footer de Experiences.
+- Patrón: azul #1A1D4F, dorado #BF873C, cuerpo #2D2F30 y fondo suave #F5F7FA. Georgia en negrita para titulares (principal 28/36 px frente a 32/40 px en Experiences) y Helvetica/Arial para texto, sin fuentes externas. Franja azul con etiqueta dorada y Summer Camps. Ancho 650 px, márgenes interiores habituales 40 px.
+- Rasgos específicos: fichas etiqueta/valor de registro y datos del camp, opciones con precio y paquete destacado, normas en tarjetas con iconos (celdas de 275 px, dos columnas en escritorio), instrucciones, banners opcionales de cuenta atrás/Telegram, certificado regalo, QR y wallets, acceso OnArrival y calendarios.
+- Las diferencias entre 15/10/2 días son de composición y contenido, no estilos para elegir. Los envíos de cancelación del camp y cancelación de una inscripción son distintos y conservan sus textos/funciones. No universalizar horarios, precios, Tax ID, políticas o enlaces de una referencia; preservar literalmente los campos Cvent, widgets y propósitos de cada envío. No tratar filas Example… del widget de confirmación como datos reales.
+- Adjuntos bajo `/Users/agkaptiva/.codex/attachments/<id>/Texto pegado.txt`, en orden: 4c1bc170-0687-45b5-bdf5-0d7ecc08311b; 915990bc-cc52-4d33-b397-bfdb365cfacb; dec69c00-25f1-4b39-82e7-24f67045782b; 9faf91cb-070b-48d0-8c90-e99667bb1aec; 2066f423-2d37-4ec4-bec7-cdae45da195f; dd7450f2-7604-48b8-a29f-9db8d8a6366e; 124e0a26-6cf9-4a30-99f0-4853b3aa66ff; 3e009d0f-08ec-4db4-a562-49141aa09d5c; 291f4fa5-e791-4dfe-9a2b-b2f1e49aa13d; fb48a02c-fdfe-437c-a7f9-4535133185ad; ab80024e-6edf-4672-acff-e38ad497dafd; ada2622f-ccb1-49f0-b675-6811bb426ccf; 8b05f9af-f20b-499a-8836-47d1cdb079e2.
+- Definidos RMF Experiences y RMF Camps USA/Canada. RMF World Challenge sigue siendo una sección independiente; este envío no autoriza a darle el estilo de Camps. Análisis del HTML sin renderizado ni modificaciones del generador en esta fase.
+
+
+## Instrucciones por kit y fusiones previstas (12/11/2026)
+
+El usuario anuncia una próxima petición de implementación y solicita conservar el contexto en instrucciones por kit. Preparadas seis fichas en `docs/brand-kits/`, con manifiesto sección→kit y 53 adjuntos originales archivados (51 HTML únicos). PSG Camps, Arsenal Camps y RMF Camps quedan definidos como kits compartidos USA/Canada, sin fusionar la organización del hub. Se documentan migración reversible, conservación de personalizaciones y snapshots, y futura integración de las instrucciones en biblioteca/importación. Esta iteración solo prepara documentación y referencias: no modifica el generador ni el almacenamiento del navegador.
+
+
+## Kit WCH incorporado al contexto (13/11/2026)
+
+- Añadida la ficha `docs/brand-kits/rmf-wch.md` y archivado el documento original íntegro en `docs/brand-kits/referencias/rmf-wch/brand-kit-original.txt`.
+- Manifest: kit `rmf-wch` → sección existente `rmf-wc`, independiente de los kits RMF Experiences y Camps. Siete kits para diez secciones; tres parejas Camps USA/Canada siguen compartiendo kit.
+- Reglas expresas del usuario: blanco/dorado #BEA47A, carbón #1F1F1F, cuerpo #2B2B2B y fondo suave #F8F5EF; sin rojo ni fuentes web. Georgia en titulares y Helvetica/Arial en cuerpo. Escala, componentes, medidas, tono inglés y tags Cvent completos en la ficha.
+- Assets vigentes: header `df32a86304cb472599c44c9e4979cf33.png`, banner de cierre `c2955fb129e34300b1277fc35ad7e793.png` y foto `a13a3c67f33046eb8dc29f11262c117f.jpg?d=650`. No usar el hero d4485b5c… ni el pie antiguo 9082f8f3….
+- Orden fijo: header, subheader carbón (WORLD CHALLENGE 2027 / FUNDACIÓN REAL MADRID), contenido, contacto/firma, banner See You in Madrid y línea legal de baja. Los badges Wallet de cvent-assets.com están expresamente aportados. No inventar contacto, enlaces ni assets pendientes.
+- Actualizados índices y manifiesto. Esta iteración incorpora instrucciones y recursos documentados, sin modificar el runtime ni kits del navegador. Verificados enlaces locales, hash del original y mapeo de sección; no se declara validación visual del email.
+
+
+## Implementación de siete kits, instrucciones y Camps compartidos (13/11/2026)
+
+- Catálogo `js/brand-designs.js`: PSG Experiences/Camps, Arsenal Experiences/Camps, RMF Experiences/Camps y WCH. Mapea diez secciones a siete perfiles. Contiene assets de las referencias y reglas deterministas por función (fuentes, paleta, títulos, etiquetas, barras, cajas, botones y fondos). Funciona abriendo el HTML directamente; sin fetch, compilación ni backend.
+- `brand-kits.js`: USA/Canada comparten una base editable por marca, con compatibilidad de IDs antiguos. Migración idempotente: backup íntegro antes de escribir, copias previas independientes y combinación de recursos. USA tiene prioridad al existir diferencias; Canada se conserva íntegramente en su copia. Los recursos que superen el límite combinado de 30 siguen accesibles en las copias. Un fallo de almacenamiento no elimina la biblioteca anterior ni la declara cargada.
+- La biblioteca anterior sirve de fuente congelada para newsletters guardadas sin designVersion. Editar los kits compartidos o sus copias recuperadas no altera el HTML de esas newsletters. Sus snapshots tampoco se sustituyen. Las nuevas usan el catálogo y sus ajustes compartidos; cambiar la sección explícitamente selecciona su perfil actual.
+- Selector Club/Clásico eliminado. Instrucciones visibles en un desplegable del editor y editables dentro de cada kit. Versionado e instrucciones se conservan al normalizar, exportar/importar y aplicar snapshots. Prompts de importación y guion incluyen las reglas del kit elegido; se evita el ejemplo universal PSG para las marcas preparadas.
+- WCH: header/franja/cierre fijos, paleta blanco/dorado/carbón, Georgia/Helvetica, firma y contacto antes del banner. Contacto por newsletter con campo de email/Cvent, sin compartir datos de eventos entre países; revisión si falta en WCH. No se inventa email. No duplicar firma ni contacto si ya hay bloque de contacto.
+- Corregida la etiqueta del kit automático al cambiar de sección y el desplazamiento de vista previa al abrir otra newsletter; la restauración tras recargar sigue usando su scroll guardado.
+- Verificación: todas las suites test/*.test.js, sintaxis, comparación BASE (misma diferencia conocida ?d=650), compare-modules con 268 casos y 0 diferencias, golden hashes del HTML anterior para 38 combinaciones sección/look y una biblioteca con dos países personalizados. Pruebas nuevas de siete perfiles, instrucciones, campos de contacto, aliases, snapshots, edición compartida, migración recuperable/idempotente/falta de espacio, y editor WCH/cambio a Canada sin selector de modelo.
+- Chrome real en origen local aislado: siete perfiles revisados en escritorio, los siete en ancho de pantalla 390 px con iframe sin scroll horizontal (358/358 px), instrucciones guardadas y visibles al cambiar entre USA y Canada, biblioteca con una ficha por pareja; WCH completo en móvil 390/390 px y cierre/contacto/firma en escritorio. Sin errores de consola capturados. Capturas `test/capturas-hub/kits-compartidos.png` y `wch-movil.png`.
+- Pendiente externo: validación real en Outlook/Gmail/Cvent. La documentación recoge reglas de compatibilidad; las pruebas web/Node no acreditan esos clientes.
+
+## Corrección de fidelidad Arsenal · 13/11/2026
+
+Comparados los dos HTML y el JSON aportados: la composición simplificada y el banner adicional ya venían en el JSON; el generador no puede recuperar tarjetas/cajas que no están descritas. Había además recomendaciones demasiado generales de usar `compra` ante un enlace de registro.
+
+Actualizado `K.importPrompt` y la guía de composición para conservar la estructura visual del HTML de esta petición y no reutilizar contenidos del chat. Nuevas opciones explícitas: `datos.style: summary` (resumen vertical en caja suave, título/nota); `box.density: editorial` (compacta, rótulo con separador opcional, caja final recta); `glance.density: editorial` (tarjetas centradas, 17/22, separación móvil); `text.size: intro/body` (15/25 y 14/23, espaciado compacto); `separador.style: neutral`. Valores anteriores intactos.
+
+Caso reproducible en `examples/arsenal-payment-reminder/`: HTML original, JSON importable y exportación generada. Test de contenido/orden/campos Cvent y opciones de importación. Mantiene la identidad estándar Arsenal (franja negra, fondo blanco), no reproduce píxel a píxel el fondo/franja rojos del original. No modifica newsletters guardadas ni su localStorage.
+
+Validación de esta corrección: todas las suites Node y 268 comparaciones sin diferencias en HTML existente. Chrome real en escritorio y 390 px: tarjetas apiladas con separación, cajas y resumen contenidos; ancho de documento 390/390. Sin validación de clientes de email reales.
+
+## Normalización de composición, corrección del enfoque anterior · 13/11/2026
+
+El usuario confirma que la IA sigue devolviendo listas/párrafos planos. El nuevo adjunto es contenido con formato antiguo; conservar su estructura era contrario al objetivo de normalizar al brand kit. Cambiados solo los prompts: para los siete perfiles, el HTML es fuente de contenido y la composición se elige por función, con prioridad explícita sobre su aspecto antiguo. Apertura a titular, importes etiquetados a datos summary incluso si vienen en viñetas, instrucciones y credenciales a caja suave. Sin inventar etiquetas o fechas para rellenar tarjetas, sin reescribir ni omitir contenido. Patrón estructural sin textos de ejemplo y revisión obligatoria en guion/importación. El importador/render y proyectos guardados no cambian.
+
+Caso literal del último adjunto en examples/arsenal-payment-normalized: source.html, project.json, salida HTML/TXT e instrucciones actualizadas listas para copiar. El test compara todo su texto visible en orden, conserva el banner real y los campos Cvent, y comprueba las reglas en los siete kits y ambos prompts.
+
+Verificación: suites Node completas, 268 casos de HTML sin diferencias, comparación literal del último adjunto y Chrome escritorio/móvil (390 px, sin desbordamiento horizontal). No se ha ejecutado una generación externa de ChatGPT; las pruebas verifican las instrucciones copiadas y el caso recompuesto, no garantizan obediencia de un modelo externo.
+
+## Arsenal, separación común y datos extraídos · 13/11/2026
+
+Petición expresa: Arsenal usa siempre franja roja y texto más compacto, bloques separados en todas las marcas, e interpretación de datos para tres recuadros. `brand-designs.js`: franja Arsenal #B4001E, texto 10/14 px bold con tracking 1 px; titulares tracking -0.5 px. Limitar franja/tipografía a los perfiles Arsenal Experiences y Camps. Los prompts y catálogo indican que esta regla prevalece sobre instrucciones antiguas de franja negra.
+
+`K.build`: para estados con designVersion actual y perfiles activos, espacio inferior mínimo 20 px por bloque visual; conservar márgenes mayores y unidades de título+introducción. Fondos de banda completa reciben espacio blanco externo. Último bloque separado del footer. El cambio se aplica al render de newsletters con perfil preparado ya guardadas, conforme a la petición; no convierte estados antiguos sin versión.
+
+Prompts de importación/guion: interpretar párrafos para extraer 2–3 hechos y etiquetas descriptivas, sin inventar valores, completar años o eliminar condiciones. Patrón con glance y revisión cuando existen tres hechos. Se permite repetir hechos en tarjetas como resumen y mantener la explicación completa. Caso actualizado con $1500, August 1st 2026 y September 1st sin año en examples/arsenal-payment-cards.
+
+Verificación de este ajuste: todas las suites Node, incluidos tests de franja, tracking, separación por marca, extracción sin año inventado e instrucciones; 268 comparaciones anteriores sin diferencias y golden hashes legacy conservados. Chrome real escritorio y 390 px, documento 390/390 sin desbordes y tarjetas apiladas separadas. No verificado en clientes de correo reales. Las instrucciones visibles en el editor incluyen reglas vigentes incluso con personalizaciones de texto anteriores del kit.
+
+## Centrado vertical de la franja Arsenal · 13/11/2026
+
+La franja compacta sumaba una fila roja inferior de 4 px al padding 10/10; el texto quedaba 2 px por encima del centro total. Para Arsenal se elimina esa fila redundante y se usa padding 12/12: mantiene 38 px de altura con una línea de texto y centro vertical simétrico. Resto de marcas y perfiles legacy sin cambios.
+
+Verificado en Chrome escritorio y móvil: centro del párrafo y centro de la franja coinciden (103.6328125 px en escritorio), altura 38 px. Suites Node completas y 268 comparaciones legacy sin diferencias.
+
+## Wallet editable y QR personal · 13/11/2026
+
+Comparación de ambos adjuntos: el HTML de salida ya incluía href con C-PASSBOOK_LINK y C-GOOGLEWALLET_LINK correctos. El error era copiar los alt «Apple Wallet», «Add to Google Wallet Button» y el campo C-QRCODE_LINK al texto opcional del bloque; el QR se exportaba como texto.
+
+Se amplía el bloque existente `wallet`: enlaces e imágenes editables por plataforma, selección de botones y QR personal opcional (180 px, img src con C-QRCODE_LINK). Valores de respaldo visibles en la UI de bloques antiguos, sin mutarlos al cargar. Nueva acción «Limpiar textos técnicos y recuperar QR» para reparar explícitamente bloques ya guardados; la importación JSON nueva realiza esa limpieza acotada y emite un aviso. No se quitan párrafos humanos. Se rechazan enlaces del editor/preview y QRCodeType.gif, con revisión y fallback válido. URLs fijas válidas se admiten con aviso porque no cambian por destinatario. La vista previa muestra un marcador explicativo del QR; el export deja la imagen dinámica para Cvent.
+
+`js/app.js` soporta acción de campo y fallback de valor, usados en Wallet. Prompt común de HTML/guion reconoce tokens, badges oficiales cvent-assets.com, QR personal y alt técnicos; no convierte los badges en tabla Markdown ni el QR en texto y distingue el QR de Telegram. Reglas comunes a todas las marcas.
+
+Caso en examples/wallet-cvent: exportación completa corregida, cambiando solo la sección Wallet del adjunto generado, ejemplo JSON de ese bloque y vista previa. Compatibilidad: Wallet sin opciones nuevas conserva exactamente su HTML; ninguna limpieza silenciosa de newsletters guardadas.
+
+Verificación: pruebas Node completas y 268 comparaciones de HTML anterior sin diferencias; test Wallet para tokens, imágenes editables, QR, limpieza idempotente, rechazo de enlaces de editor e importación. Chrome real del editor: campos por defecto visibles, limpieza de un bloque antiguo, edición del enlace Google y vista previa escritorio/móvil con badges apilados y marcador QR. Confirmado href literal C-GOOGLEWALLET_LINK en DOM. No se ha validado emisión ni descarga de pases mediante un envío real de Cvent.
+
+## Detección automática de Wallet al importar JSON · 13/11/2026
+
+El usuario requiere reconocimiento automático en todas las marcas sin limpieza manual. `K.importProject` normaliza las secciones nuevas antes de validarlas: campos C-PASSBOOK_LINK/C-GOOGLEWALLET_LINK/C-QRCODE_LINK, badges oficiales, placeholder QRCodeType.gif, botones con campos personales o URLs de editor identificados por etiqueta Wallet, y tablas Markdown con badges pasan a bloques Wallet editables. Se agrupan elementos contiguos, conservando texto humano y orden; una imagen múltiple que mezcla fotos y badges se separa sin perder las fotos. QR personal solo no inventa botones de Apple/Google. No se confunden menciones narrativas ni QR de Telegram. El bloque Wallet ya existente en el JSON se limpia automáticamente como antes. Es una regla del importador compartido, no depende de la marca ni de que la IA elija bien el tipo de bloque.
+
+No transforma proyectos guardados al abrirlos; la acción manual queda para reparar un proyecto ya guardado. El reconocimiento necesita que el JSON contenga el campo, el asset o un enlace identificable; no puede recuperar recursos que se omitieron por completo. Se mantiene la resolución final de pases por Cvent.
+
+Verificado: todas las suites Node, detección en las 19 secciones, casos de botones/imágenes/Markdown/QR solo, conservación de fotos y texto, idempotencia y exclusión de Telegram; 268 comparaciones de HTML sin diferencias. Chrome real con PSG Canada: JSON con dos imágenes de badges y un texto QR se importa como un Wallet con ambos botones y QR personal, sin ejecutar la limpieza manual.

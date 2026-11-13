@@ -44,8 +44,9 @@
   function renderForm() {
     var form = $('#kit-fields'); form.innerHTML = '';
     if (draft.base) {
-      var t = K.tournament(draft.base), saved = !!B.brandKit(draft.base);
-      form.appendChild(node('p', 'Kit de la marca ' + t.name + '. Lo que guardes se aplica a todas sus newsletters con «Kit automático del torneo» en este navegador (no en el de otras personas).' + (saved ? ' Ya está editado.' : ' Ahora mismo muestra el diseño original de la app.'), 'kit-note kit-base-note'));
+      var t = K.tournament(draft.base), group = K.Designs && K.Designs.forSection(draft.base), saved = !!B.brandKit(draft.base);
+      form.appendChild(node('p', 'Kit de la marca ' + (group ? group.name : t.name) + '. Lo que guardes se aplica a sus newsletters nuevas con kit automático en este navegador. Las newsletters anteriores conservan su diseño guardado.' + (saved ? ' Ya está editado.' : ' Ahora mismo muestra el diseño original de la app.'), 'kit-note kit-base-note'));
+      if (group && group.sections.length>1) form.appendChild(node('p', 'Compartido por USA y Canada. Los cambios se guardan en un único kit para ambas secciones. Las personalizaciones previas se conservan en copias independientes.', 'kit-note'));
       var tools = node('div', '', 'kit-base-tools');
       tools.appendChild(button('Duplicar como kit independiente', duplicate));
       if (saved) tools.appendChild(button('Volver al diseño original', function () {
@@ -66,12 +67,17 @@
     }
     if (!draft.base && !draft.id) form.appendChild(node('p', 'Kit nuevo: al pulsar «Crear kit» se añade a «Tus kits independientes». Para cambiar el diseño de una marca, elígela en «Kits de cada marca».', 'kit-note kit-base-note'));
     form.appendChild(field('Nombre del brand kit', draft.name, function (v) { draft.name = v; }));
-    var label = node('label', 'Asociación orientativa'), select = node('select');
+    var label = node('label', draft.base ? 'Secciones del kit' : 'Asociación orientativa'), select = node('select');
     var opt = node('option', 'Marca / proyecto independiente'); opt.value = ''; select.appendChild(opt);
     K.CLIENT.tournaments.forEach(function (t) { var o = node('option', t.name); o.value = t.id; select.appendChild(o); }); select.value = draft.tournament;
     select.addEventListener('change', function () { draft.tournament = select.value; touch(); }); label.appendChild(select);
+    if (draft.base && group && group.sections.length>1) { select.innerHTML=''; var shared=node('option',group.sections.map(function(id){return K.tournament(id).name;}).join(' + '));shared.value=draft.base;select.appendChild(shared);select.value=draft.base; }
     if (draft.base) select.disabled = true; // el kit de una marca siempre es de esa marca
     form.appendChild(label);
+    form.appendChild(node('h3', 'Instrucciones del brand kit'));
+    form.appendChild(node('p', 'Reglas de composición que se consultan en el editor y se incluyen al copiar instrucciones para importar o crear desde un guion. El diseño se aplica automáticamente.', 'kit-note'));
+    var instructionsLabel=node('label','Instrucciones de diseño y composición','kit-instructions'), instructions=node('textarea'); instructions.rows=12; instructions.value=draft.instructions||''; instructions.setAttribute('aria-label','Instrucciones de diseño y composición'); instructions.addEventListener('input',function(){draft.instructions=instructions.value;touch();}); instructionsLabel.appendChild(instructions); form.appendChild(instructionsLabel);
+    if(draft.designVersion) form.appendChild(node('small','Versión de diseño: '+draft.designVersion,'kit-instructions'));
     form.appendChild(node('h3', 'Colores'));
     [['principal', 'Principal'], ['acento', 'Acento'], ['secundario', 'Secundario (referencia opcional)']].forEach(function (pair) {
       var wrap = field(pair[1], draft.colors[pair[0]], function (v) { draft.colors[pair[0]] = v; if (/^#[a-f\d]{6}$/i.test(v)) color.value = v; });
@@ -90,7 +96,7 @@
     form.appendChild(node('h3', 'Imágenes (fotos para los bloques)'));
     draft.assets.forEach(function (a, i) { form.appendChild(assetEditor(a, 'Imagen ' + (i + 1), function () { draft.assets.splice(i, 1); })); });
     form.appendChild(addButton('＋ Añadir imagen', draft.assets, 'imágenes'));
-    $('#kit-editor-title').textContent = draft.base ? 'Kit de ' + K.tournament(draft.base).name : draft.id ? 'Editar kit guardado' : 'Crear un brand kit';
+    $('#kit-editor-title').textContent = draft.base ? draft.name : draft.id ? 'Editar kit guardado' : 'Crear un brand kit';
   }
   // Añade un recurso vacío a una lista (banners o fotos) y lleva la vista hasta él.
   function addButton(text, list, what) {
@@ -117,7 +123,7 @@
     var list = $('#kit-list'); list.innerHTML = '';
     // Kits de cada marca/sección: se editan en su sitio y se aplican a sus newsletters.
     list.appendChild(node('h3', 'Kits de cada marca'));
-    K.CLIENT.tournaments.forEach(function (t) {
+    B.catalog().forEach(function (t) {
       var edited = !!B.brandKit(t.id), item = button(t.name + (edited ? ' · editado' : ''), function () { if (canLeave()) openDraft(B.brandDraft(t.id)); }, 'kit-list-item');
       if (draft && draft.base === t.id) item.setAttribute('aria-current', 'true'); list.appendChild(item);
     });
@@ -127,7 +133,7 @@
   }
   function download(name, value) { var a = node('a'), url = URL.createObjectURL(new Blob([JSON.stringify(value, null, 2)], { type: 'application/json' })); a.href = url; a.download = name; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(url); a.remove(); }, 1000); }
   U.refreshSelect = function (st) {
-    var select = $('#brand-kit'); select.innerHTML = ''; var o = node('option', 'Kit automático del torneo'); o.value = ''; select.appendChild(o);
+    var select = $('#brand-kit'); select.innerHTML = ''; var info = st && K.Designs && K.Designs.forSection(st.tournament); var o = node('option', info ? 'Automático · '+info.name : 'Kit automático de la sección'); o.value = ''; select.appendChild(o);
     if (st && st.brandKit) { o = node('option', st.brandKit.name + ' · copia aplicada'); o.value = '@current'; select.appendChild(o); }
     B.custom().forEach(function (k) { var x = node('option', k.name); x.value = k.id; select.appendChild(x); }); select.value = st && st.brandKit ? '@current' : '';
   };

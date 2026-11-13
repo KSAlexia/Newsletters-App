@@ -104,3 +104,12 @@ Lee [ESTADO-PROYECTO.md](ESTADO-PROYECTO.md) para conocer la arquitectura, los c
 - **Guardar kit** guarda en este navegador. **Exportar borrador** descarga un JSON con los ajustes y referencias; **Importar kit** abre ese JSON como kit nuevo sin sobrescribir otros. El JSON individual de una newsletter incluye su copia aplicada y URLs, pero no los archivos de referencia ni toda la biblioteca.
 - La asociación a un torneo es orientativa: los kits no crean torneos, no cambian la clasificación del hub ni el contacto o los campos Cvent. Las fuentes externas conservan respaldos de sistema; hay que validar su rendering en los clientes de correo.
 - Pruebas: `node test/brand-kits.test.js`, `node test/hub.test.js`, `node test/history.test.js`, `node test/producto.test.js`, `node test/cards.test.js`, `node test/pieces.test.js`, `node test/hidden.test.js`, `node test/icons.test.js`, `node test/datos-timeline.test.js`, `node test/compra.test.js`, `node test/variantes.test.js` y `node test/club-style.test.js`. Para comprobar que el HTML antiguo no cambia: `node test/compare-modules.js <copia-anterior-de-js/modules.js>`. La subida/importación de archivos no pudo validarse automáticamente por un permiso de la extensión de Chrome; ver el estado del proyecto.
+
+## Estilos automáticos por brand kit
+
+Las [instrucciones de cada brand kit](docs/brand-kits/README.md) recogen referencias y reglas acordadas. Siete kits para PSG, Arsenal y RMF, incluido WCH independiente; sus Camps comparten diseño USA/Canada. Los siete perfiles ya se aplican automáticamente por sección; las parejas Camps USA/Canada comparten una sola ficha editable.
+
+
+En el editor, **Instrucciones del brand kit** muestra las reglas del diseño. En **Brand kits → marca → Instrucciones del brand kit** puedes editarlas; también se incorporan al copiar instrucciones para importar o crear desde un guion. Ya no hay selector «Club/Clásico».
+
+Las newsletters anteriores mantienen su aspecto. Las nuevas usan los estilos preparados. Las personalizaciones de kits anteriores a la unificación se conservan como copias independientes, además de una copia íntegra de la biblioteca. USA y Canada mantienen sus carpetas y newsletters separadas.

@@ -1,0 +1,160 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office"><head><title>Arsenal Football Development Clinic</title><meta http-equiv="Content-Type" content="text/html; charset=UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="format-detection" content="telephone=no" /><style type="text/css">/* CLIENT-SPECIFIC STYLES ------------------- */
+#outlook a {
+  padding: 0; /* Force Outlook to provide a &quot;view in browser&quot; message */
+}
+
+.ReadMsgBody {
+  width: 100%; /* Force Hotmail to display emails at full width */
+}
+.ExternalClass {
+  width:100%; /* Force Hotmail to display emails at full width */
+}
+.ExternalClass, .ExternalClass p, .ExternalClass span, .ExternalClass font, .ExternalClass td, .ExternalClass div {
+  line-height: 100%; /* Force Hotmail to display normal line spacing */
+}
+body, table, td, a { /* Prevent WebKit and Windows mobile changing default text sizes */
+  -webkit-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+}
+table, td, li { /* Remove spacing between tables in Outlook 2007 and up */
+  mso-table-lspace: 0pt;
+  mso-table-rspace: 0pt;
+  mso-line-height-rule: at-least;
+  border-spacing: 0;
+  mso-margin-bottom-alt: 0;
+  mso-margin-top-alt: 0;
+}
+img { /* Allow smoother rendering of resized image in Internet Explorer */
+  -ms-interpolation-mode: bicubic;
+}
+
+/* RESET STYLES --------------------------- */
+body {
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+  width: 100% !important;
+}
+img {
+  border: 0;
+  height: auto;
+  line-height: 100%;
+  outline: none;
+  text-decoration: none;
+}
+table {
+  border-collapse: collapse !important;
+}
+a {
+  color: #B4001E;
+}
+h1, h2, h3, h4, h5, h6, p { /* Override user agent styles for these elements */
+  margin-block-start: 0px;
+  margin-block-end: 0px;
+  margin-top: 0px;
+  margin-bottom: 0px;
+}
+/* Override Gmail Blue Links */
+u + #body a {
+  color: #B4001E;
+}
+/* iOS BLUE LINKS */
+.apple-links a {
+  color: #AAAAAA;
+  text-decoration: none;
+}
+
+/* MOBILE STYLES ------------------------ */
+/* Media Queries
+  480px matches @small(20em) in nucleus-core/less/MediaQuery.less
+*/
+@media screen and (max-width: 480px) {
+  .responsive-table,
+  .wrapper,
+  .column,
+  .img-max {
+    width: 100% !important;
+  }
+
+  .mobile-button {
+    width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .mobile-pad {
+    padding-left: 24px !important;
+    padding-right: 24px !important;
+  }
+  .h1 {
+    font-size: 28px !important;
+    line-height: 32px !important;
+  }
+  .col2 {
+    display: block !important;
+    width: 100% !important;
+    padding: 0 0 16px 0 !important;
+  }
+  .desk-only {
+    display: none !important;
+  }
+  .mob-only {
+    display: block !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+  .data-col {
+    display: block !important;
+    width: 100% !important;
+    border-left: none !important;
+    padding: 10px 0 !important;
+  }
+}</style><!--[if gte mso 9]>
+                <xml>
+                  <o:OfficeDocumentSettings>
+                    <o:AllowPNG/>
+                    <o:PixelsPerInch>96</o:PixelsPerInch>
+                  </o:OfficeDocumentSettings>
+                </xml>
+              <![endif]--><style type="text/css"> @media screen {
+  
+  
+  
+  
+  
+  
+  
+}</style></head> <body style="margin:0;padding:0" id="body"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="table-layout:fixed"><tbody><tr><td align="center" bgcolor="#FFFFFF" style="background-color:#FFFFFF"><!--[if gte mso 9]>
+            <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0"
+              width="650" style="width:650px;">
+              <tr>
+                <td align="center" valign="top" width="650" style="width:650px;">
+          <![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="width:650px" class="wrapper"><tbody>
+<!-- [0] HEADER -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/d0dda35e9eef4fc5bc22f768749c292a.png" alt="Arsenal Experiences" title="Arsenal Experiences" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [1] FRANJA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#B4001E" style="padding:12px 40px;background-color:#B4001E;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td align="left"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#FFFFFF;letter-spacing:1px;text-transform:uppercase;word-break:break-word;"></p></td><td align="right"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#FFFFFF;letter-spacing:1px;text-transform:uppercase;word-break:break-word;">Arsenal Football Development Clinic</p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [2] IMAGEN -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0 0 20px 0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/5e0100c3217d42c8b791a05f37a70bf6.png?d=650" alt="" title="" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [3] TITULO + TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:34px 40px 24px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;letter-spacing:-0.5px;font-size:32px;line-height:40px;color:#0C0C0C;text-transform:none;text-align:left;word-break:break-word;">Getting ready for the big trip, {[C-FIRST NAME:TC]}?</p><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="56" style="margin:14px 0 0 0;"><tbody><tr><td height="4" style="height:4px;line-height:4px;font-size:0;background-color:#B4001E;border-radius:2px;">&nbsp;</td></tr></tbody></table><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:15px;line-height:25px;color:#444444;text-align:left;padding-top:14px;word-break:break-word;">A friendly reminder on your next payment due for the {[E-TITLE]}.</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [4] AT A GLANCE -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:0 40px 28px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border-collapse:separate !important;"><tbody><tr><td class="col2" width="180" valign="top" bgcolor="#B4001E" style="width:180px;background-color:#B4001E;border-radius:8px;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td style="padding:16px 14px;text-align:center;"><p style="text-align:center;font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#FFCCCC;letter-spacing:2px;text-transform:uppercase;word-break:break-word;padding-bottom:8px;">First payment</p><p style="text-align:center;font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;letter-spacing:-0.5px;font-size:17px;line-height:22px;color:#FFFFFF;word-break:break-word;">$1500</p></td></tr></tbody></table></td><td class="desk-only" width="9" style="width:9px;font-size:0;line-height:0;">&nbsp;</td><td class="mob-only" height="12" style="display:none;max-height:0;overflow:hidden;mso-hide:all;height:12px;line-height:12px;font-size:0;background-color:#FFFFFF;">&nbsp;</td><td class="col2" width="180" valign="top" bgcolor="#B4001E" style="width:180px;background-color:#B4001E;border-radius:8px;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td style="padding:16px 14px;text-align:center;"><p style="text-align:center;font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#FFCCCC;letter-spacing:2px;text-transform:uppercase;word-break:break-word;padding-bottom:8px;">First payment due</p><p style="text-align:center;font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;letter-spacing:-0.5px;font-size:17px;line-height:22px;color:#FFFFFF;word-break:break-word;">August 1st,<br />2026</p></td></tr></tbody></table></td><td class="desk-only" width="9" style="width:9px;font-size:0;line-height:0;">&nbsp;</td><td class="mob-only" height="12" style="display:none;max-height:0;overflow:hidden;mso-hide:all;height:12px;line-height:12px;font-size:0;background-color:#FFFFFF;">&nbsp;</td><td class="col2" width="180" valign="top" bgcolor="#FFFFFF" style="width:180px;background-color:#FFFFFF;border-radius:8px;border:2px solid #B4001E;"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"><tbody><tr><td style="padding:16px 14px;text-align:center;"><p style="text-align:center;font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:10px;line-height:14px;color:#B4001E;letter-spacing:2px;text-transform:uppercase;word-break:break-word;padding-bottom:8px;">Final payment</p><p style="text-align:center;font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;letter-spacing:-0.5px;font-size:17px;line-height:22px;color:#0C0C0C;word-break:break-word;">September 1st</p></td></tr></tbody></table></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [5] CAJA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:24px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FDF5F5;border-left:4px solid #B4001E;"><tbody><tr><td style="padding:18px 22px;text-align:left;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#444444;text-align:left;word-break:break-word;padding-top:0px;">For families who have not yet made their <strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#0C0C0C;">first payment of $1500</strong>, we kindly remind you that the payment must be received no later than <strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#0C0C0C;">August 1st, 2026</strong>.</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#444444;text-align:left;word-break:break-word;padding-top:8px;">If you have already made the payment, thank you very much for staying up to date.</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#444444;text-align:left;word-break:break-word;padding-top:8px;">Please note that the final payment (<strong style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;color:#0C0C0C;">September 1st</strong>) serves as the final confirmation for your travel.</p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [6] BANDA DE DATOS -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:24px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:11px;line-height:14px;color:#B4001E;letter-spacing:2px;text-transform:uppercase;word-break:break-word;line-height:17px;padding-bottom:12px;">Here you have a summary of your payments:</p><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FDF5F5;border-left:4px solid #B4001E;"><tbody><tr><td style="padding:14px 20px 6px 20px;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:11px;line-height:17px;color:#888888;letter-spacing:1px;text-transform:uppercase;padding-bottom:3px;word-break:break-word;">Current Amount Ordered:</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:17px;line-height:24px;color:#0C0C0C;word-break:break-word;">{[C-AMOUNT ORDERED]}</p></td></tr><tr><td style="padding:8px 20px 6px 20px;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:11px;line-height:17px;color:#888888;letter-spacing:1px;text-transform:uppercase;padding-bottom:3px;word-break:break-word;">Current Amount Paid:</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:17px;line-height:24px;color:#0C0C0C;word-break:break-word;">{[C-AMOUNT PAID]}</p></td></tr><tr><td style="padding:8px 20px 14px 20px;"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:11px;line-height:17px;color:#888888;letter-spacing:1px;text-transform:uppercase;padding-bottom:3px;word-break:break-word;">Current Balance:</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:bold;font-size:17px;line-height:24px;color:#0C0C0C;word-break:break-word;">{[C-BALANCE DUE]} (Trip deposit has already been subtracted)</p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [7] TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:16px 40px 24px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#444444;text-align:left;word-break:break-word;">You can access to your reservation any time. {[E-MODIFY REG LINK]} and use your personal information:</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [8] CAJA -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:24px 40px 20px 40px;background-color:#FFFFFF;" class="mobile-pad"><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FDF5F5;border-left:4px solid #B4001E;"><tbody><tr><td style="padding:18px 22px;text-align:left;"><p style="font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;letter-spacing:-0.5px;font-size:20px;line-height:26px;color:#0C0C0C;word-break:break-word;text-align:left;padding-bottom:10px;">Your registration access information:</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#444444;text-align:left;word-break:break-word;padding-top:0px;">Confirmation number: {[C-CONFIRMATION NUM]}</p><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#444444;text-align:left;word-break:break-word;padding-top:8px;">Email used for registration: {[C-EMAIL]}</p></td></tr></tbody></table></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [9] TEXTO -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="left" style="padding:16px 40px 24px 40px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:14px;line-height:23px;color:#444444;text-align:left;word-break:break-word;">If you want to modify your registration or continue with the payments {[E-MODIFY REG LINK]}</p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [10] IMAGEN FOOTER -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td style="padding:0;text-align:center;font-size:0;line-height:0;"><img src="https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/e1baea18930047838d4054ffe1d0f262.png" alt="Arsenal Experiences" title="Arsenal Experiences" border="0" width="650" style="width:650px;display:block;" class="img-max" /></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+<!-- [11] OPT-OUT -->
+<tr><td align="center"><!--[if gte mso 9]><table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="650" style="width:650px;"><tr><td align="center" valign="top" width="650" style="width:650px;"><![endif]--><table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color:#FFFFFF;width:650px;" class="wrapper"><tbody><tr><td bgcolor="#FFFFFF" align="center" style="padding:16px 20px;background-color:#FFFFFF;" class="mobile-pad"><p style="font-family:Helvetica, Arial, sans-serif;font-weight:400;font-size:10px;line-height:14px;color:#AAAAAA;text-align:center;word-break:break-word;padding:3px 0;"><span style="color: #AAAAAA;">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p></td></tr></tbody></table><!--[if gte mso 9]></td></tr></table><![endif]--></td></tr>
+</tbody></table><!--[if gte mso 9]>
+                </td>
+              </tr>
+            </table>
+            <![endif]--></td></tr></tbody></table></body></html>

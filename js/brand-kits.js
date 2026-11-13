@@ -3,7 +3,10 @@
   var K = root.KSA = root.KSA || {}, B = K.BrandKits = {};
   B.KEY = 'kaptiva-newsletters-brand-kits-v1';
   B.roles = [['Extenda60', 'Titulares principales'], ['Extenda40', 'Titulares secundarios'], ['DinProBlack', 'Cifras y títulos con números'], ['DinProBold', 'Texto en negrita'], ['DinProLight', 'Texto ligero'], ['DinProMedium', 'Etiquetas'], ['DinProRegular', 'Texto de párrafo']];
-  var kits = [], loaded = false;
+  var kits = [], legacyKits = [], loaded = false;
+  function profile(tid) { return K.Designs && K.Designs.forSection(tid); }
+  B.canonical = function (tid) { return K.Designs ? K.Designs.canonical(tid) : tid; };
+  B.catalog = function () { var seen = {}; return K.CLIENT.tournaments.filter(function (t) { var id = B.canonical(t.id); if (seen[id]) return false; seen[id] = true; return true; }).map(function (t) { var p = profile(t.id); return { id: B.canonical(t.id), name: p ? p.name : t.name }; }); };
   function str(v) { return typeof v === 'string' ? v.trim() : ''; }
   function copy(v) { return JSON.parse(JSON.stringify(v)); }
   B.url = function (value, image) {
@@ -29,6 +32,9 @@
     // base: este kit sustituye al diseño de esa marca/sección para sus newsletters con «Kit automático del torneo».
     var base = str(raw.base);
     if (base) { if (!K.CLIENT.tournaments.some(function (t) { return t.id === base; })) throw Error('El kit de marca apunta a una sección que no existe.'); out.base = base; out.tournament = base; }
+    ['designId','designVersion','instructions','legacyBase','legacyName'].forEach(function (key) { if (typeof raw[key] === 'string') out[key] = raw[key]; });
+    if (out.instructions && out.instructions.length > 40000) throw Error('Las instrucciones admiten hasta 40000 caracteres.');
+    if (out.designId && (!K.Designs || !K.Designs.get(out.designId))) throw Error('Perfil de diseño desconocido.');
     if (!out.name) throw Error('Escribe un nombre para el kit.');
     if (out.name.length > 150) throw Error('El nombre del kit admite hasta 150 caracteres.');
     ['principal', 'acento', 'secundario'].forEach(function (key) {
@@ -54,13 +60,19 @@
   B.forState = function (st) {
     try {
       if (st.brandKit) return B.snapshot(st.brandKit);
-      var own = B.brandKit(K.tournament(st.tournament).id); return own ? B.snapshot(own) : null;
+      var tid = K.tournament(st.tournament).id;
+      if (K.Designs && K.Designs.active(st)) return B.snapshot(B.brandKit(tid) || B.defaults(tid));
+      var original = legacyKits.filter(function(k){return k.base===tid;})[0];
+      if(original) return B.snapshot(original);
+      var legacy = kits.filter(function (k) { return k.legacyBase === tid; })[0];
+      if (legacy) { var frozen = B.snapshot(legacy); frozen.base = tid; frozen.name = legacy.legacyName || frozen.name; return frozen; }
+      var own = kits.filter(function (k) { return k.base === tid && !k.designId; })[0]; return own ? B.snapshot(own) : null;
     } catch (e) { return null; }
   };
-  B.brandKit = function (tid) { return copy(kits.filter(function (k) { return k.base === tid; })[0] || null); };
+  B.brandKit = function (tid) { return copy(kits.filter(function (k) { return k.base === B.canonical(tid); })[0] || null); };
   B.custom = function () { return B.all().filter(function (k) { return !k.base; }); };
   // Borrador para editar el kit de una marca: el guardado si existe; si no, el diseño de la app.
-  B.brandDraft = function (tid) { var own = B.brandKit(tid); if (own) return own; var d = B.defaults(tid); d.base = tid; return d; };
+  B.brandDraft = function (tid) { tid = B.canonical(tid); var own = B.brandKit(tid); if (own) return own; var d = B.defaults(tid); d.base = tid; return d; };
   B.defaults = function (id) {
     var t = K.tournament(id), fonts = {};
     B.roles.forEach(function (r) {
@@ -70,6 +82,51 @@
     });
     return { id: '', name: t.name, tournament: t.id, colors: { principal: t.principal, acento: t.acento, secundario: t.secundario || '' }, header: { name: t.club ? t.brand : K.CLIENT.name + ' · ' + t.name, url: t.header || '' }, footer: { name: t.footerAlt || '', url: t.footer || '' }, mediaBanner: { name: 'Media Packages', url: t.club ? (t.mediaBanner || '') : K.CLIENT.mediaBanner }, fonts: fonts, banners: (t.banners || []).map(function (a) { return { name: a.name, url: a.url }; }), assets: (t.assets || []).map(function (a) { return { name: a.name, url: a.url }; }) };
   };
+  var originalDefaults = B.defaults;
+  B.defaults = function (tid) {
+    var out = originalDefaults(tid), p = profile(tid);
+    if (!p) return out;
+    out.name = p.name; out.tournament = B.canonical(tid);
+    if (p.id.indexOf('psg')!==0) B.roles.forEach(function(r){out.fonts[r[0]]='';});
+    out.designId = p.id; out.designVersion = p.version; out.instructions = p.instructions;
+    out.colors = { principal:p.principal, acento:p.acento, secundario:p.secundario };
+    out.header = { name:p.name, url:p.header }; out.footer = { name:p.id==='rmf-wch'?'See You in Madrid':p.name, url:p.footer };
+    out.banners = copy(p.banners); out.assets = copy(p.assets); return out;
+  };
+  B.instructionsFor = function (st) {
+    var k=B.forState(st), p=profile(st.tournament), text=k&&k.instructions||p&&p.instructions||'Diseño original de esta marca. Todavía no tiene instrucciones específicas.';
+    if(K.Designs && (K.Designs.active(st)||st.designVersion===K.Designs.version)) {
+      text+='\nRegla común vigente: mínimo 20 px de separación inferior por bloque visual. Se permite extraer hechos de párrafos y redactar etiquetas breves para recuadros, sin inventar cifras, fechas ni años.';
+      if((k&&k.designId||p&&p.id||'').indexOf('arsenal')===0) text+='\nRegla Arsenal vigente (prevalece sobre indicaciones anteriores): franja roja #B4001E; texto blanco Helvetica/Arial 10/14 px, negrita y espaciado 1 px; titulares Georgia 32/40 px, espaciado -0.5 px.';
+    }
+    return {name:k?k.name:p?p.name:K.tournament(st.tournament).name,text:text,version:k&&k.designVersion||p&&p.version||'',preserved:!!(p&&!K.Designs.active(st))};
+  };
+  // Se conserva la biblioteca anterior íntegra y una copia visible de cada personalización.
+  function migrate(list) {
+    var result = list.filter(function (k) { return !k.base || !profile(k.base); });
+    K.Designs.profiles.forEach(function (p) {
+      var old = list.filter(function (k) { return k.base && p.sections.indexOf(k.base)>=0; }).sort(function(a,b){return p.sections.indexOf(a.base)-p.sections.indexOf(b.base);});
+      if (!old.length) return;
+      var merged = B.defaults(p.sections[0]); merged.base=p.sections[0]; merged.id='brand-'+merged.base;
+      old.forEach(function (k,index) {
+        var archive=copy(k); archive.legacyBase=k.base; archive.legacyName=k.name; delete archive.base;
+        archive.id='archive-profiles-'+k.id; archive.name=k.name+' · anterior a la unificación'; result.push(archive);
+        var defaults=originalDefaults(k.base);
+        if (!index) {
+          ['colors','fonts','header','footer','mediaBanner'].forEach(function(field) {
+            Object.keys(k[field]||{}).forEach(function(key) { if(JSON.stringify(k[field][key])!==JSON.stringify((defaults[field]||{})[key])) merged[field][key]=copy(k[field][key]); });
+          });
+          if(k.name!==defaults.name) merged.name=k.name;
+          if(k.instructions) merged.instructions=k.instructions;
+        }
+        ['banners','assets'].forEach(function(field){
+          (k[field]||[]).forEach(function(a){ if(!merged[field].some(function(b){return JSON.stringify(a)===JSON.stringify(b);}) && merged[field].length<30) merged[field].push(copy(a)); });
+        });
+      });
+      result.push(merged);
+    });
+    return result;
+  }
   // Recursos de un kit por apartado: «banners» (header, footer, banner de media y gráficos recurrentes) y «fotos».
   B.groups = function (kit) {
     return { banners: [kit.header, kit.footer, kit.mediaBanner].concat(kit.banners || []), fotos: (kit.assets || []).slice() };
@@ -81,27 +138,46 @@
     if (raw.version !== 1 || !Array.isArray(raw.kits)) throw Error('Formato de biblioteca de marca no compatible.');
     var ids = {};
     var list = raw.kits.map(function (k) { var n = B.normalize(k, true); if (!n.id || ids[n.id]) throw Error('Identificador de kit inválido o repetido.'); ids[n.id] = true; return n; });
+    if (K.Designs && raw.profilesVersion !== 1) {
+      var migrated = migrate(list);
+      if (JSON.stringify(migrated)!==JSON.stringify(list)) {
+        if (!storage.getItem(B.KEY+'-before-profiles-v1')) storage.setItem(B.KEY+'-before-profiles-v1', text);
+        storage.setItem(B.KEY, JSON.stringify({version:1, profilesVersion:1, kits:migrated}));
+      }
+      list = migrated;
+    }
+    legacyKits = [];
+    if(K.Designs){var backupText=storage.getItem(B.KEY+'-before-profiles-v1'); if(backupText){var backup=JSON.parse(backupText);legacyKits=(backup.kits||[]).map(function(k){return B.normalize(k,true);});}}
     kits = list; loaded = true; return B.all();
   };
   B.all = function () { return copy(kits); };
-  B.find = function (id) { return B.all().filter(function (k) { return k.id === id; })[0]; };
+  B.find = function (id) { var direct = B.all().filter(function (k) { return k.id === id; })[0]; if(direct) return direct; if (typeof id==='string' && id.indexOf('brand-')===0) return B.brandKit(id.slice(6)); };
   B.save = function (raw, storage) {
     if (!loaded) throw Error('La biblioteca no se ha cargado correctamente. No se sobrescribirán los datos.');
     var kit = B.normalize(raw, true);
+    if (kit.base) { kit.base = B.canonical(kit.base); kit.tournament = kit.base; }
     if (kit.base) kit.id = 'brand-' + kit.base; // un único kit editado por marca/sección
     if (!kit.id) kit.id = 'kit-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8);
     var list = B.all(), index = list.findIndex(function (k) { return k.id === kit.id; });
     if (index < 0) list.push(kit); else list[index] = kit;
     // La memoria solo cambia después de guardar correctamente.
-    storage.setItem(B.KEY, JSON.stringify({ version: 1, kits: list })); kits = list; return copy(kit);
+    storage.setItem(B.KEY, JSON.stringify({ version: 1, profilesVersion: K.Designs ? 1 : undefined, kits: list })); kits = list; return copy(kit);
   };
   B.remove = function (id, storage) {
     if (!loaded) throw Error('La biblioteca no se ha cargado correctamente. No se sobrescribirán los datos.');
     var list = B.all().filter(function (k) { return k.id !== id; });
-    storage.setItem(B.KEY, JSON.stringify({ version: 1, kits: list })); kits = list;
+    storage.setItem(B.KEY, JSON.stringify({ version: 1, profilesVersion: K.Designs ? 1 : undefined, kits: list })); kits = list;
   };
   B.effectiveTournament = function (st) {
     var t = K.tournament(st.tournament), kit = B.forState(st);
+    var p = K.Designs && K.Designs.active(st) ? (kit && kit.designId ? K.Designs.get(kit.designId) : profile(t.id)) : null;
+    if (p) {
+      var serif = "Georgia, 'Times New Roman', Times, serif", sans = 'Helvetica, Arial, sans-serif';
+      t = Object.assign({}, t, { theme:K.Designs.theme(p, kit), families:p.id.indexOf('psg')===0?null:{Extenda60:serif,Extenda40:serif,DinProBlack:serif,DinProBold:sans,DinProRegular:sans,DinProLight:sans,DinProMedium:sans} });
+      if(/camps$/.test(p.id)) t.franjaRight=p.id==='psg-camps'?'PSG SUMMER CAMPS':p.id==='arsenal-camps'?'ARSENAL SUMMER CAMP':'SUMMER CAMPS';
+      if(p.id==='rmf-wch') { t.franjaLeft='WORLD CHALLENGE 2027';t.franjaRight='FUNDACIÓN REAL MADRID'; }
+    }
+    if (typeof st.contactEmail==='string' && st.contactEmail.trim()) t=Object.assign({},t,{contact:st.contactEmail.trim()});
     return kit ? Object.assign({}, t, { principal: kit.colors.principal, acento: kit.colors.acento, secundario: kit.colors.secundario || null, header: kit.header.url, footer: kit.footer.url, footerAlt: kit.footer.name }) : t;
   };
   B.fontHtml = function (html, kit) {

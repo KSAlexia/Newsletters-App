@@ -1,0 +1,119 @@
+{
+  "description": "Hashes de HTML generados por la versión anterior a los siete perfiles (13/11/2026).",
+  "cases": {
+    "surfcup/classic": "72f504b2af29924ab5d8947cbb6a1f775d23e20a8920467e8b178a7504be55df",
+    "surfcup/auto": "72f504b2af29924ab5d8947cbb6a1f775d23e20a8920467e8b178a7504be55df",
+    "fit/classic": "54eb2939ff91cf21a8f06edce550d9e52e8d984c39123c66f368bb8a7a3d12a3",
+    "fit/auto": "54eb2939ff91cf21a8f06edce550d9e52e8d984c39123c66f368bb8a7a3d12a3",
+    "endeka/classic": "88ae1c22c835068f535042c7ddd5ba8c3ecde69b1e57cf16f11926e624da3746",
+    "endeka/auto": "88ae1c22c835068f535042c7ddd5ba8c3ecde69b1e57cf16f11926e624da3746",
+    "mic/classic": "2b08214a55c2914d92173396e48a41849c437dd26aa3c85478e159ae09d15fbc",
+    "mic/auto": "2b08214a55c2914d92173396e48a41849c437dd26aa3c85478e159ae09d15fbc",
+    "usacup/classic": "7f0fbfcd56b0fa854c09eab97435f65f34df9f0f18b2173e46c30039bb13a594",
+    "usacup/auto": "7f0fbfcd56b0fa854c09eab97435f65f34df9f0f18b2173e46c30039bb13a594",
+    "rmf-usa/classic": "042fe9ced854da1d5ccaaa5ac9806c32f7b20e511aa5eebbc52d211764256424",
+    "rmf-usa/auto": "ad05c824d93937712f7ffc63fae023aa60a0237db8f3cb44f8e30b8ecbf6e3a3",
+    "rmf-canada/classic": "042fe9ced854da1d5ccaaa5ac9806c32f7b20e511aa5eebbc52d211764256424",
+    "rmf-canada/auto": "ad05c824d93937712f7ffc63fae023aa60a0237db8f3cb44f8e30b8ecbf6e3a3",
+    "rmf-exp/classic": "fbe74e2800d0a72a7c4209b173b3acccf6f999f1260e39c82118c477af9eff8f",
+    "rmf-exp/auto": "9a2acad251c96a251a9d21feeab6f670ea9de8fc3b9bd12ba889f11933f112ab",
+    "rmf-wc/classic": "56061bcaad5efa1ca3705d4a7c6b5eddbd1b4324641a23d45c7b1f7fceca9346",
+    "rmf-wc/auto": "56061bcaad5efa1ca3705d4a7c6b5eddbd1b4324641a23d45c7b1f7fceca9346",
+    "psg-usa/classic": "3c35c636bdc6a9bcc418075318eac9c3db665f7dbb8b145d5b7a5eaf134485cd",
+    "psg-usa/auto": "2fc78720bbbd2caf9b5b00e8186adfc170c501bc1dd1a064079a0efeb2918635",
+    "psg-canada/classic": "3c35c636bdc6a9bcc418075318eac9c3db665f7dbb8b145d5b7a5eaf134485cd",
+    "psg-canada/auto": "2fc78720bbbd2caf9b5b00e8186adfc170c501bc1dd1a064079a0efeb2918635",
+    "psg-exp/classic": "3c35c636bdc6a9bcc418075318eac9c3db665f7dbb8b145d5b7a5eaf134485cd",
+    "psg-exp/auto": "2fc78720bbbd2caf9b5b00e8186adfc170c501bc1dd1a064079a0efeb2918635",
+    "arsenal-usa/classic": "f90813136d1f447ef39b9583b07a443da225aea310be4267675954333576b361",
+    "arsenal-usa/auto": "d0d53b7e2b46eaa438e18edffde361d0842980c2f45779986be81efec3c97d5e",
+    "arsenal-canada/classic": "f90813136d1f447ef39b9583b07a443da225aea310be4267675954333576b361",
+    "arsenal-canada/auto": "d0d53b7e2b46eaa438e18edffde361d0842980c2f45779986be81efec3c97d5e",
+    "arsenal-exp/classic": "460824023a5bd89d65e07958d13e4093f62eca5d4da6dbd3c95e41d0143b5855",
+    "arsenal-exp/auto": "397e03200c3dd88f5175d2767e0dbb2dc589627ba3dbccd02e180ba24970d7ed",
+    "bayern-canada/classic": "41c08ed9a604af4208989313d6094f0f3ad2a6c92d37c5a11efe9889f4d06fd4",
+    "bayern-canada/auto": "00e771389df5d6018469b7c8f842d56cdabee6e0e73826261982521946ddfc78",
+    "bayern-exp/classic": "41c08ed9a604af4208989313d6094f0f3ad2a6c92d37c5a11efe9889f4d06fd4",
+    "bayern-exp/auto": "00e771389df5d6018469b7c8f842d56cdabee6e0e73826261982521946ddfc78",
+    "academy-short/classic": "59660629ba8937cc5d18c59398000ea603db7948b3bb1625503ab0c5428dabbf",
+    "academy-short/auto": "59660629ba8937cc5d18c59398000ea603db7948b3bb1625503ab0c5428dabbf",
+    "academy-residential/classic": "59660629ba8937cc5d18c59398000ea603db7948b3bb1625503ab0c5428dabbf",
+    "academy-residential/auto": "59660629ba8937cc5d18c59398000ea603db7948b3bb1625503ab0c5428dabbf"
+  },
+  "library": [
+    {
+      "id": "brand-psg-usa",
+      "name": "Paris Saint-Germain Academy · USA CAMPS",
+      "tournament": "psg-usa",
+      "colors": {
+        "principal": "#445566",
+        "acento": "#E30613",
+        "secundario": ""
+      },
+      "header": {
+        "name": "Paris Saint-Germain",
+        "url": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/2c5043ece01d4a9a8ae79d29943bad1a.png"
+      },
+      "footer": {
+        "name": "Paris Saint-Germain",
+        "url": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/1abe18827cfe4f5e9e62da2599c16442.png"
+      },
+      "mediaBanner": {
+        "name": "Media Packages",
+        "url": ""
+      },
+      "fonts": {
+        "Extenda60": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/f7af6f3c0aeb49dd880cd60fe6a07804.otf",
+        "Extenda40": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/f7af6f3c0aeb49dd880cd60fe6a07804.otf",
+        "DinProBlack": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/f7af6f3c0aeb49dd880cd60fe6a07804.otf",
+        "DinProBold": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/6d0ea52a58b145fe9b8c2077cddba5d6.otf",
+        "DinProLight": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/2d7daec633b4437d99ea6d638c5bc5a8.ttf",
+        "DinProMedium": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/2d7daec633b4437d99ea6d638c5bc5a8.ttf",
+        "DinProRegular": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/2d7daec633b4437d99ea6d638c5bc5a8.ttf"
+      },
+      "banners": [],
+      "assets": [],
+      "base": "psg-usa"
+    },
+    {
+      "id": "brand-psg-canada",
+      "name": "Paris Saint-Germain Academy · CANADA CAMPS",
+      "tournament": "psg-canada",
+      "colors": {
+        "principal": "#667788",
+        "acento": "#E30613",
+        "secundario": ""
+      },
+      "header": {
+        "name": "Paris Saint-Germain",
+        "url": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/2c5043ece01d4a9a8ae79d29943bad1a.png"
+      },
+      "footer": {
+        "name": "Paris Saint-Germain",
+        "url": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/1abe18827cfe4f5e9e62da2599c16442.png"
+      },
+      "mediaBanner": {
+        "name": "Media Packages",
+        "url": ""
+      },
+      "fonts": {
+        "Extenda60": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/f7af6f3c0aeb49dd880cd60fe6a07804.otf",
+        "Extenda40": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/f7af6f3c0aeb49dd880cd60fe6a07804.otf",
+        "DinProBlack": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/f7af6f3c0aeb49dd880cd60fe6a07804.otf",
+        "DinProBold": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/6d0ea52a58b145fe9b8c2077cddba5d6.otf",
+        "DinProLight": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/2d7daec633b4437d99ea6d638c5bc5a8.ttf",
+        "DinProMedium": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/2d7daec633b4437d99ea6d638c5bc5a8.ttf",
+        "DinProRegular": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/files/2d7daec633b4437d99ea6d638c5bc5a8.ttf"
+      },
+      "banners": [],
+      "assets": [
+        {
+          "name": "Foto Canada exclusiva",
+          "url": "https://custom.cvent.com/pix/canada.png"
+        }
+      ],
+      "base": "psg-canada"
+    }
+  ],
+  "canadaHash": "4e4358837be05f8fdd0720cfb4f1c80fc3f56eb3c4fcf1792de9e3857aefff23"
+}

@@ -165,7 +165,7 @@
     projects[id].opened = Date.now(); saveAll();
     currentId = id; state = K.normalize(projects[id].state); undo.clear();
     savedContent = JSON.stringify(state, function (key, value) { return key === 'open' ? undefined : value; });
-    document.body.classList.remove('in-lobby'); syncSettings(); renderSections(); refresh();
+    document.body.classList.remove('in-lobby'); syncSettings(); renderSections(); refresh(); previewScroll = 0;
     var here = editorLocation(); openPath(here.t, here.f); renderTree(); $('#name').focus();
   }
   function createProject(st) {
@@ -593,6 +593,51 @@
     resize.addEventListener('dblclick', function () { saveTreeWidth(320); applyTreeWidth(320); });
     window.addEventListener('resize', function () { applyTreeWidth(preferredTreeWidth()); });
     applyTreeWidth(preferredTreeWidth());
+    // Ancho independiente del panel de edición; el límite sigue el espacio del editor.
+    var layout = $('#editor-layout'), editorResize = $('#editor-resize'), editorDrag = null;
+    function editorMax() { return Math.max(300, Math.floor(Math.min(720, (layout.clientWidth || 1200) * .6))); }
+    function preferredEditorWidth() { return typeof view.editorWidth === 'number' && isFinite(view.editorWidth) ? view.editorWidth : 470; }
+    function applyEditorWidth(value) {
+      var width = Math.round(Math.max(300, Math.min(editorMax(), value)));
+      layout.style.setProperty('--editor-width', width + 'px');
+      editorResize.setAttribute('aria-valuemin', '300');
+      editorResize.setAttribute('aria-valuemax', String(editorMax()));
+      editorResize.setAttribute('aria-valuenow', String(width));
+      editorResize.setAttribute('aria-valuetext', width + ' píxeles');
+      fitFrames(); return width;
+    }
+    function saveEditorWidth(width) {
+      view.editorWidth = width;
+      try { localStorage.setItem(VIEW, JSON.stringify(view)); } catch (e) {}
+    }
+    function widthFromPointer(event) { return layout.getBoundingClientRect().right - event.clientX; }
+    editorResize.addEventListener('pointerdown', function (event) {
+      if (event.button !== 0) return;
+      event.preventDefault(); editorDrag = preferredEditorWidth();
+      editorResize.setPointerCapture(event.pointerId); document.body.classList.add('editor-resizing');
+    });
+    editorResize.addEventListener('pointermove', function (event) { if (editorDrag !== null) applyEditorWidth(widthFromPointer(event)); });
+    function finishEditorResize(event) {
+      if (editorDrag === null) return;
+      if (event.type === 'pointerup') saveEditorWidth(applyEditorWidth(widthFromPointer(event)));
+      else applyEditorWidth(editorDrag);
+      editorDrag = null; document.body.classList.remove('editor-resizing');
+      if (editorResize.hasPointerCapture(event.pointerId)) editorResize.releasePointerCapture(event.pointerId);
+    }
+    ['pointerup', 'pointercancel', 'lostpointercapture'].forEach(function (type) { editorResize.addEventListener(type, finishEditorResize); });
+    editorResize.addEventListener('keydown', function (event) {
+      var width = Number(editorResize.getAttribute('aria-valuenow'));
+      if (event.key === 'ArrowLeft') width += 16;
+      else if (event.key === 'ArrowRight') width -= 16;
+      else if (event.key === 'Home') width = 300;
+      else if (event.key === 'End') width = editorMax();
+      else return;
+      event.preventDefault(); saveEditorWidth(applyEditorWidth(width));
+    });
+    editorResize.addEventListener('dblclick', function () { saveEditorWidth(470); applyEditorWidth(470); });
+    if (window.ResizeObserver) new window.ResizeObserver(function () { applyEditorWidth(preferredEditorWidth()); }).observe(layout);
+    window.addEventListener('resize', function () { applyEditorWidth(preferredEditorWidth()); });
+    applyEditorWidth(preferredEditorWidth());
     $('#hub-scope').addEventListener('change', function () { showLobby(); $('#hub-search').focus(); });
     // En pantallas estrechas el panel de ubicaciones empieza plegado; en escritorio siempre está abierto.
     if (window.matchMedia) {
@@ -630,13 +675,13 @@
     if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
     editingCode = false; renderImagePanel(); renderCompareSelect(); renderCompare();
     selectedSection = -1; previewScroll = 0; pendingInsert = null; if (state.sections.length) closePalette(); else openPalette(null);
-    $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || ''; $('#franja-right').value = state.franjaRight || ''; $('#look').value = state.look === 'auto' ? 'auto' : 'classic'; lookNote();
-    ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; });
+    $('#contact-email').value = state.contactEmail || ''; $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || ''; $('#franja-right').value = state.franjaRight || ''; lookNote();
+    ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; }); lookNote();
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
   }
 
   // ---------- Otras newsletters: saltar entre ellas y comparar al lado ----------
-  var compareId = '', comparing = false, previewMobile = false, GROUPS = ['Misma carpeta', 'Mismo torneo o sección', 'Otras newsletters'];
+  var compareId = '', comparing = false, previewMobile = false, activeTab = 'preview', GROUPS = ['Misma carpeta', 'Mismo torneo o sección', 'Otras newsletters'];
   function norm(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); }
   function projectLabel(id) {
     var p = projects[id], t = K.tournament(p.state.tournament), f = p.folder && organization.folders[p.folder] ? folderPath(p.folder) : '';
@@ -800,15 +845,21 @@
     timeline: 'De 1 a 8 fechas o hitos, uno debajo de otro. Texto en párrafos o en puntos.', deadlines: 'Dos fechas límite lado a lado.',
     fotos3: 'Tres fotos en fila (se apilan en móvil).', cta: 'Caja con borde para inscribirse o actuar.',
     boton: 'Un botón solo, del color principal u oscuro.', important: 'Aviso destacado en caja oscura.',
-    wallet: 'Botones para añadir la entrada al wallet.'
+    wallet: 'Botones de Apple/Google Wallet: enlaces e imágenes editables y QR personal de Cvent.'
   };
   // dragBlock: { kind: 'move', from } (bloque existente) | { kind: 'new', type } (desde la paleta)
   var dragBlock = null, selectedSection = -1, insertAt = null, pendingInsert = null, previewDoc = null, previewScroll = 0, inlineEditing = false;
   // Miniatura con el esquema del bloque (js/block-icons.js); si no hay, la letra de siempre.
   // Estilo: «auto» = estilo de club en los clubs (newsletters nuevas); «classic» = el de siempre (las guardadas antes).
   function lookNote() {
-    var t = K.tournament(state.tournament), club = K.lookIsClub({ look: 'auto' }, t);
-    $('#look-note').textContent = !club ? 'Este torneo usa siempre su estilo propio.' : state.look === 'auto' ? 'Estilo de club: franja del color principal, títulos sin mayúsculas, texto gris y el acento en las cajas destacadas.' : 'Estilo clásico de Kaptiva (como las newsletters hechas antes).';
+    var info = K.BrandKits.instructionsFor(state);
+    var fixed = !!(K.Designs && K.Designs.active(state) && (K.Designs.forSection(state.tournament)||{}).id==='rmf-wch');
+    $('#contact-caption').textContent=fixed?'Contacto de esta newsletter *':'Contacto de esta newsletter (opcional)';
+    ['on-header','on-franja','on-footer','franja','franja-right'].forEach(function(id){$('#'+id).disabled=fixed;});
+    if(!fixed){$('#franja').value=state.franjaLeft||'';$('#franja-right').value=state.franjaRight||'';['header','franja','footer'].forEach(function(k){$('#on-'+k).checked=!state.off[k];});}
+    if(fixed){$('#franja').value='WORLD CHALLENGE 2027';$('#franja-right').value='FUNDACIÓN REAL MADRID';['on-header','on-franja','on-footer'].forEach(function(id){$('#'+id).checked=true;});}
+    $('#kit-guidelines-text').textContent = info.text;
+    $('#kit-design-status').textContent = info.name + (info.version ? ' · '+info.version : '') + (info.preserved ? ' · Se conserva el diseño de esta newsletter guardada.' : ' · Se aplica automáticamente.');
   }
   function blockThumb(id, cls) {
     var svg = K.blockIcon && K.blockIcon(id), n = el('span', { class: cls });
@@ -1343,6 +1394,7 @@
       if (m.note) body.appendChild(el('p', { class: 'note', text: m.note }));
       m.fields.forEach(function (f) {
         if (f.type === 'head') { body.appendChild(el('h4', { text: f.label })); return; }
+        if (f.type === 'action') { body.appendChild(el('button',{type:'button',class:'btn ghost2',text:f.label,onclick:function(){f.run(s.d);renderSections();update();}})); return; }
         // Grupos repetibles (p. ej. opciones con precio): cabecera con «Quitar» y botón «＋ Añadir otra».
         if (f.type === 'opt') {
           if (f.showIf && !f.showIf(s.d)) return;
@@ -1367,7 +1419,7 @@
         else input = el('input', { type: 'text' });
         if (f.ph) input.setAttribute('placeholder', f.ph);
         if (f.type === 'url') input.setAttribute('placeholder', f.img || f.k === 'img' ? 'https://custom.cvent.com/…' : 'https://…');
-        input.value = s.d[f.k] == null ? '' : s.d[f.k];
+        input.value = s.d[f.k] == null || s.d[f.k] === '' ? (f.fallback || '') : s.d[f.k];
         var wrap = el('label', { class: f.half ? 'half' : '' }, [el('span', { text: f.label + (f.req ? ' *' : '') }), input, f.hint ? el('small', { text: f.hint }) : null]);
         if (f.showIf && !f.showIf(s.d)) wrap.hidden = true;
         wrap._f = f;
@@ -1444,11 +1496,59 @@
   }
 
   // ---------- Eventos ----------
+  // La ubicación pertenece a esta pestaña: recargar no devuelve al inicio ni afecta a otras.
+  var SESSION = 'kaptiva-newsletters-session-v1';
+  var sessionFields = ['hub-search', 'hub-from', 'hub-to', 'hub-scope', 'hub-kind', 'hub-date-field'];
+  var sessionScrolls = ['lobby', 'editor-panel', 'hub-tree-box', 'pane-preview', 'pane-review', 'pane-code', 'code'];
+  function showOutputTab(tab) {
+    activeTab = ['preview', 'review', 'code'].indexOf(tab) >= 0 ? tab : 'preview';
+    Array.prototype.forEach.call(document.querySelectorAll('.tabs > button'), function (b) { b.classList.toggle('on', b.dataset.tab === activeTab); });
+    ['preview', 'review', 'code'].forEach(function (t) { $('#pane-' + t).hidden = t !== activeTab; });
+    $('#device').style.visibility = $('#compare').style.visibility = activeTab === 'preview' ? 'visible' : 'hidden';
+    if (activeTab === 'preview') fitFrames();
+  }
+  function setPreviewDevice(mobile) {
+    previewMobile = !!mobile;
+    Array.prototype.forEach.call(document.querySelectorAll('#device button'), function (b) { b.classList.toggle('on', (b.dataset.w === 'mobile') === previewMobile); });
+    $('#frame').classList.toggle('mobile', previewMobile); $('#compare-frame').classList.toggle('mobile', previewMobile); fitFrames();
+  }
+  function saveSession() {
+    try {
+      var fields = {}, scrolls = {}, frame = $('#frame');
+      sessionFields.forEach(function (id) { fields[id] = $('#' + id).value; });
+      sessionScrolls.forEach(function (id) { scrolls[id] = $('#' + id).scrollTop || 0; });
+      var y = previewScroll;
+      try { if (frame.contentWindow) y = frame.contentWindow.scrollY; } catch (e) {}
+      window.sessionStorage.setItem(SESSION, JSON.stringify({ project: currentId, tournament: hubTournament, folder: hubFolder, club: hubClub,
+        tab: activeTab, mobile: previewMobile, compare: compareId, selected: state && state.sections[selectedSection] && state.sections[selectedSection].id,
+        fields: fields, scrolls: scrolls, previewY: y, more: document.querySelector('details.more').open, images: $('#image-panel').open }));
+    } catch (e) {} // Almacenamiento no disponible: la app sigue funcionando.
+  }
+  function restoreSession() {
+    var v; try { v = JSON.parse(window.sessionStorage.getItem(SESSION)); } catch (e) {}
+    if (!v || typeof v !== 'object') return;
+    hubTournament = K.CLIENT.tournaments.some(function (t) { return t.id === v.tournament; }) ? v.tournament : '';
+    hubClub = !hubTournament && K.CLIENT.clubs.some(function (c) { return c.id === v.club; }) ? v.club : '';
+    var folder = organization.folders[v.folder];
+    hubFolder = folder && folder.tournament === hubTournament ? v.folder : '';
+    sessionFields.forEach(function (id) { if (v.fields && typeof v.fields[id] === 'string') $('#' + id).value = v.fields[id]; });
+    if (v.project && Object.prototype.hasOwnProperty.call(projects, v.project)) {
+      compareId = typeof v.compare === 'string' ? v.compare : '';
+      openProject(v.project);
+      selectedSection = state.sections.map(function (x) { return x.id; }).indexOf(v.selected);
+      renderSections();
+      setPreviewDevice(v.mobile); showOutputTab(v.tab);
+      document.querySelector('details.more').open = !!v.more; $('#image-panel').open = !!v.images;
+      previewScroll = typeof v.previewY === 'number' && isFinite(v.previewY) ? Math.max(0, v.previewY) : 0;
+    } else { openPath(hubTournament, hubFolder, hubClub); showLobby(); }
+    sessionScrolls.forEach(function (id) { var y = v.scrolls && v.scrolls[id]; if (typeof y === 'number' && isFinite(y)) $('#' + id).scrollTop = Math.max(0, y); });
+  }
+
   function init() {
     // Al guardar un kit se repinta la newsletter abierta: si es el kit de su marca, cambia al momento.
     if (K.BrandKitsUI) {
       K.BrandKitsUI.currentTournament = function () { return currentId ? K.tournament(state.tournament).id : ''; };
-      K.BrandKitsUI.init(function () { K.BrandKitsUI.refreshSelect(state); if (currentId) { renderImagePanel(); refresh(); } });
+      K.BrandKitsUI.init(function () { K.BrandKitsUI.refreshSelect(state); if (currentId) { renderImagePanel(); lookNote(); refresh(); } });
     }
     fillSettings();
     loadAll(); initHub(); showLobby();
@@ -1505,9 +1605,9 @@
     });
     $('#franja').addEventListener('input', function () { state.franjaLeft = this.value; update(); });
     $('#franja-right').addEventListener('input', function () { state.franjaRight = this.value; update(); });
-    $('#look').addEventListener('change', function () { state.look = this.value; lookNote(); update(); });
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).addEventListener('change', function () { state.off[k] = !this.checked; update(); }); });
-    window.addEventListener('beforeunload', function () { if (currentId) persist(); });
+    window.addEventListener('beforeunload', function () { saveSession(); if (currentId) persist(); });
+    window.addEventListener('pagehide', saveSession);
     // Otra pestaña ha guardado: fusionar y refrescar lo que se ve.
     window.addEventListener('storage', function (event) {
       if (event.key !== PROJ && event.key !== HUB) return;
@@ -1541,9 +1641,10 @@
       if (this.value === '@current' || !K.BrandKits) return;
       var kit = K.BrandKits.find(this.value);
       if (kit) state.brandKit = K.BrandKits.snapshot(kit); else delete state.brandKit;
-      update(); K.BrandKitsUI.refreshSelect(state); renderImagePanel();
+      update(); K.BrandKitsUI.refreshSelect(state); lookNote(); renderImagePanel();
     });
-    $('#tournament').addEventListener('change', function () { state.tournament = this.value; lookNote(); update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); });
+    $('#tournament').addEventListener('change', function () { state.tournament = this.value; if (K.Designs) state.designVersion = K.Designs.version; if (state.brandKit && state.brandKit.base) delete state.brandKit; if(K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state); lookNote(); update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); });
+    $('#contact-email').addEventListener('input',function(){state.contactEmail=this.value;update();});
     $('#name').addEventListener('input', function () { state.name = this.value; update(); });
     $('#desc').addEventListener('input', function () { state.desc = this.value; update(); });
     $('#mp').addEventListener('change', function () { state.mediaPackages = this.checked; update(); });
@@ -1585,7 +1686,7 @@
     $('#import').addEventListener('click', function () { $('#imp-err').textContent = ''; $('#dlg').showModal(); });
     $('#imp-cancel').addEventListener('click', function () { $('#dlg').close(); });
     $('#imp-copy').addEventListener('click', function () {
-      var b = this, t = K.importPrompt();
+      var b = this, t = K.importPrompt(state.tournament, state);
       (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).catch(function () {
         var x = el('textarea'); x.value = t; $('#dlg').appendChild(x); x.select(); document.execCommand('copy'); x.remove();
       }).then(function () { b.textContent = 'Copiadas ✓'; setTimeout(function () { b.textContent = 'Copiar instrucciones'; }, 1500); });
@@ -1602,20 +1703,15 @@
 
     Array.prototype.forEach.call(document.querySelectorAll('.tabs > button'), function (b) {
       b.addEventListener('click', function () {
-        Array.prototype.forEach.call(document.querySelectorAll('.tabs > button'), function (x) { x.classList.toggle('on', x === b); });
-        ['preview', 'review', 'code'].forEach(function (t) { $('#pane-' + t).hidden = t !== b.dataset.tab; });
-        $('#device').style.visibility = b.dataset.tab === 'preview' ? 'visible' : 'hidden';
-        $('#compare').style.visibility = b.dataset.tab === 'preview' ? 'visible' : 'hidden';
-        if (b.dataset.tab === 'preview') fitFrames();
+        showOutputTab(b.dataset.tab);
       });
     });
     Array.prototype.forEach.call(document.querySelectorAll('#device button'), function (b) {
       b.addEventListener('click', function () {
-        Array.prototype.forEach.call(document.querySelectorAll('#device button'), function (x) { x.classList.toggle('on', x === b); });
-        previewMobile = b.dataset.w === 'mobile';
-        $('#frame').classList.toggle('mobile', previewMobile); $('#compare-frame').classList.toggle('mobile', previewMobile); fitFrames();
+        setPreviewDevice(b.dataset.w === 'mobile');
       });
     });
+    restoreSession();
   }
   init();
 })();

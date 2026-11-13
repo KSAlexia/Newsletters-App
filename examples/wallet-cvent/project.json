@@ -1,0 +1,15 @@
+{
+  "tournament": "arsenal-exp",
+  "name": "Wallet y QR de registro",
+  "sections": [
+    {
+      "type": "wallet",
+      "d": {
+        "appleUrl": "{[C-PASSBOOK_LINK]}",
+        "googleUrl": "{[C-GOOGLEWALLET_LINK]}",
+        "qr": "personal",
+        "qrUrl": "{[C-QRCODE_LINK]}"
+      }
+    }
+  ]
+}

@@ -1,0 +1,88 @@
+{
+  "tournament": "arsenal-exp",
+  "name": "",
+  "desc": "",
+  "franja": "",
+  "mediaPackages": false,
+  "sections": [
+    {
+      "type": "images",
+      "d": {
+        "f1_src": "https://custom.cvent.com/5A4954AC75CF473B9BB504EB993966CD/pix/5e0100c3217d42c8b791a05f37a70bf6.png?d=650",
+        "f1_alt": "",
+        "size": "full"
+      }
+    },
+    {
+      "type": "title",
+      "d": {
+        "text": "Getting ready for the big trip, {[C-FIRST NAME:TC]}?",
+        "style": "principal",
+        "align": "left"
+      }
+    },
+    {
+      "type": "text",
+      "d": {
+        "text": "A friendly reminder on your next payment due for the {[E-TITLE]}.",
+        "size": "intro"
+      }
+    },
+    {
+      "type": "glance",
+      "d": {
+        "density": "editorial",
+        "l1": "First payment",
+        "v1": "$1500",
+        "l2": "First payment due",
+        "v2": "August 1st,\n2026",
+        "l3": "Final payment",
+        "v3": "September 1st"
+      }
+    },
+    {
+      "type": "box",
+      "d": {
+        "style": "suave",
+        "density": "editorial",
+        "text": "For families who have not yet made their **first payment of $1500**, we kindly remind you that the payment must be received no later than **August 1st, 2026**.\nIf you have already made the payment, thank you very much for staying up to date.\nPlease note that the final payment (**September 1st**) serves as the final confirmation for your travel."
+      }
+    },
+    {
+      "type": "datos",
+      "d": {
+        "style": "summary",
+        "title": "Here you have a summary of your payments:",
+        "l1": "Current Amount Ordered:",
+        "v1": "{[C-AMOUNT ORDERED]}",
+        "l2": "Current Amount Paid:",
+        "v2": "{[C-AMOUNT PAID]}",
+        "l3": "Current Balance:",
+        "v3": "{[C-BALANCE DUE]} (Trip deposit has already been subtracted)"
+      }
+    },
+    {
+      "type": "text",
+      "d": {
+        "size": "body",
+        "text": "You can access to your reservation any time. {[E-MODIFY REG LINK]} and use your personal information:"
+      }
+    },
+    {
+      "type": "box",
+      "d": {
+        "style": "suave",
+        "density": "editorial",
+        "title": "Your registration access information:",
+        "text": "Confirmation number: {[C-CONFIRMATION NUM]}\nEmail used for registration: {[C-EMAIL]}"
+      }
+    },
+    {
+      "type": "text",
+      "d": {
+        "text": "If you want to modify your registration or continue with the payments {[E-MODIFY REG LINK]}",
+        "size": "body"
+      }
+    }
+  ]
+}
