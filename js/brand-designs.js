@@ -437,8 +437,20 @@
   D.theme=function(p,kit){
     var c=(kit&&kit.colors)||{principal:p.principal,acento:p.acento}, a=c.principal,b=c.acento;
     var ars=p.id.indexOf('arsenal')===0, rmf=p.id.indexOf('rmf')===0, wch=p.id==='rmf-wch', camp=/camps$/.test(p.id);
-    if(wch)return {label:a,edge:a,titleBar:a,title:'#000000',strong:'#000000',link:'#000000',button:a,buttonText:'#000000',franjaText:'#FFFFFF',franjaBg:'#1F1F1F',line:'#EAE5DA',contactBg:'#F8F5EF',band:'#1F1F1F',body:'#2B2B2B',grey:'#9A9A9A',soft:'#F8F5EF',bg:'#FFFFFF',titleCase:'none',headWeight:'bold',btnRadius:'4px',onDark:a,hilite:a,franjaBar:'#1F1F1F',h1:'32px;line-height:40px',h2:'22px;line-height:28px'};
-    return {label:rmf?b:a,edge:rmf?b:a,titleBar:rmf?b:a,title:ars?'#0C0C0C':a,strong:ars?'#0C0C0C':a,link:a,button:ars?a:rmf?b:b,buttonText:rmf?'#000000':'#FFFFFF',franjaText:'#FFFFFF',franjaBg:ars?'#B4001E':a,franjaBar:ars?'#B4001E':a,franjaTracking:ars?'1px':null,franjaSize:ars?'10px':null,titleTracking:ars?'-0.5px':'0.3px',line:rmf?'#EAE5DA':'#EEEEEE',contactBg:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',band:a,body:rmf&&camp?'#2D2F30':'#444444',grey:'#AAAAAA',soft:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',bg:'#FFFFFF',titleCase:'none',headWeight:'bold',btnRadius:'4px',onDark:ars?'#FFCCCC':rmf?b:'#FFFFFF',hilite:ars?a:b,h1:rmf&&camp?'28px;line-height:36px':'32px;line-height:40px',h2:'22px;line-height:28px'};
+    // Franja identificadora copiada de las referencias de cada kit (docs/brand-kits/referencias): padding 12/40, sin barra inferior.
+    // font: bold / reg (las fuentes del kit por función; en PSG la negrita es PSG Bold Italic), regbold (la regular en negrita:
+    // en PSG Camps la referencia pide PSG bold sin cursiva y el navegador engrosa la regular, recta) o serif (Georgia negrita).
+    var FR={
+      'psg-experiences':{bg:a,l:{font:'bold',size:'11px',color:'#FFFFFF',tracking:'3px',italic:true},r:{font:'reg',size:'11px',color:'#FFFFFF',tracking:'1px'}},
+      'psg-camps':{bg:a,nowrap:true,l:{font:'regbold',size:'10px',color:'#FFFFFF',tracking:'1px'},r:{font:'reg',size:'10px',color:'#C9D8E8',tracking:'1px'}},
+      'rmf-experiences':{bg:'#13163B',l:{font:'bold',size:'11px',color:'#FFFFFF',tracking:'1px'},r:{font:'reg',size:'11px',color:b,tracking:'1px'}},
+      // WCH: como sus dos emails de ejemplo (referencias/rmf-wch/01 y 02): carbón, Helvetica 11/16 px negrita, blanca, espaciado
+      // 1 px, sin cortes de línea; en móvil 9 px sin espaciado (clase mobile-sub, como el ejemplo 02).
+      'rmf-wch':{bg:'#1F1F1F',lh:'16px',keepAll:true,mobileSub:true,l:{font:'bold',size:'11px',color:'#FFFFFF',tracking:'1px'},r:{font:'bold',size:'11px',color:'#FFFFFF',tracking:'1px'}},
+      'rmf-camps':{bg:'#13163B',l:{font:'serif',size:'11px',color:b,tracking:'3px'},r:{font:'reg',size:'11px',color:'rgba(255,255,255,0.8)',tracking:'1px'}}
+    }[p.id]||null;
+    if(wch)return {franja:FR,label:a,edge:a,titleBar:a,title:'#000000',strong:'#000000',link:'#000000',button:a,buttonText:'#000000',franjaText:'#FFFFFF',franjaBg:'#1F1F1F',line:'#EAE5DA',contactBg:'#F8F5EF',band:'#1F1F1F',body:'#2B2B2B',grey:'#9A9A9A',soft:'#F8F5EF',bg:'#FFFFFF',titleCase:'none',headWeight:'bold',btnRadius:'4px',onDark:a,hilite:a,franjaBar:'#1F1F1F',h1:'32px;line-height:40px',h2:'22px;line-height:28px'};
+    return {franja:FR,label:rmf?b:a,edge:rmf?b:a,titleBar:rmf?b:a,title:ars?'#0C0C0C':a,strong:ars?'#0C0C0C':a,link:a,button:ars?a:rmf?b:b,buttonText:rmf?'#000000':'#FFFFFF',franjaText:'#FFFFFF',franjaBg:ars?'#B4001E':a,franjaBar:ars?'#B4001E':a,franjaTracking:ars?'1px':null,franjaSize:ars?'10px':null,titleTracking:ars?'-0.5px':'0.3px',line:rmf?'#EAE5DA':'#EEEEEE',contactBg:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',band:a,body:rmf&&camp?'#2D2F30':'#444444',grey:'#AAAAAA',soft:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',bg:'#FFFFFF',titleCase:'none',headWeight:'bold',btnRadius:'4px',onDark:ars?'#FFCCCC':rmf?b:'#FFFFFF',hilite:ars?a:b,h1:rmf&&camp?'28px;line-height:36px':'32px;line-height:40px',h2:'22px;line-height:28px'};
   };
   D.instructions=function(tid){var p=D.forSection(tid);return p?'BRAND KIT '+p.name+' · '+p.version+'\n'+p.instructions:'';};
 })(typeof window!=='undefined'?window:globalThis);

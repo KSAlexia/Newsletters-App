@@ -355,10 +355,26 @@
   var M = K.MODULES = {};
   var TIP = 'Un párrafo por línea. **negrita** · *cursiva* · [texto](enlace) · ==etiqueta destacada== · ++subrayado de color++';
 
+  // Franja de un kit con referencias (t.theme.franja, de js/brand-designs.js): estilo propio a cada lado, como en sus HTML de ejemplo.
+  function franjaKit(d, t, spec) {
+    var left = has(d.left) ? d.left : (t.franjaLeft || ''), right = has(d.right) ? d.right.trim() : t.franjaRight || (t.club ? t.brand : t.name);
+    function ps(x) {
+      var font = x.font === 'serif' ? "font-family:Georgia, 'Times New Roman', Times, serif;font-weight:bold;" : x.font === 'bold' ? F.bold : x.font === 'regbold' ? F.reg.replace('font-weight:400;', 'font-weight:bold;') : F.reg;
+      return font + (x.italic ? 'font-style:italic;' : '') + 'font-size:' + x.size + ';line-height:' + (spec.lh || '14px') + ';color:' + x.color + ';letter-spacing:' + x.tracking + ';text-transform:uppercase;' + (spec.nowrap ? 'white-space:nowrap;' : spec.keepAll ? 'white-space:nowrap;word-break:keep-all;' : 'word-break:break-word;');
+    }
+    // mobileSub: en móvil la etiqueta baja a 9 px sin espaciado (la regla CSS se añade al <head> solo en estos emails, ver K.build).
+    var pc = spec.mobileSub ? '<p class="mobile-sub" style="' : '<p style="';
+    var tdL = spec.nowrap ? '<td align="left" style="white-space:nowrap;">' : '<td align="left">', tdR = spec.nowrap ? '<td align="right" style="white-space:nowrap;padding-left:12px;">' : '<td align="right" style="padding-left:12px;">';
+    return section(cell(spec.pad || '12px 40px', '', TBL + '><tbody><tr>' + tdL + pc + ps(spec.l) + '">' + esc(left.trim()) + '</p></td>' + tdR + pc + ps(spec.r) + '">' + esc(right) + '</p></td></tr></tbody></table>', spec.bg) +
+      (spec.bar ? '<tr><td height="4" bgcolor="' + spec.bar + '" style="height:4px;line-height:4px;font-size:0;background-color:' + spec.bar + ';">&nbsp;</td></tr>' : ''));
+  }
+
   M.franja = {
     letter: 'B', name: 'Franja identificadora', tag: 'FRANJA',
     fields: [{ k: 'left', label: 'Etiqueta izquierda', type: 'text', req: true, ph: 'Media Packages' }],
     build: function (d, t) {
+      var spec = renderingProfile && t.theme && t.theme.franja;
+      if (spec) return franjaKit(d, t, spec);
       var compact = renderingProfile && t.theme && t.theme.franjaTracking;
       var ps = (compact ? F.bold : F.med) + 'font-size:' + (compact ? t.theme.franjaSize : '11px') + ';line-height:14px;color:' + C.franjaText + ';letter-spacing:' + (compact ? t.theme.franjaTracking : '3px') + ';text-transform:uppercase;word-break:break-word;';
       // Una marca puede fijar las etiquetas (t.franjaLeft por defecto a la izquierda, t.franjaRight a la derecha).
@@ -1128,6 +1144,8 @@
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
     var title = (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name) + (has(st.name) ? ' – ' + st.name.trim() : '');
     var html = K.HEAD.replace('%%TITLE%%', function () { return esc(title); }) + ' ' + K.BODY_OPEN + parts.join('\n') + '\n' + K.BODY_CLOSE + '\n';
+    // Franja con etiqueta reducida en móvil (WCH): su regla va solo en estos emails; el <head> del resto no cambia.
+    if (html.indexOf('class="mobile-sub"') >= 0) html = html.replace('</style>', '@media screen and (max-width: 480px) {\n  .mobile-sub {\n    font-size: 9px !important;\n    letter-spacing: 0 !important;\n  }\n}</style>');
     // Paleta por roles (t.theme, solo sin kit aplicado): texto, grises, fondos suaves y roles separados del principal.
     // El kit editado de la propia marca (kit.base) conserva su paleta por roles; un kit aplicado aparte no.
     var clubLook = !((!kit || kit.base) && t.theme) && K.lookIsClub(st, t);

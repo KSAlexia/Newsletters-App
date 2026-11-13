@@ -139,3 +139,7 @@ Importante: {[E-RSVP YES LINK]} y {[E-MODIFY REG LINK]} nunca van dentro de otro
 ## 10. IDIOMA Y TONO
 - Copy de las newsletters: inglés.
 - Tono: cercano y premium. En los recordatorios, urgente pero educado.
+
+## Emails de ejemplo (13/11/2026)
+
+El usuario aportó dos emails de WCH como referencia: `referencias/rmf-wch/01.html` (Schedule & Tournament Wristbands) y `02.html` (About Madrid). Su subheader manda sobre lo que la ficha no concreta: fondo carbón #1F1F1F, padding 12/40 y sin línea inferior; Helvetica 11 px negrita, blanca, en mayúsculas, espaciado 1 px y sin cortes de línea. En móvil baja a 9 px sin espaciado (clase `mobile-sub`, como en el 02). El resto de piezas de estos ejemplos no se ha comparado todavía con el generador.

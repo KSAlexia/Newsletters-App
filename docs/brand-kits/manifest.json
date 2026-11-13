@@ -399,6 +399,20 @@
           "source_attachment_id": "42c953c8-594a-438c-b54e-38226cc72831",
           "sha256": "21cb423a55798e10a6811e693e4b6efc8ed1c8260f43d42f9eb199982914c758",
           "type": "user_brand_instructions"
+        },
+        {
+          "file": "referencias/rmf-wch/01.html",
+          "source": "pegado por el usuario en la conversación (13/11/2026)",
+          "title": "Schedule & Tournament Wristbands",
+          "sha256": "ba010f09df4e364f74ae382f15c26c68d716493c7651ed3275cb110cf15e6227",
+          "type": "example_newsletter"
+        },
+        {
+          "file": "referencias/rmf-wch/02.html",
+          "source": "pegado por el usuario en la conversación (13/11/2026)",
+          "title": "About Madrid",
+          "sha256": "192ede5cc08754e2e7e1aae810be21d4b5bee42cd7b8ba9d9fd180fb337114f2",
+          "type": "example_newsletter"
         }
       ]
     }
