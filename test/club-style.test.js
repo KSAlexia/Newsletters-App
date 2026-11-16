@@ -22,7 +22,7 @@ const body = h => h.slice(h.indexOf('<body'));
   assert.ok(h.includes('bgcolor="#004070" style="padding:14px 40px;background-color:#004070;"'), 'Franja del color principal');
   assert.ok(/color:#FFFFFF;letter-spacing:3px;text-transform:uppercase;word-break:break-word;">Paris Saint-Germain Academy Clinic/.test(h), 'Texto blanco en la franja');
   assert.ok(h.includes('>November 2026 · Paris</p>'), 'Etiqueta derecha de la franja');
-  assert.ok(/font-size:32px;line-height:40px;color:#004070;text-transform:none;[^"]*">Your Week in Paris,<br \/>\{\[C-FIRST NAME:TC\]\}/.test(h), 'Título sin mayúsculas, 32 px, con salto de línea');
+  assert.ok(/font-size:32px;line-height:40px;color:#004070;text-transform:none;[^"]*">Your Week in Paris, \{\[C-FIRST NAME:TC\]\}/.test(h), 'Título sin mayúsculas, 32 px, en una línea');
   assert.ok(h.includes('color:#444444;'), 'Texto gris oscuro'); assert.ok(!/color:#000000;/.test(h));
   assert.ok(/color:#FFFFFF;letter-spacing:2px;text-transform:uppercase;word-break:break-word;padding-bottom:8px;">Clinic dates/.test(h), 'Etiqueta blanca en los recuadros oscuros');
   assert.ok(/border:2px solid #E30613;[^>]*>[\s\S]{0,400}Final payment</.test(h), 'Recuadro claro con el acento');

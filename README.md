@@ -113,3 +113,11 @@ Las [instrucciones de cada brand kit](docs/brand-kits/README.md) recogen referen
 En el editor, **Instrucciones del brand kit** muestra las reglas del diseño. En **Brand kits → marca → Instrucciones del brand kit** puedes editarlas; también se incorporan al copiar instrucciones para importar o crear desde un guion. Ya no hay selector «Club/Clásico».
 
 Las newsletters anteriores mantienen su aspecto. Las nuevas usan los estilos preparados. Las personalizaciones de kits anteriores a la unificación se conservan como copias independientes, además de una copia íntegra de la biblioteca. USA y Canada mantienen sus carpetas y newsletters separadas.
+
+### Nombre, ubicación y ajustes de la newsletter
+
+Al pulsar «Nueva newsletter» aparece una ventana opcional con nombre y club/sub-brand o torneo. «Guardar y continuar» aplica la sección y su kit; conserva la carpeta actual si pertenece a esa sección. «Ahora no», la X o Escape permiten continuar como antes, sin rellenar los datos. En «Desde un guion» se puede indicar también el nombre antes de crearla.
+
+El nombre permanece arriba del panel derecho, con la ubicación debajo. «⚙ Ajustes» abre los datos de envío, franja, nombre de archivo, opciones y brand kit. La biblioteca de imágenes se mantiene plegada y separada de los bloques de contenido.
+
+La etiqueta izquierda de la franja usa el nombre por defecto y sigue sus cambios. Al editar la franja manualmente, deja de sincronizarse; «Usar el nombre de la newsletter» restaura ese vínculo. Se respetan las franjas fijas de marca, como World Challenge. Los textos de franja ya personalizados no se sustituyen al abrir newsletters antiguas.

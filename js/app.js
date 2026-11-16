@@ -181,7 +181,37 @@
     document.body.classList.remove('in-lobby'); syncSettings(); renderSections(); refresh(); previewScroll = 0;
     var here = editorLocation(); openPath(here.t, here.f); renderTree(); $('#name').focus();
   }
+  function prepareNewsletterIdentity(st) {
+    if(st.franjaAuto===true || (st.franjaAuto==null && !String(st.franjaLeft||'').trim())) {
+      st.franjaAuto=true;st.franjaLeft=String(st.name||'').trim();
+    }
+    return st;
+  }
+  function renameNewsletter(value) {
+    var automatic=state.franjaAuto===true || (state.franjaAuto==null && !String(state.franjaLeft||'').trim());
+    state.name=value;
+    if(automatic){state.franjaAuto=true;state.franjaLeft=String(value||'').trim();$('#franja').value=state.franjaLeft;}
+    lookNote();settingsSummary();update();
+  }
+  function setNewsletterTournament(tid) {
+    if(!K.CLIENT.tournaments.some(function(t){return t.id===tid;}))return;
+    if(state.tournament!==tid) {
+      state.headerAlt='';
+      if(currentId&&projects[currentId])projects[currentId].folder='';
+    }
+    state.tournament=tid;$('#tournament').value=tid;
+    if(K.Designs)state.designVersion=K.Designs.version;
+    if(state.brandKit&&state.brandKit.base)delete state.brandKit;
+    if(K.BrandKitsUI)K.BrandKitsUI.refreshSelect(state);
+    lookNote();update();renderImagePanel();persist();
+    var here=editorLocation();openPath(here.t,here.f);renderTree();settingsSummary();
+  }
+  function askNewNewsletterIdentity() {
+    $('#new-newsletter-name').value=state.name||'';$('#new-newsletter-tournament').value=state.tournament;
+    $('#new-newsletter-dialog').showModal();$('#new-newsletter-name').focus();
+  }
   function createProject(st) {
+    prepareNewsletterIdentity(st);
     var id = newId(), tournament = K.tournament(st.tournament).id;
     projects[id] = { id: id, updated: Date.now(), folder: tournament === hubTournament ? hubFolder : '', state: K.normalize(st) };
     saveAll(); openProject(id);
@@ -681,7 +711,7 @@
     });
   }
   function fillSettings() {
-    fillTournaments($('#tournament')); fillTournaments($('#script-tournament'));
+    fillTournaments($('#tournament')); fillTournaments($('#script-tournament')); fillTournaments($('#new-newsletter-tournament'));
     $('#recipe').innerHTML = ''; $('#recipe').appendChild(el('option', { value: '', text: 'Nueva desde receta…' }));
     K.RECIPES.forEach(function (r) { $('#recipe').appendChild(el('option', { value: r.id, text: r.name })); });
     renderPalette();
@@ -689,17 +719,17 @@
   function syncSettings() {
     if (K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state);
     editingCode = false; renderImagePanel(); renderCompareSelect(); renderCompare();
-    selectedSection = -1; previewScroll = 0; pendingInsert = null; if (state.sections.length) closePalette(); else openPalette(null);
+    selectedSection = -1; previewScroll = 0; pendingInsert = null; if (state.sections.length) closePalette(); else openPalette(null,true);
     $('#contact-email').value = state.contactEmail || ''; $('#tournament').value = state.tournament; $('#name').value = state.name || ''; $('#desc').value = state.desc || ''; $('#mp').checked = !!state.mediaPackages; $('#franja').value = state.franjaLeft || ''; $('#franja-right').value = state.franjaRight || ''; lookNote();
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).checked = !state.off[k]; }); lookNote();
     document.querySelector('details.more').open = ['header', 'franja', 'footer'].some(function (k) { return state.off[k]; });
-    // Con bloques y la franja resuelta, los datos se pliegan para que los bloques queden arriba; una newsletter nueva los muestra abiertos.
-    $('#settings-box').open = !state.sections.length || !(String(state.franjaLeft || '').trim() || $('#franja').disabled);
+    // El nombre queda visible; los ajustes se abren solo desde su botón.
+    $('#newsletter-settings-dialog').close();
     settingsSummary();
   }
   function settingsSummary() {
     var t = K.tournament(state.tournament);
-    $('#settings-summary').textContent = [t.club ? t.clubName + ' · ' + t.section : t.name, String(state.name || '').trim() || 'Sin nombre'].join(' · ');
+    $('#settings-summary').textContent = t.club ? t.clubName + ' · ' + t.section : t.name;
   }
 
   // ---------- Otras newsletters: saltar entre ellas y comparar al lado ----------
@@ -867,6 +897,12 @@
     timeline: 'De 1 a 8 fechas o hitos, uno debajo de otro. Texto en párrafos o en puntos.', deadlines: 'Dos fechas límite lado a lado.',
     fotos3: 'Tres fotos en fila (se apilan en móvil).', cta: 'Caja con borde para inscribirse o actuar.',
     boton: 'Un botón solo, del color principal u oscuro.', important: 'Aviso destacado en caja oscura.',
+    normas: 'Tarjetas de normas con emoji (uniforme, objetos perdidos, recogida…): paneles a todo el ancho o rejilla de 2 columnas.',
+    actividad: 'Actividades o excursiones con foto, etiqueta, fecha y precio.',
+    botones: 'Dos a cuatro botones en fila (relleno y con contorno) o «Añadir al calendario» con los enlaces de Cvent.',
+    opciones: 'Opciones apiladas con el precio a la derecha; una puede ir destacada («Best value»).',
+    paquete: 'Un paquete destacado con cabecera de color o dos tarjetas de paquete con lo que incluyen y su precio.',
+    registro: 'Tarjeta oscura centrada con los datos de registro (etiqueta y valor).',
     wallet: 'Botones de Apple/Google Wallet: enlaces e imágenes editables y QR personal de Cvent.'
   };
   // dragBlock: { kind: 'move', from } (bloque existente) | { kind: 'new', type } (desde la paleta)
@@ -877,7 +913,7 @@
     var info = K.BrandKits.instructionsFor(state);
     var fixed = !!(K.Designs && K.Designs.active(state) && (K.Designs.forSection(state.tournament)||{}).id==='rmf-wch');
     $('#contact-caption').textContent=fixed?'Contacto de esta newsletter *':'Contacto de esta newsletter (opcional)';
-    ['on-header','on-franja','on-footer','franja','franja-right'].forEach(function(id){$('#'+id).disabled=fixed;});
+    ['on-header','on-franja','on-footer','franja','franja-right','franja-name'].forEach(function(id){$('#'+id).disabled=fixed;});
     if(!fixed){$('#franja').value=state.franjaLeft||'';$('#franja-right').value=state.franjaRight||'';['header','franja','footer'].forEach(function(k){$('#on-'+k).checked=!state.off[k];});}
     if(fixed){$('#franja').value='WORLD CHALLENGE 2027';$('#franja-right').value='FUNDACIÓN REAL MADRID';['on-header','on-franja','on-footer'].forEach(function(id){$('#'+id).checked=true;});}
     $('#kit-guidelines-text').textContent = info.text;
@@ -952,11 +988,11 @@
       box.appendChild(card);
     });
   }
-  function openPalette(at) {
+  function openPalette(at,noScroll) {
     insertAt = at == null ? null : at;
     $('#palette-target').textContent = pendingInsert != null ? 'Elige el tipo del bloque nuevo marcado en la vista previa.' : (insertAt == null || insertAt >= state.sections.length ? 'Se añade al final. También puedes arrastrarlo a la vista previa o entre los bloques.' : 'Se añade debajo de «' + blockName(insertAt - 1) + '».');
     $('#palette').hidden = false; $('#add-toggle').setAttribute('aria-expanded', 'true');
-    if ($('#palette').scrollIntoView) $('#palette').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (!noScroll && $('#palette').scrollIntoView) $('#palette').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
   function closePalette() {
     insertAt = null; $('#palette').hidden = true; $('#add-toggle').setAttribute('aria-expanded', 'false');
@@ -1443,7 +1479,7 @@
           return;
         }
         var input;
-        if (f.type === 'area') input = el('textarea', { rows: 4 });
+        if (f.type === 'area') { input = el('textarea', { rows: 4 }); input.addEventListener('keydown', mdShortcut); }
         else if (f.type === 'select') { input = el('select'); f.opts.forEach(function (o) { input.appendChild(el('option', { value: o[0], text: o[1] })); }); }
         else input = el('input', { type: 'text' });
         if (f.ph) input.setAttribute('placeholder', f.ph);
@@ -1476,6 +1512,29 @@
       });
       det.appendChild(body); box.appendChild(det);
     });
+  }
+  // Ctrl/⌘ + B (negrita) y Ctrl/⌘ + I (cursiva) en los cuadros de texto del panel: ponen o quitan ** / * alrededor de la selección.
+  function mdShortcut(event) {
+    var k = String(event.key || '').toLowerCase();
+    if (!(event.metaKey || event.ctrlKey) || event.altKey || (k !== 'b' && k !== 'i')) return;
+    event.preventDefault();
+    var ta = event.target, v = ta.value, a = ta.selectionStart, z = ta.selectionEnd, mk = k === 'b' ? '**' : '*', n = mk.length;
+    var sel = v.slice(a, z), lead = sel.match(/^\s*/)[0].length, trail = sel.match(/\s*$/)[0].length;
+    if (sel.trim()) { a += lead; z -= trail; sel = v.slice(a, z); } // los espacios de los extremos quedan fuera de la marca
+    // ¿Qué hay justo alrededor o dentro? (en cursiva, «*» no puede ser parte de «**»)
+    function wrapped() { return v.slice(a - n, a) === mk && v.slice(z, z + n) === mk && (k === 'b' || (v.charAt(a - n - 1) !== '*' && v.charAt(z + n) !== '*')) ? true : false; }
+    var start, end, text, selA, selZ;
+    if (sel.length >= 2 * n && sel.slice(0, n) === mk && sel.slice(-n) === mk && (k === 'b' || (sel.charAt(n) !== '*' && sel.charAt(sel.length - n - 1) !== '*'))) { start = a; end = z; text = sel.slice(n, -n); selA = a; selZ = a + text.length; }
+    else if (wrapped()) { start = a - n; end = z + n; text = sel; selA = a - n; selZ = z - n; }
+    else if (!sel) { start = a; end = z; text = mk + mk; selA = selZ = a + n; }
+    else { start = a; end = z; text = mk + sel + mk; selA = a + n; selZ = z + n; }
+    ta.focus(); ta.setSelectionRange(start, end);
+    // insertText conserva Ctrl/⌘ + Z del cuadro de texto; si el navegador no lo admite, se sustituye directamente.
+    if (!(document.execCommand && document.execCommand('insertText', false, text)) || ta.value.slice(start, start + text.length) !== text) {
+      ta.value = v.slice(0, start) + text + v.slice(end);
+      ta.dispatchEvent(new Event('input', { bubbles: true }));
+    }
+    ta.setSelectionRange(selA, selZ);
   }
   function move(i, dir) { var a = state.sections, x = a.splice(i, 1)[0]; a.splice(i + dir, 0, x); renderSections(); update(); }
 
@@ -1612,6 +1671,7 @@
     function hubTarget() { return hubTournament || (hubClub ? K.CLIENT.tournaments.filter(function (t) { return t.club === hubClub; })[0].id : ''); }
     // Nueva newsletter desde un guion: instrucciones + guion para ChatGPT y creación con su respuesta.
     $('#from-script').addEventListener('click', function () {
+      $('#script-name').value='';
       $('#script-tournament').value = hubTarget() || K.CLIENT.tournaments[0].id; $('#script-err').textContent = '';
       $('#script-dlg').showModal(); $('#script-text').focus();
     });
@@ -1628,9 +1688,10 @@
       catch (e) { $('#script-err').textContent = 'No se ha podido crear: ' + (e.message || 'el texto pegado no es válido') + ' Copia la respuesta completa de ChatGPT.'; return; }
       if (r.state.tournament !== tid) r.notes.push('ChatGPT indicó «' + K.tournament(r.state.tournament).name + '»; se usa el elegido: ' + K.tournament(tid).name + '.');
       r.state.tournament = tid;
+      if($('#script-name').value.trim())r.state.name=$('#script-name').value.trim();
       var missing = script.trim() ? K.scriptCoverage(script, r.state) : [];
       $('#script-dlg').close(); $('#script-text').value = ''; $('#script-answer').value = '';
-      createProject(r.state);
+      createProject(r.state);hubTournament=tid;hubFolder=projects[currentId].folder||'';hubClub='';
       notice('Newsletter creada con ' + r.state.sections.length + ' bloques', (missing.length ? '' : (script.trim() ? 'Todos los textos del guion aparecen en la newsletter. ' : '')) + 'Revisa los textos y mira la pestaña Revisión (placeholders y contenido PENDIENTE).',
         [{ title: 'Avisos:', items: r.notes }, { title: 'Textos del guion que no encuentro tal cual (revísalos):', items: missing }], true);
     });
@@ -1638,9 +1699,17 @@
       var target = hubTarget();
       var st = K.fromRecipe('blank', target || undefined);
       if (target) { st.tournament = target; st.headerAlt = ''; }
-      createProject(st);
+      createProject(st);askNewNewsletterIdentity();
     });
-    $('#franja').addEventListener('input', function () { state.franjaLeft = this.value; update(); });
+    $('#newsletter-settings-open').addEventListener('click',function(){$('#newsletter-settings-dialog').showModal();});
+    $('#newsletter-settings-close').addEventListener('click',function(){$('#newsletter-settings-dialog').close();});
+    ['new-newsletter-close','new-newsletter-skip'].forEach(function(id){$('#'+id).addEventListener('click',function(){$('#new-newsletter-dialog').close();$('#name').focus();});});
+    $('#new-newsletter-form').onsubmit=function(event){
+      event.preventDefault();renameNewsletter($('#new-newsletter-name').value.trim());setNewsletterTournament($('#new-newsletter-tournament').value);
+      persist();var here=editorLocation();hubTournament=here.t;hubFolder=here.f;hubClub='';syncSettings();renderSections();refresh();$('#new-newsletter-dialog').close();$('#name').focus();
+    };
+    $('#franja-name').addEventListener('click',function(){state.franjaAuto=true;state.franjaLeft=String(state.name||'').trim();lookNote();update();});
+    $('#franja').addEventListener('input', function () { state.franjaAuto=false;state.franjaLeft = this.value; update(); });
     $('#franja-right').addEventListener('input', function () { state.franjaRight = this.value; update(); });
     ['header', 'franja', 'footer'].forEach(function (k) { $('#on-' + k).addEventListener('change', function () { state.off[k] = !this.checked; update(); }); });
     window.addEventListener('beforeunload', function () { saveSession(); if (currentId) persist(); });
@@ -1680,16 +1749,16 @@
       if (kit) state.brandKit = K.BrandKits.snapshot(kit); else delete state.brandKit;
       update(); K.BrandKitsUI.refreshSelect(state); lookNote(); renderImagePanel();
     });
-    $('#tournament').addEventListener('change', function () { state.tournament = this.value; if (K.Designs) state.designVersion = K.Designs.version; if (state.brandKit && state.brandKit.base) delete state.brandKit; if(K.BrandKitsUI) K.BrandKitsUI.refreshSelect(state); lookNote(); update(); renderImagePanel(); var here = editorLocation(); openPath(here.t, here.f); renderTree(); settingsSummary(); });
+    $('#tournament').addEventListener('change', function () { setNewsletterTournament(this.value); });
     $('#contact-email').addEventListener('input',function(){state.contactEmail=this.value;update();});
-    $('#name').addEventListener('input', function () { state.name = this.value; update(); });
+    $('#name').addEventListener('input', function () { renameNewsletter(this.value); });
     $('#desc').addEventListener('input', function () { state.desc = this.value; update(); });
     $('#mp').addEventListener('change', function () { state.mediaPackages = this.checked; update(); });
 
     $('#recipe').addEventListener('change', function () {
       var id = this.value; this.value = ''; if (!id) return;
       if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
-      var appliedKit = state.brandKit; state = K.fromRecipe(id, state.tournament); if (appliedKit) state.brandKit = appliedKit; persist(); syncSettings(); renderSections(); refresh();
+      var appliedKit = state.brandKit, previousName=state.name, automaticBand=state.franjaAuto; state = K.fromRecipe(id, state.tournament); if(String(previousName||'').trim())state.name=previousName; if(automaticBand===true)state.franjaAuto=true;prepareNewsletterIdentity(state); if (appliedKit) state.brandKit = appliedKit; persist(); syncSettings(); renderSections(); refresh();
     });
     $('#add-toggle').addEventListener('click', function () { if ($('#palette').hidden) startPending(state.sections.length); else closePalette(); });
     $('#palette-close').addEventListener('click', closePalette);
@@ -1732,7 +1801,8 @@
       try {
         var r = K.importProject($('#imp-text').value, state.tournament);
         if (state.sections.length > 0 && !confirm('Se sustituirá el contenido de este proyecto. ¿Continuar?')) return;
-        state = r.state; persist(); syncSettings(); renderSections(); refresh();
+        if(!String(r.state.name||'').trim()&&String(state.name||'').trim())r.state.name=state.name;
+        state = prepareNewsletterIdentity(r.state); persist(); syncSettings(); renderSections(); refresh();
         var here = editorLocation(); openPath(here.t, here.f); renderTree(); // el menú lateral refleja la sección importada
         $('#imp-text').value = ''; $('#dlg').close();
         notice('Importados ' + state.sections.length + ' bloques', 'Revisa los textos frente al original y mira la pestaña Revisión.', [{ title: 'Avisos:', items: r.notes }], true);

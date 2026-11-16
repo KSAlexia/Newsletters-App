@@ -26,7 +26,7 @@ for(const id of ['psg-exp','psg-usa','arsenal-exp','arsenal-canada','rmf-exp','r
   assert.ok(guide.includes('COMPOSICIÓN OBLIGATORIA DEL KIT'));
   assert.ok(guide.includes('incluso cuando el original los presente como viñetas'));
   assert.ok(guide.includes('promuévela a title principal'));
-  assert.ok(guide.includes('No uses box borde para credenciales'));
+  assert.ok(guide.includes('conserva el tipo de caja del original'),'Datos de acceso: la caja del original (Arsenal Experiences usa borde)');
   assert.ok(guide.includes('REVISIÓN ANTES DE RESPONDER'));
  }
 }

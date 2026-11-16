@@ -450,7 +450,33 @@
       'rmf-camps':{bg:'#13163B',l:{font:'serif',size:'11px',color:b,tracking:'3px'},r:{font:'reg',size:'11px',color:'rgba(255,255,255,0.8)',tracking:'1px'}}
     }[p.id]||null;
     if(wch)return {franja:FR,label:a,edge:a,titleBar:a,title:'#000000',strong:'#000000',link:'#000000',button:a,buttonText:'#000000',franjaText:'#FFFFFF',franjaBg:'#1F1F1F',line:'#EAE5DA',contactBg:'#F8F5EF',band:'#1F1F1F',body:'#2B2B2B',grey:'#9A9A9A',soft:'#F8F5EF',bg:'#FFFFFF',titleCase:'none',headWeight:'bold',btnRadius:'4px',onDark:a,hilite:a,franjaBar:'#1F1F1F',titleTracking:'-0.5px',h1:'36px;line-height:44px',h2:'22px;line-height:28px'}; // H1 36/44 como sus emails de ejemplo
-    return {franja:FR,label:rmf||p.id==='psg-experiences'?b:a, /* PSG Experiences: rótulos en rojo, como sus ejemplos */edge:rmf?b:a,titleBar:rmf?b:a,title:ars?'#0C0C0C':a,strong:ars?'#0C0C0C':a,link:a,button:ars?a:rmf?b:b,buttonText:rmf?'#000000':'#FFFFFF',franjaText:'#FFFFFF',franjaBg:ars?'#B4001E':a,franjaBar:ars?'#B4001E':a,franjaTracking:ars?'1px':null,franjaSize:ars?'10px':null,titleTracking:ars?'-0.5px':'0.3px',line:rmf?'#EAE5DA':'#EEEEEE',contactBg:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',band:a,body:rmf&&camp?'#2D2F30':'#444444',grey:'#AAAAAA',soft:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',bg:'#FFFFFF',titleCase:'none',headWeight:'bold',btnRadius:'4px',onDark:ars?'#FFCCCC':rmf?b:'#FFFFFF',hilite:ars?a:b,h1:rmf&&camp?'28px;line-height:36px':'32px;line-height:40px',h2:'22px;line-height:28px'};
+    return {franja:FR,label:rmf||p.id==='psg-experiences'?b:a, /* PSG Experiences: rótulos en rojo, como sus ejemplos */edge:rmf?b:a,titleBar:rmf?b:a,title:ars?'#0C0C0C':a,strong:ars?'#0C0C0C':a,link:a,button:ars?a:rmf&&camp?a:b,buttonText:'#FFFFFF' /* botones como las referencias: RMF Camps azul marino, RMF Experiences dorado; texto blanco */,franjaText:'#FFFFFF',franjaBg:ars?'#B4001E':a,franjaBar:ars?'#B4001E':a,franjaTracking:ars?'1px':null,franjaSize:ars?'10px':null,titleTracking:ars?'-0.5px':'0.3px',line:rmf?'#EAE5DA':'#EEEEEE',contactBg:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',band:a,body:rmf&&camp?'#2D2F30':'#444444',grey:'#AAAAAA',soft:ars?'#FDF5F5':rmf?(camp?'#F5F7FA':'#F6F5F0'):'#F5F7FB',bg:'#FFFFFF',titleCase:'none',headWeight:'bold',btnRadius:'4px',onDark:ars?'#FFCCCC':rmf?b:'#FFFFFF',hilite:ars?a:b,h1:rmf&&camp?'28px;line-height:36px':'32px;line-height:40px',h2:'22px;line-height:28px'};
+  };
+  // Estilo de cada pieza por kit, medido en sus newsletters de referencia (docs/brand-kits/referencias, 16/11/2026).
+  // h2: título de sección (title «seccion»). borde: caja con borde. btn: botón (auto = ajustado al texto, en una línea).
+  // pairs: datos «Etiqueta: valor». bullet: color de las viñetas. boxTitle: título dentro de las cajas. tlGap: separación entre días del timeline.
+  // labelFont/pairValue: rótulos y valores de datos en la regular (PSG Camps). borde.title: tamaño del título dentro.
+  // h2.bar/align: barra de 56 px bajo el título de sección y centrado (Camps, como sus referencias).
+  // stack: separación entre cajas seguidas. icon: tamaño del emoji suelto que abre una caja con borde (🎁).
+  D.look=function(p,kit){
+    if(!p)return null;
+    var c=(kit&&kit.colors)||{principal:p.principal,acento:p.acento}, a=c.principal, b=c.acento;
+    var serif="Georgia, 'Times New Roman', Times, serif";
+    var L={
+      'arsenal-camps':{h2:{font:serif,size:26,lh:32,color:'#0C0C0C',upper:true,track:'-0.3px',bar:true,align:'center'},borde:{bg:'#FDF5F5',border:'2px solid '+a,radius:'4px',pad:'22px 24px'},btn:{auto:true,size:13,pad:'13px 28px',track:'1px'},bullet:a},
+      'arsenal-experiences':{h2:{font:"'Arial Black', Helvetica, Arial, sans-serif",weight:900,size:28,lh:34,color:a,upper:true,track:'-0.5px',rule:'#EEEEEE'},borde:{bg:'#FFFFFF',border:'2px solid '+a,radius:'0',pad:'22px 24px'},btn:{auto:true,size:13,pad:'13px 18px',track:'1px'},bullet:a,boxTitle:{size:20,lh:26},note:'#888888'},
+      'psg-camps':{h2:{brand:true,size:26,lh:32,color:a,upper:true,track:'-0.3px',bar:true,align:'center'},borde:{bg:'#FFFFFF',border:'2px solid '+a,radius:'0',pad:'22px 24px'},btn:{auto:true,size:13,pad:'13px 28px',track:'1px'},bullet:a,strongFont:'DinProBlack',labelFont:'DinProRegular',pairValue:'reg'},
+      'psg-experiences':{h2:{brand:true,size:21,lh:28,color:a},borde:{bg:'#FFFFFF',border:'2px solid '+b,radius:'0',pad:'22px 24px'},btn:{width:210,size:13,pad:'14px 0',track:'1px',italic:true},bullet:a,tlGap:8,labelItalic:true,strongFont:'DinProBlack'},
+      'rmf-camps':{h2:{font:serif,size:24,lh:30,color:a,bar:true,align:'center'},borde:{bg:'#FDFAF3',border:'1px solid '+b,left:'4px solid '+b,radius:'4px',pad:'22px 24px',btnBelow:true,title:{size:18,lh:24}},btn:{auto:true,size:11,pad:'12px 28px',track:'1.5px'},bullet:b,boxTitle:{size:18,lh:24}},
+      'rmf-experiences':{h2:{font:serif,size:24,lh:30,color:a},borde:{bg:'#FFFFFF',border:'2px solid '+b,radius:'0',pad:'22px 24px'},btn:{width:260,size:11,pad:'11px 20px',track:'1.5px'},bullet:b,boxTitle:{size:20,lh:26}},
+      'rmf-wch':{borde:{bg:'#FFFFFF',border:'2px solid '+a,radius:'0',pad:'15px 18px'},bullet:a}
+    }[p.id]||{};
+    // Bloques nuevos: tarjetas de normas en rejilla (RMF Camps) o paneles; actividades con la foto a la izquierda (Arsenal),
+    // a la derecha (RMF) o en dos columnas (PSG), como sus referencias.
+    L.normas=p.id==='rmf-camps'?'rejilla':'lista';
+    L.activity=p.id.indexOf('rmf')===0?'right':p.id.indexOf('psg')===0?'grid':'left';
+    L.stack=12; L.icon=26;
+    return L;
   };
   D.instructions=function(tid){var p=D.forSection(tid);return p?'BRAND KIT '+p.name+' · '+p.version+'\n'+p.instructions:'';};
 })(typeof window!=='undefined'?window:globalThis);

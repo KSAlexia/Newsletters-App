@@ -45,6 +45,9 @@
   }
   K.linkLevel = linkLevel;
   // **negrita**, *cursiva* y [texto](enlace). Nada más se toca.
+  // Estilo por pieza del kit activo (K.Designs.look): se fija en K.build mientras se monta el email.
+  var LOOK = {};
+  function strongFont() { return LOOK.strongFont ? F.bold.replace('DinProBold', LOOK.strongFont) : F.bold; }
   function inline(s, strongColor) {
     var h = esc(String(s || '').trim());
     h = h.replace(LINK, function (m, t, u) {
@@ -52,7 +55,7 @@
       if (!/^(https?:\/\/|mailto:)/i.test(u)) return t;
       return '<a href="' + u.replace(/"/g, '&quot;') + '" target="_blank" style="color:' + C.link + ';text-decoration:underline;">' + t + '</a>';
     });
-    h = h.replace(/\*\*(.+?)\*\*/g, '<strong style="' + F.bold + 'color:' + (strongColor || C.strong) + ';">$1</strong>');
+    h = h.replace(/\*\*(.+?)\*\*/g, '<strong style="' + strongFont() + 'color:' + (strongColor || C.strong) + ';">$1</strong>');
     // *cursiva* (un solo asterisco, después de las negritas)
     h = h.replace(/(^|[^*])\*([^*\n]+?)\*(?!\*)/g, '$1<em style="font-style:italic;">$2</em>');
     // ==etiqueta== (fondo del color principal, texto en negrita) y ++subrayado++ (negrita con subrayado del color principal).
@@ -104,12 +107,12 @@
   // Texto en puntos dentro de cajas y timeline: «•» del color principal y el texto a continuación (una línea, un punto).
   function dotLines(text, size, lh, first) {
     return paras(text).map(function (p, i) {
-      return '<p style="' + F.reg + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:#000000;word-break:break-word;padding-top:' + (i ? 7 : first) + 'px;"><span style="color:' + P + ';font-weight:bold;">&bull;</span>&nbsp; ' + inline(p) + '</p>';
+      return '<p style="' + F.reg + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:#000000;word-break:break-word;padding-top:' + (i ? 7 : first) + 'px;"><span style="color:' + (LOOK.bullet || P) + ';font-weight:bold;">&bull;</span>&nbsp; ' + inline(p) + '</p>';
     }).join('');
   }
   function bullets(text) {
     var rows = paras(text).map(function (it) {
-      return '<tr><td valign="top" width="26" style="font-size:12px;line-height:24px;color:' + P + ';padding:0 0 12px 0;">&#9679;</td><td valign="top" style="' + F.reg + 'font-size:15px;line-height:24px;color:#000000;padding:0 0 12px 0;word-break:break-word;">' + inline(it) + '</td></tr>';
+      return '<tr><td valign="top" width="26" style="font-size:12px;line-height:24px;color:' + (LOOK.bullet || P) + ';padding:0 0 12px 0;">&#9679;</td><td valign="top" style="' + F.reg + 'font-size:15px;line-height:24px;color:#000000;padding:0 0 12px 0;word-break:break-word;">' + inline(it) + '</td></tr>';
     }).join('');
     return TBL + '><tbody>' + rows + '</tbody></table>';
   }
@@ -677,9 +680,11 @@
   // Ancho útil 570 px (650 − 2 × 40). En móvil, las columnas «col2» se apilan.
   // ============================================================
   var SANS = "font-family:'DinProBold', Arial, Helvetica, sans-serif;font-weight:bold;";
+  function labelSans() { return LOOK.labelFont ? SANS.replace('DinProBold', LOOK.labelFont) : SANS; }
   function eyebrow(text, color, extra) {
-    return '<p style="' + SANS + 'font-size:11px;line-height:14px;color:' + color + ';letter-spacing:2px;text-transform:uppercase;word-break:break-word;' + (extra || '') + '">' + esc(String(text).trim()) + '</p>';
+    return '<p style="' + labelSans() + 'font-size:11px;line-height:14px;color:' + color + ';letter-spacing:2px;text-transform:uppercase;word-break:break-word;' + (extra || '') + '">' + esc(String(text).trim()) + '</p>';
   }
+  function boxTitleColor(d) { return d.titleColor === 'brand' ? P : d.titleColor === 'accent' ? A : d.titleColor === 'dark' ? '#000000' : ''; }
   function boxTitle(text, size, lh, color, extra) {
     return '<p style="' + F.ex40 + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:' + (color || C.title) + ';word-break:break-word;' + (extra || '') + '">' + br(esc(String(text).trim())) + '</p>';
   }
@@ -694,15 +699,24 @@
   }
   // Botón de 190 px: «gold» (color principal, texto según la marca) u «dark» (carbón, texto blanco).
   // Estilos de botón: principal de la marca, acento (p. ej. el rojo de Telegram en PSG) u oscuro. Sin elegir, el principal de siempre.
-  var BTN_STYLES = [['gold', 'Color principal de la marca (rojo en Arsenal, dorado en WCH)'], ['accent', 'Color de acento (p. ej. rojo en PSG, para Telegram)'], ['dark', 'Oscuro (carbón)']];
-  function btn190(text, url, style, align) {
+  var BTN_STYLES = [['gold', 'Color principal de la marca (rojo en Arsenal, dorado en WCH)'], ['accent', 'Color de acento (p. ej. rojo en PSG, para Telegram)'], ['dark', 'Oscuro (carbón)'], ['outline', 'Con contorno (blanco y borde de la marca)']];
+  // width: '' (como la marca), 'auto' (ajustado al texto, en una línea), '190' o 'full' (todo el ancho).
+  var BTN_W = [['', 'Como en las referencias de la marca'], ['auto', 'Ajustado al texto (una línea)'], ['190', 'Fijo (190 px)'], ['full', 'Todo el ancho']];
+  function btn190(text, url, style, align, width) {
     var bg = style === 'dark' ? C.band : style === 'accent' ? A : C.button, color = style === 'dark' || style === 'accent' ? '#FFFFFF' : C.buttonText;
+    var spec = LOOK.btn, mode = width || (spec ? (spec.auto ? 'auto' : 'fixed') : '190'), outline = style === 'outline';
+    if (outline) { color = C.button; }
+    if (spec || mode !== '190' || outline) {
+      spec = spec || { size: 11, pad: '13px 10px', track: '1.5px' };
+      var w = mode === 'full' ? '100%' : mode === '190' ? 190 : mode === 'fixed' ? spec.width : 0, pad = mode === 'auto' && !spec.auto ? '13px 28px' : spec.pad;
+      return '<table role="presentation" border="0" cellpadding="0" cellspacing="0"' + (w ? ' width="' + w + '"' : '') + ' align="' + (align || 'center') + '" style="' + (w ? 'width:' + (w === '100%' ? w : w + 'px') + ';' : '') + 'margin:' + (align === 'left' ? '18px 0 0 0' : '22px auto 0 auto') + ';border-collapse:separate !important;" class="mobile-button"><tbody><tr><td align="center" bgcolor="' + (outline ? '#FFFFFF' : bg) + '" style="background-color:' + (outline ? '#FFFFFF' : bg) + ';border:' + (outline ? '2px solid ' + C.button : '1px solid ' + bg) + ';border-radius:' + C.btnRadius + ';"><a href="' + attr(url) + '" target="_blank" style="display:block;padding:' + (w && mode !== 'fixed' ? '13px 10px' : outline ? pad.replace(/(\d+)px (\d+)px/, function (m, a, b) { return (a - 1) + 'px ' + (b - 2) + 'px'; }) : pad) + ';' + SANS + (spec.italic ? 'font-style:italic;' : '') + 'font-size:' + spec.size + 'px;line-height:' + (spec.size + 4) + 'px;color:' + color + ';text-decoration:none;letter-spacing:' + spec.track + ';text-transform:uppercase;text-align:center;' + (mode === 'auto' ? 'white-space:nowrap;' : '') + '">' + esc(text) + '</a></td></tr></tbody></table>';
+    }
     return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="190" align="' + (align || 'center') + '" style="width:190px;margin:' + (align === 'left' ? '18px 0 0 0' : '22px auto 0 auto') + ';border-collapse:separate !important;" class="mobile-button"><tbody><tr><td align="center" bgcolor="' + bg + '" style="background-color:' + bg + ';border:1px solid ' + bg + ';border-radius:' + C.btnRadius + ';"><a href="' + attr(url) + '" target="_blank" style="display:block;padding:13px 10px;' + SANS + 'font-size:11px;line-height:15px;color:' + color + ';text-decoration:none;letter-spacing:1.5px;text-transform:uppercase;text-align:center;">' + esc(text) + '</a></td></tr></tbody></table>';
   }
-  function optBtn(d, align) { return has(d.btn) ? btn190(d.btn.trim(), String(d.url || '').trim() || '#', d.btnStyle, align) : ''; }
+  function optBtn(d, align) { return has(d.btn) ? btn190(d.btn.trim(), String(d.url || '').trim() || '#', d.btnStyle, align, d.btnW) : ''; }
   var BTN_FIELDS = [
     { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true },
-    { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: BTN_STYLES }
+    { k: 'btnStyle', label: 'Estilo del botón', type: 'select', half: true, opts: BTN_STYLES }, { k: 'btnW', label: 'Ancho del botón', type: 'select', half: true, opts: BTN_W, showIf: function (d) { return has(d.btn); } }
   ];
   function sectionTitle(text) {
     return has(text) ? '<p style="' + titleFont(text, 'ex60', 22, 28) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;word-break:break-word;">' + esc(text.trim()) + '</p>' + bar(40, P, 'center', '12px auto 22px auto') : '';
@@ -759,7 +773,7 @@
     fields: [{ k: 'title', label: 'Título de sección (opcional)', type: 'text' }, { k: 'fmt', label: 'Texto de los hitos', type: 'select', opts: [['', 'Párrafos'], ['puntos', 'Puntos (una línea, un punto)']] }].concat(HITOS.fields()),
     build: function (d) {
       var rows = [1, 2, 3, 4, 5, 6, 7, 8].filter(function (n) { return has(d['d' + n]) || has(d['s' + n]) || has(d['h' + n]) || has(d['t' + n]); }).map(function (n, i) {
-        var sep = i ? 'border-top:2px solid #FFFFFF;' : '';
+        var sep = i ? 'border-top:' + (LOOK.tlGap || 2) + 'px solid #FFFFFF;' : '';
         return '<tr><td width="120" valign="top" bgcolor="' + C.band + '" style="width:120px;padding:16px 14px;background-color:' + C.band + ';' + sep + '">' + boxTitle(d['d' + n] || '', 16, 20, '#FFFFFF') + (has(d['s' + n]) ? eyebrow(d['s' + n], '#FFFFFF', 'font-size:10px;padding-top:4px;') : '') + '</td>' +
           '<td valign="top" bgcolor="' + SOFT + '" style="padding:16px 20px;background-color:' + SOFT + ';' + sep + '">' + (has(d['h' + n]) ? boxTitle(d['h' + n], 17, 22) : '') + (d.fmt === 'puntos' ? dotLines(d['t' + n], 14, 22, has(d['h' + n]) ? 6 : 0) : bodyText(d['t' + n], 14, 22, '#000000', 'left', has(d['h' + n]) ? 6 : 0)) + '</td></tr>';
       }).join('');
@@ -808,8 +822,10 @@
     defaults: { btnStyle: 'gold' },
     build: function (d) {
       // La etiqueta solo existe en la «Caja» con borde (el bloque antiguo no la tiene): antes se ignoraba y el texto se perdía.
-      var h = (has(d.label) ? eyebrow(d.label, C.label, 'text-align:center;padding-bottom:10px;') : '') + (has(d.title) ? boxTitle(d.title, 20, 26, C.title, 'text-align:center;') : '') + bodyText(d.text, 14, 22, '#000000', 'center', has(d.title) ? 10 : 0) +
-        (has(d.line) ? (renderingWCH && /^\{\[E-(MODIFY REG|RSVP YES) LINK\]\}$/.test(d.line.trim()) ? wchLinkButton(d.line.trim()) : '<p style="' + SANS + 'font-size:14px;line-height:22px;color:' + C.title + ';text-align:center;padding-top:12px;word-break:break-word;">' + inline(d.line) + '</p>') : '') + optBtn(d);
+      var icon = emojiOnly(d.label), below = btnBelow(d);
+      var h = (icon ? iconLine(d.label) : has(d.label) ? eyebrow(d.label, C.label, 'text-align:center;padding-bottom:10px;') : '') + (has(d.title) ? boxTitle(d.title, (LOOK.borde && LOOK.borde.title || {}).size || 20, (LOOK.borde && LOOK.borde.title || {}).lh || 26, boxTitleColor(d) || C.title, 'text-align:center;') : '') + bodyText(d.text, 14, 22, '#000000', 'center', has(d.title) ? 10 : 0) +
+        (has(d.line) ? (renderingWCH && /^\{\[E-(MODIFY REG|RSVP YES) LINK\]\}$/.test(d.line.trim()) ? wchLinkButton(d.line.trim()) : '<p style="' + SANS + 'font-size:14px;line-height:22px;color:' + C.title + ';text-align:center;padding-top:12px;word-break:break-word;">' + inline(d.line) + '</p>') : '') + (below ? '' : optBtn(d));
+      if (LOOK.borde || d.bordeBg || d.corners || d.btnPos) return section(cell('16px 40px', 'center', bordeBox(h, d, renderingWCH ? '15px 18px' : '24px 26px') + (below ? optBtn(d).replace('margin:22px auto 0 auto', 'margin:20px auto 0 auto') : '')));
       // WCH: caja recta y más compacta, como en sus emails de ejemplo.
       return section(cell('16px 40px', 'center', TBL + ' style="background-color:#FFFFFF;border:2px solid ' + C.hilite + ';' + (renderingWCH ? '' : 'border-radius:8px;') + 'border-collapse:separate !important;"><tbody><tr><td align="center" style="padding:' + (renderingWCH ? '15px 18px' : '24px 26px') + ';">' + h + '</td></tr></tbody></table>'));
     }
@@ -848,7 +864,7 @@
   var WALLET_GOOGLE = 'https://www.cvent-assets.com/event-email-editor/assets/images/enUS_add_to_google_wallet_add-wallet-badge__b79d999246ba9434bcd9.png';
   var WALLET_DEFAULTS = { appleUrl:'{[C-PASSBOOK_LINK]}', googleUrl:'{[C-GOOGLEWALLET_LINK]}', appleImage:WALLET_APPLE, googleImage:WALLET_GOOGLE, qrUrl:'{[C-QRCODE_LINK]}' };
   K.cleanWallet = function (d) {
-    var original=String(d.text||''), previousQr=d.qr, hasTable=/cvent-assets\.com.*(?:passbook|google_wallet|Apple_Wallet)/i.test(original);
+    var original=Array.isArray(d.text)?d.text.join('\n'):String(d.text||''), previousQr=d.qr, hasTable=/cvent-assets\.com.*(?:passbook|google_wallet|Apple_Wallet)/i.test(original);
     var qr=/\{\[C-QRCODE_LINK\]\}|cvent\.com\/g\/images\/QRCodeType\.gif/i.test(original);
     d.text=original.split(/\n/).filter(function(line){
       var plain=line.trim();
@@ -938,33 +954,54 @@
     return out;
   };
   // Contenido de una pieza dentro de su celda. prev: pieza anterior de la misma celda (o null).
+  // Título de sección con el estilo de la marca (LOOK.h2, medido en sus referencias). rule: línea gris encima (Arsenal Experiences).
+  function secTitle(d, txt, ta, pb) {
+    var h = LOOK.h2, fam = h.brand ? F.ex60.replace(/letter-spacing:[^;]*;/, '') : 'font-family:' + h.font + ';font-weight:' + (h.weight || 'bold') + ';';
+    var p = '<p style="' + fam + 'font-size:' + h.size + 'px;line-height:' + h.lh + 'px;color:' + h.color + ';' + (h.track ? 'letter-spacing:' + h.track + ';' : '') + 'text-transform:' + (h.upper ? 'uppercase' : 'none') + ';' + ta + 'padding-bottom:' + pb + 'px;word-break:break-word;">' + txt + '</p>';
+    // Barra bajo el título (Camps: centrado con barra de 56 px, como sus referencias) o la elegida en el editor.
+    var withBar = d.bar === 'yes' || (d.bar !== 'no' && h.bar), center = !ta && h.align === 'center' && !d.align;
+    if (center) p = p.replace('text-transform:', 'text-align:center;text-transform:');
+    if (withBar) p = p.replace(/padding-bottom:\d+px;/, 'padding-bottom:0;') + (center || ta ? bar(56, P, 'center', '14px auto ' + pb + 'px auto') : bar(56, P, 'left', '14px 0 ' + pb + 'px 0').replace(' align="left"', ''));
+    return h.rule ? TBL + '><tbody><tr><td style="border-top:1px solid ' + h.rule + ';padding-top:26px;">' + p + '</td></tr></tbody></table>' : p;
+  }
   function flowPiece(s, prev, align, first, next) {
     var d = s.d || {}, h = '';
     if (s.type === 'box') return softBand(d.text, d.fmt === 'puntos');
+    if (s.type === 'title' && next && next.type === 'box' && LOOK.h2) return secTitle(d, br(esc((d.text || '').trim())), '', 16);
     if (s.type === 'title' && next && next.type === 'box') return '<p style="' + titleFont(d.text, 'ex60', 34, 38).replace('font-size:34px;line-height:38px;', 'font-size:' + C.h2 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;padding-bottom:16px;">' + br(esc((d.text || '').trim())) + '</p>';
     if (s.type === 'title') {
       var st = titleStyle(d), txt = br(esc((d.text || '').trim())), ta = align === 'center' ? 'text-align:center;' : '';
       if (st === 'principal') return '<p style="' + titleFont(d.text, 'ex60', 38, 42).replace('font-size:38px;line-height:42px;', 'font-size:' + C.h1 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:' + align + ';' + (prev && prev.type === 'title' && titleStyle(prev.d || {}) === 'ante' ? 'padding-top:8px;' : '') + 'word-break:break-word;">' + txt + '</p>' + (align === 'center' ? bar(56, P, 'center', '14px auto 0 auto') : bar(56, P, 'left', '14px 0 0 0').replace(' align="left"', '')); // a la izquierda, sin align: una tabla con align flota y el texto de debajo se le pondría al lado
+      if (st === 'seccion' && LOOK.h2) return secTitle(d, txt, ta, renderingWCH ? 14 : 16);
       if (st === 'seccion') return '<p style="' + titleFont(d.text, 'ex60', 34, 38).replace('font-size:34px;line-height:38px;', 'font-size:' + C.h2 + ';') + 'color:' + C.title + ';text-transform:' + C.titleCase + ';' + ta + 'padding-bottom:' + (renderingWCH ? 14 : 16) + 'px;word-break:break-word;">' + txt + '</p>'; // WCH: como sus ejemplos, a la izquierda y sin barra
       // WCH (sus ejemplos): el saludo es una línea en negrita del tamaño de la introducción, pegada al texto.
       if (st === 'saludo' && renderingWCH) return '<p style="' + F.bold + 'font-size:15px;line-height:25px;color:' + C.title + ';' + ta + (prev ? 'padding-top:20px;' : '') + 'word-break:break-word;">' + txt + '</p>';
       if (st === 'saludo') return '<p style="' + F.bold + 'font-size:28px;line-height:34px;color:' + C.title + ';' + ta + 'word-break:break-word;">' + txt + '</p>';
-      if (st === 'ante') return '<p style="' + SANS + 'font-size:' + (renderingWCH ? 11 : 12) + 'px;line-height:16px;color:' + (renderingProfile ? C.label : P) + ';letter-spacing:2px;text-transform:uppercase;' + ta + 'word-break:break-word;">' + txt + '</p>';
+      if (st === 'ante') return '<p style="' + labelSans() + 'font-size:' + (renderingWCH ? 11 : 12) + 'px;line-height:16px;color:' + (renderingProfile ? C.label : P) + ';letter-spacing:2px;text-transform:uppercase;' + ta + 'word-break:break-word;">' + txt + '</p>';
       return bar(80, A, 'center', '0 auto') + '<p style="' + titleFont(d.text, 'ex60', 36, 40) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';text-align:center;padding-top:18px;word-break:break-word;">' + txt + '</p>' + bar(80, A, 'center', '18px auto 0 auto');
     }
     if (s.type === 'text') {
       var afterTitle = prev && prev.type === 'title', small = d.size === 'small';
-      paras(d.text).forEach(function (p, i) {
-        var afterGreeting = !i && renderingWCH && prev && prev.type === 'title' && titleStyle(prev.d || {}) === 'saludo';
+      // Color del texto: elegido (gris de nota o color de la marca) o, en las notas pequeñas, el gris de la marca si sus referencias lo usan.
+      // Firma o cierre (RMF Camps, PSG): titular de la marca en negrita y su color.
+      if (d.tone === 'serif') return paras(d.text).map(function (p, i) { return boxTitle(p.replace(/\*\*/g, ''), 17, 25, C.title, 'text-align:' + align + ';' + (i || prev ? 'padding-top:' + (i ? 4 : 14) + 'px;' : '')); }).join('');
+      var tone = d._plain ? '' : d.tone === 'grey' ? '#888888' : d.tone === 'brand' ? C.title : (small && LOOK.note) || '';
+      if (tone) return flowPiece({ type: 'text', d: Object.assign({}, d, { _plain: 1 }) }, prev, align, first, next).split('color:#000000;').join('color:' + tone + ';');
+      var allP = paras(d.text);
+      allP.forEach(function (p, i) {
+        // Con kit: la línea que sigue a un saludo («Dear …,») va pegada a él, como en las referencias (WCH).
+        var afterGreeting = (!i && renderingWCH && prev && prev.type === 'title' && titleStyle(prev.d || {}) === 'saludo') || (i > 0 && renderingProfile && /^\W*(dear|hi|hello|hola)\b.{0,80},\W*$/i.test(allP[i - 1]));
         if (d.size === 'intro' || d.size === 'body') h += '<p style="' + F.reg + 'font-size:' + (d.size === 'intro' ? '15px;line-height:25px;' : '14px;line-height:23px;') + 'color:#000000;text-align:' + align + ';' + ((i || prev) && !afterGreeting ? 'padding-top:14px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
         else if (align === 'center') h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;text-align:center;padding-top:' + (i ? 8 : (prev ? 20 : 0)) + 'px;word-break:break-word;">' + inline(p) + '</p>';
         else if (small) h += '<p style="' + F.reg + 'font-size:13px;line-height:21px;color:#000000;' + (i ? 'padding-top:7px;' : prev ? 'padding-top:10px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
-        else h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;' + (i || prev ? 'padding-top:14px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
+        else h += '<p style="' + F.reg + 'font-size:16px;line-height:25px;color:#000000;' + ((i || prev) && !afterGreeting ? 'padding-top:14px;' : '') + 'word-break:break-word;">' + inline(p) + '</p>';
       });
       return h;
     }
     if (s.type === 'list') return (prev && !(prev.type === 'title' && titleStyle(prev.d || {}) === 'seccion') ? gap(18) : '') + bullets(d.items);
     // Botón dentro de una celda (tras un título o un texto): el estilo de botón del antiguo «Título centrado».
+    // Con kit (o con un ancho elegido): el botón de la marca, como en sus referencias.
+    if (LOOK.btn || d.btnW || d.btnStyle === 'outline') return btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle, align === 'left' ? 'left' : 'center', d.btnW);
     var b = button(String(d.btn || '').trim(), String(d.url || '').trim() || '#', false);
     if (align === 'left') b = b.replace('align="center" style="margin:22px auto 0 auto;', 'align="left" style="margin:18px 0 0 0;');
     if (d.btnStyle === 'dark' || d.btnStyle === 'accent') { var bb = d.btnStyle === 'dark' ? C.band : A; b = b.split('bgcolor="' + C.button + '" style="background-color:' + C.button).join('bgcolor="' + bb + '" style="background-color:' + bb).split('color:' + C.buttonText).join('color:#FFFFFF'); }
@@ -987,22 +1024,28 @@
     var h = '';
     pieces.forEach(function (s, j) { var part = flowPiece(s, j ? pieces[j - 1] : null, align, j === 0, pieces[j + 1]); h += wrap ? wrap(j, part) : part; });
     // Un Botón solo es el antiguo «Botón suelto» (190 px, dorado u oscuro).
-    if (pieces.length === 1 && pieces[0].type === 'button') { var d = pieces[0].d || {}; return section(cell('6px 40px 16px 40px', 'center', wrap ? wrap(0, btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle)) : btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle))); }
-    return section(cell(flowPad(pieces), align, h));
+    if (pieces.length === 1 && pieces[0].type === 'button') { var d = pieces[0].d || {}; return section(cell('6px 40px 16px 40px', 'center', wrap ? wrap(0, btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle, '', d.btnW)) : btn190(String(d.btn || '').trim(), String(d.url || '').trim() || '#', d.btnStyle, '', d.btnW))); }
+    // Un widget o tabla de Cvent suelto ({[C-PAYMENTS]}, el widget de registro…) va con 20 px de margen lateral, como en las
+    // referencias, para que la tabla que genera Cvent no se recorte.
+    var pad = flowPad(pieces);
+    if (renderingProfile && pieces.length === 1 && pieces[0].type === 'text' && /^\s*\{\[(C-CURRENT REGISTRATION WIDGET|C-PAYMENTS|C-ORDER|C-AGENDA|C-SESSIONS)[^\]]*\]\}\s*$/.test((pieces[0].d || {}).text || '')) pad = pad.replace(/ 40px/g, ' 20px');
+    return section(cell(pad, align, h));
   };
   var ALIGN_OPTS = [['', 'Automática'], ['left', 'Izquierda'], ['center', 'Centrada']];
   M.title = {
     letter: 'I', name: 'Título', tag: 'TITULO', flow: true,
     fields: [
       { k: 'text', label: 'Título', type: 'text', req: true },
-      { k: 'style', label: 'Estilo', type: 'select', half: true, opts: TITLE_STYLES }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: ALIGN_OPTS, showIf: function (d) { return titleStyle(d) !== 'entre'; } }
+      { k: 'style', label: 'Estilo', type: 'select', half: true, opts: TITLE_STYLES }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: ALIGN_OPTS, showIf: function (d) { return titleStyle(d) !== 'entre'; } },
+      { k: 'bar', label: 'Barra debajo', type: 'select', opts: [['', 'Como en las referencias de la marca'], ['yes', 'Con barra'], ['no', 'Sin barra']], showIf: function (d) { return titleStyle(d) === 'seccion'; } }
     ],
     defaults: { style: 'principal' },
     build: function (d) { var s = { type: 'title', d: d }; return K.flowCell([s], flowAlign(s)); }
   };
   M.text = {
     letter: 'C', name: 'Texto', tag: 'TEXTO', flow: true,
-    fields: [{ k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: [['', 'Como el título de encima (o izquierda)'], ['left', 'Izquierda'], ['center', 'Centrada']] }, { k: 'size', label: 'Tamaño', type: 'select', half: true, opts: [['', 'Normal'], ['intro', 'Introducción (15/25 px)'], ['body', 'Cuerpo (14/23 px)'], ['small', 'Pequeño (notas, «good to know»)']], showIf: function (d) { return d.align !== 'center'; } }],
+    fields: [{ k: 'text', label: 'Texto', type: 'area', req: true, hint: TIP }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: [['', 'Como el título de encima (o izquierda)'], ['left', 'Izquierda'], ['center', 'Centrada']] }, { k: 'size', label: 'Tamaño', type: 'select', half: true, opts: [['', 'Normal'], ['intro', 'Introducción (15/25 px)'], ['body', 'Cuerpo (14/23 px)'], ['small', 'Pequeño (notas, «good to know»)']], showIf: function (d) { return d.align !== 'center'; } },
+      { k: 'tone', label: 'Color del texto', type: 'select', opts: [['', 'Como en las referencias de la marca'], ['grey', 'Gris (nota)'], ['brand', 'Color de la marca'], ['serif', 'Firma o cierre (letra de titular, en negrita)']] }],
     build: function (d) { var s = { type: 'text', d: d }; return K.flowCell([s], flowAlign(s)); }
   };
   M.list = {
@@ -1015,7 +1058,8 @@
     note: 'Debajo de un Título principal (y su texto) se une a ellos como en el antiguo «Título centrado». En cualquier otro sitio es un botón de 190 px.',
     fields: [
       { k: 'btn', label: 'Texto del botón', type: 'text', req: true, half: true }, { k: 'url', label: 'Enlace', type: 'url', req: true, half: true },
-      { k: 'btnStyle', label: 'Estilo', type: 'select', half: true, opts: BTN_STYLES }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: [['', 'Como el texto de encima'], ['left', 'Izquierda'], ['center', 'Centrada']] }
+      { k: 'btnStyle', label: 'Estilo', type: 'select', half: true, opts: BTN_STYLES }, { k: 'align', label: 'Alineación', type: 'select', half: true, opts: [['', 'Como el texto de encima'], ['left', 'Izquierda'], ['center', 'Centrada']] },
+      { k: 'btnW', label: 'Ancho', type: 'select', opts: BTN_W }
     ],
     defaults: { btnStyle: 'gold' },
     build: function (d) { var s = { type: 'button', d: d }; return K.flowCell([s], flowAlign(s)); }
@@ -1037,20 +1081,24 @@
       { k: 'img', label: 'Imagen · custom link de Cvent', type: 'url', req: true, img: true, half: true }, { k: 'alt', label: 'Descripción de la imagen (alt)', type: 'text', req: true, half: true },
       { k: 'side', label: 'Imagen', type: 'select', half: true, opts: [['right', 'A la derecha'], ['left', 'A la izquierda']] },
       { k: 'imgW', label: 'Tamaño de la imagen', type: 'select', half: true, opts: [['', 'Mitad (275 px)'], ['small', 'Pequeña (200 px)'], ['large', 'Grande (340 px)']] },
-      { k: 'valign', label: 'Alineación vertical', type: 'select', opts: [['middle', 'Centrados'], ['top', 'Arriba']] },
+      { k: 'valign', label: 'Alineación vertical', type: 'select', half: true, opts: [['middle', 'Centrados'], ['top', 'Arriba']] },
+      { k: 'panel', label: 'Fondo del texto', type: 'select', half: true, opts: [['', 'Sin fondo'], ['soft', 'Panel suave (fondo claro y barra lateral)']] },
       { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true },
       { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: BTN_STYLES, showIf: function (d) { return has(d.btn); } }
     ],
     defaults: { side: 'right', valign: 'middle', btnStyle: 'gold' },
     build: function (d) {
-      var iw = TI_W[d.imgW] || TI_W[''], GAP = 24, tw = 570 - iw - GAP, left = d.side === 'left', va = d.valign === 'top' ? 'top' : 'middle';
-      var t = (has(d.label) ? '<p style="' + F.bold + 'font-size:12px;line-height:16px;color:' + C.label + ';letter-spacing:1.5px;text-transform:uppercase;word-break:break-word;padding-bottom:8px;">' + esc(d.label.trim()) + '</p>' : '') +
-        (has(d.title) ? '<p style="' + titleFont(d.title, 'ex60', 28, 32) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;">' + br(esc(d.title.trim())) + '</p>' : '') +
-        bodyText(d.text, 16, 25, '#000000', 'left', has(d.title) ? 12 : 0) +
+      // Con kit: como el bloque del hotel de sus referencias (foto de 285 px, 20 px de separación, título 20/26 y texto 14/22).
+      var iw = d.imgW ? TI_W[d.imgW] : renderingProfile ? 285 : TI_W[''], GAP = renderingProfile ? 20 : 24, tw = 570 - iw - GAP, left = d.side === 'left', va = d.valign === 'top' ? 'top' : 'middle';
+      var t = (has(d.label) ? '<p style="' + F.bold + 'font-size:' + (renderingProfile ? '11px;line-height:15px;' : '12px;line-height:16px;') + 'color:' + C.label + ';letter-spacing:' + (renderingProfile ? '2px' : '1.5px') + ';text-transform:uppercase;word-break:break-word;padding-bottom:8px;">' + esc(d.label.trim()) + '</p>' : '') +
+        (has(d.title) ? (renderingProfile ? boxTitle(d.title, 20, 26, C.title) : '<p style="' + titleFont(d.title, 'ex60', 28, 32) + 'color:' + C.title + ';text-transform:' + C.titleCase + ';word-break:break-word;">' + br(esc(d.title.trim())) + '</p>') : '') +
+        (renderingProfile ? bodyText(d.text, 14, 22, '#000000', 'left', has(d.title) ? 10 : 0) : bodyText(d.text, 16, 25, '#000000', 'left', has(d.title) ? 12 : 0)) +
         // El botón (tabla con align="left") flota: sin el clear, en móvil la imagen se le monta encima.
         (has(d.btn) ? optBtn(d, 'left') + '<div style="clear:both;height:0;line-height:0;font-size:0;">&nbsp;</div>' : '');
       var src = String(d.img || '').trim();
       var pic = !src || isPh(src) ? phBlock(iw, Math.round(iw * 0.75)) : '<img src="' + attr(src) + '" alt="' + attr(d.alt) + '" title="' + attr(d.alt) + '" border="0" width="' + iw + '" style="width:' + iw + 'px;max-width:100%;height:auto;display:block;border-radius:8px;" class="img-max" />';
+      // Panel suave (Arsenal y PSG Experiences): el texto va sobre fondo claro con barra lateral, junto a la foto.
+      if (d.panel === 'soft') t = TBL + ' bgcolor="' + SOFT + '" style="background-color:' + SOFT + ';border-left:4px solid ' + (renderingProfile ? C.edge : P) + ';"><tbody><tr><td style="padding:18px 20px;">' + t + '</td></tr></tbody></table>';
       var txtTd = '<td class="col2" width="' + tw + '" valign="' + va + '" style="width:' + tw + 'px;padding:' + (left ? '0 0 0 ' + GAP + 'px' : '0 ' + GAP + 'px 0 0') + ';">' + t + '</td>';
       var imgTd = '<td class="col2" width="' + iw + '" valign="' + va + '" style="width:' + iw + 'px;">' + pic + '</td>';
       return section(cell('30px 40px 30px 40px', 'left', TBL + '><tbody><tr>' + (left ? imgTd + txtTd : txtTd + imgTd) + '</tr></tbody></table>'));
@@ -1069,7 +1117,8 @@
     letter: 'A', name: 'Imagen', tag: 'IMAGEN',
     fields: IMGS.fields().concat([
       { k: 'size', label: 'Tamaño (con una imagen)', type: 'select', opts: [['full', 'A sangre (650 px)'], ['inset', 'Con márgenes (570 px)']], showIf: function (d) { return IMGS.count(d) === 1 && !scalePct(d.scale); } },
-      { k: 'scale', label: 'Escala (más pequeña, con más margen)', type: 'select', opts: SCALE_OPTS, hint: 'Reduce la imagen (o la fila) y la centra. En móvil mantiene la proporción.' }
+      { k: 'scale', label: 'Escala (más pequeña, con más margen)', type: 'select', half: true, opts: SCALE_OPTS, hint: 'Reduce la imagen (o la fila). En móvil mantiene la proporción.' },
+      { k: 'imgAlign', label: 'Alineación', type: 'select', half: true, opts: [['', 'Centrada'], ['left', 'A la izquierda']], showIf: function (d) { return !!scalePct(d.scale); } }
     ]),
     defaults: { size: 'full' },
     // Enlace opcional por imagen (badges de app, QR de Telegram, vídeos): envuelve su <img>. Sin enlace, el HTML de siempre.
@@ -1092,7 +1141,9 @@
     if (pct) {
       var list = its.length ? its : [{ src: d.f1_src, alt: d.f1_alt }], total = Math.round(570 * pct / 100), n = list.length, w = Math.floor((total - 12 * (n - 1)) / n);
       var pics = list.map(function (it) { return '<td class="col2" width="' + w + '" valign="top" style="width:' + w + 'px;">' + scaledPic(it.src, it.alt, w, n === 3 ? 'border-radius:6px;' : '') + '</td>'; });
-      return section(cell('12px 40px', 'center', '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="' + total + '" align="center" style="width:100%;max-width:' + total + 'px;margin:0 auto;"><tbody><tr>' + pics.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
+      var left = d.imgAlign === 'left'; // a la izquierda, dentro de los márgenes (p. ej. el rótulo «HOTEL» de RMF Experiences)
+      if (left) pics = pics.map(function (p) { return p.replace('display:block;margin:0 auto;', 'display:block;'); });
+      return section(cell('12px 40px', left ? 'left' : 'center', '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="' + total + '" align="' + (left ? 'left' : 'center') + '" style="width:100%;max-width:' + total + 'px;margin:' + (left ? '0' : '0 auto') + ';"><tbody><tr>' + pics.join('<td class="desk-only" width="12" style="width:12px;font-size:0;line-height:0;">&nbsp;</td>') + '</tr></tbody></table>'));
     }
     if (its.length <= 1) return M.imagen.build({ src: its.length ? its[0].src : d.f1_src, alt: its.length ? its[0].alt : d.f1_alt, size: d.size });
     if (its.length === 3) return M.fotos3.build({ src1: its[0].src, alt1: its[0].alt, src2: its[1].src, alt2: its[1].alt, src3: its[2].src, alt3: its[2].alt });
@@ -1111,41 +1162,80 @@
   // ============================================================
   // Pares etiqueta/valor (Caja suave, formato «Datos»): cada línea «Etiqueta: valor» → etiqueta pequeña en mayúsculas y el valor en negrita debajo,
   // como el resumen de registro de los Camps. Una línea sin «:» sale como párrafo normal.
+  // Contenido mixto en una caja (Arsenal y PSG Experiences): «## subtítulo», «- punto», «> nota gris» y párrafos, línea a línea.
+  function mixLines(text, size, lh) {
+    return paras(text).map(function (p, i) {
+      var top = i ? 'padding-top:8px;' : '';
+      if (/^##\s+/.test(p)) return '<p style="' + strongFont() + 'font-size:15px;line-height:24px;color:' + C.title + ';word-break:break-word;padding-top:' + (i ? 14 : 0) + 'px;">' + inline(p.replace(/^##\s+/, '')) + '</p>';
+      if (/^[-•]\s+/.test(p)) return dotLines(p.replace(/^[-•]\s+/, ''), size, lh, i ? 7 : 0);
+      if (/^>\s*/.test(p)) return '<p style="' + F.reg + 'font-size:13px;line-height:20px;color:#888888;word-break:break-word;' + top + '">' + inline(p.replace(/^>\s*/, '')) + '</p>';
+      return '<p style="' + F.reg + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:#000000;word-break:break-word;' + top + '">' + inline(p) + '</p>';
+    }).join('');
+  }
   function pairLines(text) {
     return paras(text).map(function (p, i) {
       var m = p.match(/^([^:{}\[\]]{1,60}):\s+(.+)$/);
       if (!m) return '<p style="' + F.reg + 'font-size:14px;line-height:22px;color:#000000;word-break:break-word;padding-top:' + (i ? 12 : 0) + 'px;">' + inline(p) + '</p>';
+      // Con kit: como sus referencias (etiqueta 11 px gris #888888 con espaciado 1 px; valor 14 px en negrita; 14 px entre datos).
+      if (renderingProfile) return '<p style="' + F.reg + 'font-size:11px;line-height:15px;color:#888888;letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:' + (i ? 14 : 0) + 'px;padding-bottom:2px;line-height:13px;">' + esc(m[1].replace(/\*\*/g, '').trim()) + '</p>' +
+        '<p style="' + (LOOK.pairValue === 'reg' ? F.reg : strongFont()) + 'font-size:14px;line-height:17px;color:' + C.title + ';word-break:break-word;">' + inline(m[2].replace(/^\*\*(.*)\*\*$/, '$1')) + '</p>';
       return '<p style="' + SANS + 'font-size:10px;line-height:14px;color:' + GREY + ';letter-spacing:1px;text-transform:uppercase;word-break:break-word;padding-top:' + (i ? 12 : 0) + 'px;">' + esc(m[1].replace(/\*\*/g, '').trim()) + '</p>' +
         '<p style="' + F.bold + 'font-size:14px;line-height:20px;color:' + C.title + ';word-break:break-word;padding-top:2px;">' + inline(m[2].replace(/^\*\*(.*)\*\*$/, '$1')) + '</p>';
     }).join('');
   }
-  function boxStyle(d) { return d.style === 'borde' || d.style === 'oscura' ? d.style : 'suave'; }
+  function boxStyle(d) { return d.style === 'borde' || d.style === 'oscura' || d.style === 'aviso' ? d.style : 'suave'; }
   var BOX_EMPTY = 'KSA_CAJA_VACIA';
   function boxSimple(d) { return d.density !== 'editorial' && boxStyle(d) === 'suave' && !has(d.label) && !has(d.title) && !has(d.deadline) && !has(d.btn); }
+  // Caja con borde como la del kit (LOOK.borde) o como se elija: fondo, esquinas y botón dentro o debajo.
+  function emojiOnly(s) { s = String(s || '').trim(); return !!s && s.length <= 8 && !/[A-Za-z0-9\u00C0-\u024F]/.test(s); }
+  function bordeBox(inner, d, pad) {
+    // A la izquierda (Arsenal y PSG Camps, datos de acceso): blanca y recta como sus referencias, salvo que se elija otra cosa.
+    var L = LOOK.borde || {}, leftBox = d.boxAlign === 'left', bg = d.bordeBg === 'soft' ? SOFT : d.bordeBg === 'white' || leftBox ? '#FFFFFF' : (L.bg || '#FFFFFF');
+    var radius = d.corners === 'square' ? '0' : d.corners === 'round' ? '8px' : leftBox ? '0' : (L.radius != null ? L.radius : (renderingWCH ? '0' : '8px'));
+    var border = L.border || '2px solid ' + C.hilite;
+    return TBL + ' style="background-color:' + bg + ';border:' + border + ';' + (L.left ? 'border-left:' + L.left + ';' : '') + (radius !== '0' ? 'border-radius:' + radius + ';' : '') + 'border-collapse:separate !important;"><tbody><tr><td align="' + (leftBox ? 'left' : 'center') + '" style="padding:' + (leftBox ? '20px 24px' : L.pad || pad) + ';text-align:' + (leftBox ? 'left' : 'center') + ';">' + inner + '</td></tr></tbody></table>';
+  }
+  function btnBelow(d) { return d.btnPos === 'below' || (d.btnPos !== 'inside' && !!LOOK.borde && !!LOOK.borde.btnBelow); }
+  function iconLine(label) { return '<p style="font-family:Helvetica, Arial, sans-serif;font-size:' + (LOOK.icon || 26) + 'px;line-height:' + ((LOOK.icon || 26) + 4) + 'px;text-align:center;padding-bottom:6px;">' + esc(String(label).trim()) + '</p>'; }
+  var BORDE_OPTS = function (d) { return boxStyle(d) === 'borde'; };
   M.box = {
     letter: 'N', name: 'Caja', tag: 'CAJA',
     fields: [{ k:'density', label:'Composición', type:'select', opts:[['','Habitual'],['editorial','Compacta (referencia editorial)']] },
-      { k: 'style', label: 'Estilo', type: 'select', opts: [['suave', 'Suave (fondo claro y barra lateral)'], ['borde', 'Con borde (centrada)'], ['oscura', 'Oscura (aviso)']] },
+      { k: 'style', label: 'Estilo', type: 'select', opts: [['suave', 'Suave (fondo claro y barra lateral)'], ['borde', 'Con borde (centrada)'], ['oscura', 'Oscura (aviso)'], ['aviso', 'Aviso claro (fondo rojizo y barra roja)']] },
+      { k: 'edge', label: 'Color de la barra lateral', type: 'select', half: true, opts: [['', 'Como en las referencias de la marca'], ['accent', 'Color de acento']], showIf: function (d) { return boxStyle(d) === 'suave'; } },
+      { k: 'boxAlign', label: 'Alineación del contenido', type: 'select', half: true, opts: [['', 'Centrada'], ['left', 'A la izquierda']], showIf: function (d) { return boxStyle(d) === 'borde'; } },
       { k: 'label', label: 'Etiqueta (opcional)', type: 'text', half: true, ph: 'Step 1 · IMPORTANT' }, { k: 'deadline', label: 'Fecha límite (etiqueta de color, opcional)', type: 'text', half: true, ph: 'Deadline: May 1', showIf: function (d) { return boxStyle(d) === 'suave'; } },
       { k: 'title', label: 'Título de la caja (opcional)', type: 'text', showIf: function (d) { return boxStyle(d) !== 'oscura'; } },
       { k: 'text', label: 'Texto', type: 'area', hint: TIP },
-      { k: 'fmt', label: 'Formato del texto', type: 'select', opts: [['', 'Párrafos'], ['puntos', 'Puntos (una línea, un punto)'], ['pares', 'Datos: una línea «Etiqueta: valor» (etiqueta pequeña encima del valor)']], showIf: function (d) { return boxStyle(d) === 'suave'; } },
+      { k: 'fmt', label: 'Formato del texto', type: 'select', opts: [['', 'Párrafos'], ['puntos', 'Puntos (una línea, un punto)'], ['pares', 'Datos: una línea «Etiqueta: valor» (etiqueta pequeña encima del valor)'], ['mixto', 'Mixto: «## subtítulo», «- punto», «> nota gris» y párrafos']], showIf: function (d) { return boxStyle(d) === 'suave'; } },
       { k: 'line', label: 'Línea con enlace de Cvent (opcional)', type: 'text', ph: 'Register here: {[E-RSVP YES LINK]}', hint: 'Escribe el campo de Cvent suelto: genera su propio enlace.', showIf: function (d) { return boxStyle(d) === 'borde'; } },
       { k: 'btn', label: 'Texto del botón (opcional)', type: 'text', half: true, showIf: function (d) { return boxStyle(d) !== 'oscura'; } }, { k: 'url', label: 'Enlace del botón', type: 'url', half: true, showIf: function (d) { return boxStyle(d) !== 'oscura'; } },
-      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', opts: BTN_STYLES, showIf: function (d) { return boxStyle(d) !== 'oscura' && has(d.btn); } }
+      { k: 'btnStyle', label: 'Estilo del botón', type: 'select', half: true, opts: BTN_STYLES, showIf: function (d) { return boxStyle(d) !== 'oscura' && has(d.btn); } },
+      { k: 'btnW', label: 'Ancho del botón', type: 'select', half: true, opts: BTN_W, showIf: function (d) { return boxStyle(d) !== 'oscura' && has(d.btn); } },
+      { k: 'btnPos', label: 'Posición del botón', type: 'select', half: true, opts: [['', 'Como en las referencias de la marca'], ['inside', 'Dentro de la caja'], ['below', 'Debajo de la caja']], showIf: function (d) { return boxStyle(d) === 'borde' && has(d.btn); } },
+      { k: 'bordeBg', label: 'Fondo de la caja', type: 'select', half: true, opts: [['', 'Como en las referencias de la marca'], ['white', 'Blanco'], ['soft', 'Suave (color claro de la marca)']], showIf: BORDE_OPTS },
+      { k: 'corners', label: 'Esquinas', type: 'select', half: true, opts: [['', 'Como en las referencias de la marca'], ['square', 'Rectas'], ['round', 'Redondeadas']], showIf: BORDE_OPTS },
+      { k: 'titleColor', label: 'Color del título', type: 'select', half: true, opts: [['', 'Como en las referencias de la marca'], ['brand', 'Color principal'], ['accent', 'Color de acento'], ['dark', 'Negro']], showIf: function (d) { return boxStyle(d) !== 'oscura' && has(d.title); } }
     ],
     defaults: { style: 'suave', btnStyle: 'gold' },
     build: function (d) {
-      var st = boxStyle(d);
+      var st = boxStyle(d), html;
+      // Aviso claro (RMF Camps): fondo rojizo, barra roja, rótulo rojo y texto 14/22.
+      if (st === 'aviso') return section(cell('12px 40px', 'left', TBL + ' bgcolor="#FDF3F0" style="background-color:#FDF3F0;border-left:4px solid #C0392B;"><tbody><tr><td style="padding:16px 20px;">' + (has(d.label) ? eyebrow(d.label, '#C0392B', 'padding-bottom:6px;') : '') + (has(d.title) ? boxTitle(d.title, 18, 24, C.title, 'padding-bottom:6px;') : '') + bodyText(d.text, 14, 22, '#000000', 'left', 0) + '</td></tr></tbody></table>'));
+      // Caja con borde a la izquierda (Arsenal y PSG Camps): composición compacta, título pequeño y texto a la izquierda.
+      if (st === 'borde' && d.boxAlign === 'left' && d.density !== 'editorial') return M.box.build(Object.assign({}, d, { density: 'editorial' }));
+      if (d.edge === 'accent' && st === 'suave') { html = M.box.build(Object.assign({}, d, { edge: '' })); return html.split('border-left:4px solid ' + C.edge).join('border-left:4px solid ' + A).split('border-left:4px solid ' + P).join('border-left:4px solid ' + A); }
       // «Datos» (etiqueta encima del valor) se pinta con la composición compacta, que admite etiqueta, título y botón.
-      if (d.fmt === 'pares' && st === 'suave' && d.density !== 'editorial') d = Object.assign({}, d, { density: 'editorial' });
+      if ((d.fmt === 'pares' || d.fmt === 'mixto') && st === 'suave' && d.density !== 'editorial') d = Object.assign({}, d, { density: 'editorial' });
       if (d.density === 'editorial' && st !== 'oscura') {
-        var bordered = st === 'borde', align = bordered ? 'center' : 'left';
-        var content = (has(d.title) ? boxTitle(d.title,bordered ? 22 : 20,bordered ? 28 : 26,C.title,'text-align:'+align+';padding-bottom:10px;') : '') + (has(d.deadline) ? tag(d.deadline) : '') + (d.fmt === 'puntos' ? dotLines(d.text,14,23,0) : d.fmt === 'pares' && !bordered ? pairLines(d.text) : bodyText(d.text,bordered ? 15 : 14,bordered ? 24 : 23,'#000000',align,0)) + (has(d.line) ? bodyText(d.line,15,25,'#000000',align,12) : '') + optBtn(d,align);
+        var bordered = st === 'borde', align = bordered && d.boxAlign !== 'left' ? 'center' : 'left';
+        var bt = (bordered ? (d.boxAlign === 'left' ? { size: 16, lh: 22 } : LOOK.borde && LOOK.borde.title) : LOOK.boxTitle) || {}, icon = bordered && emojiOnly(d.label), below = bordered && btnBelow(d);
+        var content = (icon ? iconLine(d.label) : '') + (has(d.title) ? boxTitle(d.title,bt.size || (bordered ? 22 : 20),bt.lh || (bordered ? 28 : 26),boxTitleColor(d) || bt.color || C.title,'text-align:'+align+';padding-bottom:10px;') : '') + (has(d.deadline) ? tag(d.deadline) : '') + (d.fmt === 'puntos' ? dotLines(d.text,14,23,0) : d.fmt === 'mixto' ? mixLines(d.text,14,23) : d.fmt === 'pares' && !bordered ? pairLines(d.text) : bodyText(d.text,bordered ? 15 : 14,bordered ? 24 : 23,'#000000',align,0)) + (has(d.line) ? bodyText(d.line,15,25,'#000000',align,12) : '') + (below ? '' : optBtn(d,align));
         // WCH (sus emails de ejemplo): la etiqueta va dentro de la caja, encima del texto. Resto de kits: rótulo con línea encima.
-        var label = has(d.label) && !renderingWCH ? TBL+'><tbody><tr><td style="border-top:1px solid '+C.line+';padding-top:22px;padding-bottom:14px;">'+eyebrow(d.label,C.label,'line-height:16px;')+'</td></tr></tbody></table>' : '';
-        if (has(d.label) && renderingWCH) content = eyebrow(d.label, C.label, 'line-height:16px;text-align:'+align+';padding-bottom:8px;') + content;
-        return section(cell(bordered ? '26px 40px 34px 40px' : '24px 40px 0 40px',align,label+TBL+' style="background-color:'+(bordered ? '#FFFFFF' : SOFT)+';'+(bordered ? 'border:2px solid '+C.edge : 'border-left:4px solid '+C.edge)+';"><tbody><tr><td style="padding:'+(renderingWCH ? (bordered ? '15px 18px' : '17px 20px') : (bordered ? '22px 24px' : '18px 22px'))+';text-align:'+align+';">'+content+'</td></tr></tbody></table>'));
+        var label = has(d.label) && !renderingWCH && !icon ? TBL+'><tbody><tr><td style="border-top:1px solid '+C.line+';padding-top:22px;padding-bottom:14px;">'+eyebrow(d.label,C.label,'line-height:16px;')+'</td></tr></tbody></table>' : '';
+        if (has(d.label) && renderingWCH && !icon) content = eyebrow(d.label, C.label, 'line-height:16px;text-align:'+align+';padding-bottom:8px;') + content;
+        if (bordered && (LOOK.borde || d.bordeBg || d.corners || d.btnPos)) return section(cell('26px 40px 34px 40px', align, label + bordeBox(content, d, renderingWCH ? '15px 18px' : '22px 24px') + (below ? optBtn(d, 'center').replace('margin:22px auto 0 auto', 'margin:20px auto 0 auto') : '')));
+        return section(cell(bordered ? '26px 40px 34px 40px' : '24px 40px 0 40px',align,label+TBL+' style="background-color:'+(bordered ? '#FFFFFF' : SOFT)+';'+(bordered ? 'border:2px solid '+C.edge : 'border-left:4px solid '+C.edge)+';"><tbody><tr><td style="padding:'+(renderingWCH ? (bordered ? '15px 18px' : '17px 20px') : bordered ? '22px 24px' : renderingProfile && d.fmt === 'pares' && !has(d.title) ? '14px 20px 14px 20px' /* datos: como las referencias */ : '18px 22px')+';text-align:'+align+';">'+content+'</td></tr></tbody></table>'));
       }
       if (st === 'oscura') return M.important.build({ label: has(d.label) ? d.label : 'IMPORTANT', text: d.text });
       if (st === 'borde') return M.cta.build(d);
@@ -1153,7 +1243,155 @@
       return M.step.build(d);
     }
   };
-  K.MODULE_ORDER = ['title', 'text', 'list', 'images', 'textimg', 'button', 'cards', 'box', 'datos', 'producto', 'separador', 'compra', 'contacto', 'glance', 'timeline', 'deadlines', 'wallet'];
+  // ============================================================
+  // BLOQUES NUEVOS (16/11/2026), copiados de las newsletters de referencia de los kits (docs/brand-kits/referencias).
+  // Por defecto, cada uno toma la variante que usa la marca (LOOK) y el editor permite elegir otra.
+  // ============================================================
+  function spacerRow(h) { return '<tr><td height="' + h + '" style="height:' + h + 'px;line-height:' + h + 'px;font-size:0;">&nbsp;</td></tr>'; }
+  function cols2(a, b, w, gapW) {
+    return TBL + ' style="border-collapse:separate !important;"><tbody><tr><td class="col2" width="' + w + '" valign="top" style="width:' + w + 'px;">' + a + '</td>' +
+      (b == null ? '' : '<td class="desk-only" width="' + gapW + '" style="width:' + gapW + 'px;font-size:0;line-height:0;">&nbsp;</td><td class="col2" width="' + w + '" valign="top" style="width:' + w + 'px;">' + b + '</td>') + '</tr></tbody></table>';
+  }
+  function whiteP(text, size, lh, extra) { return '<p style="' + F.reg + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:#FFFFFF;word-break:break-word;' + (extra || '') + '">' + inline(text, '#FFFFFF') + '</p>'; }
+  function pic(src, alt, w, radius) {
+    src = String(src || '').trim();
+    if (!src || isPh(src)) return phBlock(w, Math.round(w * 0.7));
+    return '<img src="' + attr(src) + '" alt="' + attr(alt) + '" title="' + attr(alt) + '" border="0" width="' + w + '" style="width:' + w + 'px;max-width:100%;height:auto;display:block;' + (radius ? 'border-radius:' + radius + ';' : '') + '" class="img-max" />';
+  }
+  function pill(text, bg, color, border) { return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" style="border-collapse:separate !important;margin-bottom:8px;"><tbody><tr><td style="background-color:' + bg + ';' + (border ? 'border:1px solid ' + border + ';' : '') + 'border-radius:3px;padding:3px 8px;"><p style="' + SANS + 'font-size:9px;line-height:12px;color:' + color + ';letter-spacing:1.5px;text-transform:uppercase;">' + esc(String(text).trim()) + '</p></td></tr></tbody></table>'; }
+
+  // Tarjetas de normas con emoji: paneles a todo el ancho (Arsenal y PSG Camps) o rejilla de 2 columnas con colores alternos (RMF Camps).
+  var NORMAS = K.repeat({ prefix: 'n', countKey: 'nN', max: 8, keys: ['icon', 'title', 'text'], titleKey: 'title', noun: 'tarjeta', more: '＋ Añadir otra tarjeta',
+    fields: function (n, show) { return [{ k: 'n' + n + '_icon', label: 'Emoji', type: 'text', half: true, ph: '👕', showIf: show }, { k: 'n' + n + '_title', label: 'Título', type: 'text', half: true, req: n === 1, ph: 'Uniform information', showIf: show }, { k: 'n' + n + '_text', label: 'Texto', type: 'area', hint: TIP, showIf: show }]; } });
+  M.normas = {
+    letter: 'Ñ', name: 'Tarjetas de normas (con emoji)', tag: 'NORMAS',
+    fields: [{ k: 'layout', label: 'Presentación', type: 'select', opts: [['', 'Como en las referencias de la marca'], ['lista', 'Paneles a todo el ancho (emoji a la derecha)'], ['rejilla', 'Rejilla de 2 columnas (colores alternos)']] }].concat(NORMAS.fields()),
+    build: function (d) {
+      var its = NORMAS.items(d), grid = (d.layout || LOOK.normas) === 'rejilla';
+      if (!its.length) its = [{ icon: '', title: 'PENDIENTE: título', text: '' }];
+      if (grid) {
+        var cardsH = its.map(function (it, i) {
+          var bg = (Math.floor(i / 2) + i % 2) % 2 ? A : C.band;
+          return TBL + ' style="background-color:' + bg + ';border-radius:10px;border-collapse:separate !important;"><tbody><tr><td style="padding:22px 22px 24px 22px;">' + (has(it.icon) ? '<p style="font-size:30px;line-height:34px;padding-bottom:8px;">' + esc(it.icon.trim()) + '</p>' : '') + '<p style="' + SANS + 'font-size:16px;line-height:20px;color:#FFFFFF;text-transform:uppercase;word-break:break-word;padding-bottom:10px;">' + esc(String(it.title).trim()) + '</p>' + whiteP(it.text || '', 13, 20) + '</td></tr></tbody></table>';
+        }), rows = '';
+        for (var i = 0; i < cardsH.length; i += 2) rows += (i ? spacerRow(20) : '') + '<tr><td>' + cols2(cardsH[i], cardsH[i + 1] == null ? '' : cardsH[i + 1], 275, 20) + '</td></tr>';
+        return section(cell('16px 40px', 'left', TBL + '><tbody>' + rows + '</tbody></table>'));
+      }
+      var panels = its.map(function (it, i) {
+        return (i ? spacerRow(12) : '') + '<tr><td>' + TBL + ' bgcolor="' + C.band + '" style="background-color:' + C.band + ';"><tbody><tr><td valign="top" style="padding:18px 20px;">' + boxTitle(String(it.title).trim(), 18, 24, '#FFFFFF', 'text-transform:uppercase;padding-bottom:8px;') + whiteP(it.text || '', 14, 22) + '</td>' + (has(it.icon) ? '<td valign="middle" width="70" style="width:70px;text-align:center;padding-right:18px;"><p style="font-size:38px;line-height:1;color:#FFFFFF;">' + esc(it.icon.trim()) + '</p></td>' : '') + '</tr></tbody></table></td></tr>';
+      });
+      return section(cell('8px 40px', 'left', TBL + '><tbody>' + panels.join('') + '</tbody></table>'));
+    }
+  };
+
+  // Tarjetas de actividad con foto, etiqueta, fecha y precio: foto a la izquierda sobre fondo suave (Arsenal Experiences),
+  // foto a la derecha con borde fino (RMF Experiences) o dos columnas con foto arriba (PSG Experiences).
+  var ACTS = K.repeat({ prefix: 'a', countKey: 'aN', max: 6, keys: ['title', 'text', 'img', 'tag', 'when', 'price', 'note'], allKeys: ['title', 'text', 'img', 'alt', 'tag', 'when', 'price', 'note'], titleKey: 'title', noun: 'actividad', more: '＋ Añadir otra actividad',
+    fields: function (n, show) { var k = function (x) { return 'a' + n + '_' + x; };
+      return [{ k: k('tag'), label: 'Etiqueta (opcional)', type: 'text', half: true, ph: 'Supporters only', showIf: show }, { k: k('title'), label: 'Título', type: 'text', half: true, req: n === 1, showIf: show },
+        { k: k('text'), label: 'Descripción', type: 'area', hint: TIP + ' Para una lista, empieza cada línea con «- ».', showIf: show },
+        { k: k('when'), label: 'Fecha y hora (opcional)', type: 'text', half: true, ph: 'Nov 24 · 10:00–13:00', showIf: show }, { k: k('price'), label: 'Precio (opcional)', type: 'text', half: true, ph: '$120', showIf: show },
+        { k: k('note'), label: 'Nota del precio (opcional)', type: 'text', ph: 'Early bird until Oct 1', showIf: show },
+        { k: k('img'), label: 'Foto · custom link de Cvent', type: 'url', img: true, half: true, showIf: show }, { k: k('alt'), label: 'Descripción de la foto (alt)', type: 'text', half: true, showIf: show }]; } });
+  function actText(t, size, lh) { return has(t) ? '<div style="padding-top:6px;">' + mixLines(t, size, lh) + '</div>' : ''; }
+  M.actividad = {
+    letter: 'Y', name: 'Tarjetas de actividad (foto y precio)', tag: 'ACTIVIDADES',
+    fields: [{ k: 'layout', label: 'Presentación', type: 'select', opts: [['', 'Como en las referencias de la marca'], ['left', 'Foto a la izquierda, fondo suave'], ['right', 'Foto a la derecha, con borde fino'], ['grid', 'Dos columnas con la foto arriba']] }].concat(ACTS.fields()),
+    build: function (d) {
+      var its = ACTS.items(d), lay = d.layout || LOOK.activity || 'left';
+      if (!its.length) its = [{ title: 'PENDIENTE: actividad' }];
+      function foot(it, big) {
+        if (!has(it.when) && !has(it.price) && !has(it.note)) return '';
+        return '<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top:12px;"><tbody><tr><td style="border-top:1px solid ' + C.line + ';padding-top:10px;">' +
+          (has(it.when) && !big ? '<p style="' + F.reg + 'font-size:13px;line-height:20px;color:#000000;word-break:break-word;">' + inline(it.when) + '</p>' : '') +
+          (has(it.price) ? (big ? boxTitle(it.price, 28, 32, C.title) : '<p style="' + strongFont() + 'font-size:15px;line-height:22px;color:' + C.hilite + ';word-break:break-word;">' + inline(it.price) + '</p>') : '') +
+          (has(it.note) ? '<p style="' + F.reg + 'font-size:13px;line-height:20px;color:' + A + ';word-break:break-word;">' + inline(it.note) + '</p>' : '') + '</td></tr></tbody></table>';
+      }
+      if (lay === 'grid') {
+        var cs = its.map(function (it) { return TBL + ' style="border:1px solid #E6E9F0;border-radius:8px;border-collapse:separate !important;"><tbody><tr><td style="padding:0;">' + pic(it.img, it.alt, 273, '8px 8px 0 0').replace('height:auto;', 'height:170px;object-fit:cover;') + '</td></tr><tr><td style="padding:16px 18px 18px 18px;">' + (has(it.tag) ? eyebrow(it.tag, C.label, 'font-size:10px;padding-bottom:6px;') : '') + boxTitle(it.title, 22, 28, C.title) + actText(it.text, 13, 21) + (has(it.when) ? '<p style="' + F.reg + 'font-size:13px;line-height:20px;color:#000000;padding-top:6px;">' + inline(it.when) + '</p>' : '') + foot(it, true) + '</td></tr></tbody></table>'; }), rows = '';
+        for (var i = 0; i < cs.length; i += 2) rows += (i ? spacerRow(16) : '') + '<tr><td>' + cols2(cs[i], cs[i + 1] == null ? '' : cs[i + 1], 277, 16) + '</td></tr>';
+        return section(cell('12px 40px', 'left', TBL + '><tbody>' + rows + '</tbody></table>'));
+      }
+      var out = its.map(function (it, i) {
+        var txt = (has(it.tag) ? pill(it.tag, P, '#FFFFFF') : '') + boxTitle(it.title, lay === 'right' ? 18 : 19, 24, C.title) + actText(it.text, lay === 'right' ? 14 : 13, lay === 'right' ? 22 : 21) + foot(it, false);
+        var row = lay === 'right'
+          ? TBL + ' style="border:1px solid #E8E1D3;border-radius:8px;border-collapse:separate !important;"><tbody><tr><td style="padding:22px;">' + TBL + '><tbody><tr><td class="col2" valign="top" style="padding-right:18px;">' + txt + '</td><td class="col2" width="250" valign="top" style="width:250px;">' + pic(it.img, it.alt, 250, '6px') + '</td></tr></tbody></table></td></tr></tbody></table>'
+          : TBL + ' bgcolor="' + SOFT + '" style="background-color:' + SOFT + ';border-left:4px solid ' + C.edge + ';"><tbody><tr><td class="col2" width="210" valign="top" style="width:210px;padding:16px 0 16px 16px;">' + pic(it.img, it.alt, 194, '6px') + '</td><td class="col2" valign="top" style="padding:16px 18px;">' + txt + '</td></tr></tbody></table>';
+        return (i ? spacerRow(14) : '') + '<tr><td>' + row + '</td></tr>';
+      });
+      return section(cell('12px 40px', 'left', TBL + '><tbody>' + out.join('') + '</tbody></table>'));
+    }
+  };
+
+  // Fila de botones: dos botones (relleno y con contorno, Arsenal y RMF Camps) o «Add to calendar» con los enlaces de Cvent.
+  var CAL = [['Google', '{[E-CALENDAR URL:GOOGLE]}'], ['Outlook', '{[E-CALENDAR URL:OUTLOOK]}'], ['iCal', '{[E-CALENDAR URL:ICAL]}'], ['ICS', '{[E-CALENDAR URL:ICS]}']];
+  var BTNS = K.repeat({ prefix: 'b', countKey: 'bN', max: 4, keys: ['btn', 'url'], allKeys: ['btn', 'url', 'style'], titleKey: 'btn', noun: 'botón', more: '＋ Añadir otro botón',
+    fields: function (n, show) { var k = function (x) { return 'b' + n + '_' + x; }; return [{ k: k('btn'), label: 'Texto', type: 'text', half: true, showIf: show }, { k: k('url'), label: 'Enlace', type: 'url', half: true, showIf: show }, { k: k('style'), label: 'Estilo', type: 'select', opts: BTN_STYLES, showIf: show }]; } });
+  M.botones = {
+    letter: 'B', name: 'Fila de botones / Añadir al calendario', tag: 'BOTONES',
+    fields: [{ k: 'preset', label: 'Tipo', type: 'select', opts: [['', 'Botones elegidos (2 a 4 en fila)'], ['calendar', 'Añadir al calendario (Google, Outlook, iCal, ICS de Cvent)']] }, { k: 'label', label: 'Rótulo encima (opcional)', type: 'text', ph: 'Add to calendar' }].concat(BTNS.fields()),
+    build: function (d) {
+      var cal = d.preset === 'calendar', its = cal ? CAL.map(function (c) { return { btn: c[0], url: c[1], style: 'outline' }; }) : BTNS.items(d);
+      if (!its.length) its = [{ btn: 'PENDIENTE: botón', url: '#' }];
+      var label = has(d.label) || cal ? eyebrow(has(d.label) ? d.label : 'Add to calendar', C.label, 'text-align:center;padding-bottom:12px;') : '';
+      var cells = its.map(function (it) {
+        var b = btn190(String(it.btn).trim(), String(it.url || '').trim() || '#', it.style || (cal ? 'outline' : 'gold'), 'center', 'auto').replace('margin:22px auto 0 auto', 'margin:0 auto');
+        if (cal) b = b.replace(/padding:[^;]+;(font-family)/, 'padding:10px 20px;$1');
+        return '<td class="col2" align="center" valign="top" style="padding:' + (cal ? '0 2px' : '0 8px') + ';">' + b + '</td>';
+      });
+      return section(cell('12px 40px', 'center', label + '<table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;"><tbody><tr>' + cells.join('') + '</tr></tbody></table>'));
+    }
+  };
+
+  // Opciones con el precio a la derecha (RMF Camps): filas apiladas; una puede ir destacada («Best value»).
+  var OPTS = K.repeat({ prefix: 'o', countKey: 'oN', max: 6, keys: ['title', 'sub', 'price'], allKeys: ['title', 'sub', 'price', 'per', 'best'], titleKey: 'title', noun: 'opción', more: '＋ Añadir otra opción',
+    fields: function (n, show) { var k = function (x) { return 'o' + n + '_' + x; }; return [{ k: k('title'), label: 'Opción', type: 'text', half: true, req: n === 1, showIf: show }, { k: k('sub'), label: 'Detalle (opcional)', type: 'text', half: true, showIf: show }, { k: k('price'), label: 'Precio', type: 'text', half: true, ph: '$450', showIf: show }, { k: k('per'), label: 'Bajo el precio (opcional)', type: 'text', half: true, ph: 'for the week', showIf: show }, { k: k('best'), label: 'Destacada: rótulo (opcional)', type: 'text', ph: 'Best value', showIf: show }]; } });
+  M.opciones = {
+    letter: 'Z', name: 'Opciones con precio (lista)', tag: 'OPCIONES',
+    fields: [{ k: 'title', label: 'Título (opcional)', type: 'text' }].concat(OPTS.fields(), [{ k: 'note', label: 'Nota debajo (opcional)', type: 'area', hint: TIP }]),
+    build: function (d) {
+      var its = OPTS.items(d); if (!its.length) its = [{ title: 'PENDIENTE: opción', price: '' }];
+      var rows = its.map(function (it, i) {
+        var best = has(it.best), bg = best ? '#FFFFFF' : SOFT;
+        return (i ? spacerRow(12) : '') + '<tr><td>' + TBL + ' style="background-color:' + bg + ';' + (best ? 'border:1px solid ' + C.hilite + ';' : '') + 'border-radius:8px;border-collapse:separate !important;"><tbody><tr><td valign="middle" style="padding:16px 20px;">' + (best ? eyebrow(it.best, C.hilite, 'font-size:9px;line-height:12px;padding-bottom:4px;') : '') + boxTitle(it.title, 16, 22, C.title) + (has(it.sub) ? '<p style="' + F.reg + 'font-size:13px;line-height:20px;color:#666666;word-break:break-word;">' + inline(it.sub) + '</p>' : '') + '</td><td valign="middle" align="right" style="padding:16px 20px;text-align:right;white-space:nowrap;">' + boxTitle(it.price || '', 20, 24, C.title, 'text-align:right;') + (has(it.per) ? '<p style="' + F.reg + 'font-size:11px;line-height:14px;color:#888888;text-align:right;">' + esc(it.per.trim()) + '</p>' : '') + '</td></tr></tbody></table></td></tr>';
+      }).join('');
+      return section(cell('12px 40px', 'left', (has(d.title) ? boxTitle(d.title, 20, 26, C.title, 'padding-bottom:12px;') : '') + TBL + '><tbody>' + rows + '</tbody></table>' + (has(d.note) ? '<p style="' + F.reg + 'font-style:italic;font-size:13px;line-height:20px;color:#888888;padding-top:12px;word-break:break-word;">' + inline(d.note) + '</p>' : '')));
+    }
+  };
+
+  // Tarjeta oscura centrada con los datos de registro (RMF Experiences): rótulo, título y pares con línea fina entre ellos.
+  M.registro = {
+    letter: 'H', name: 'Tarjeta oscura de datos de registro', tag: 'DATOS DE REGISTRO',
+    fields: [{ k: 'label', label: 'Rótulo (opcional)', type: 'text', half: true, ph: 'Your registration' }, { k: 'title', label: 'Título (opcional)', type: 'text', half: true }, { k: 'text', label: 'Datos', type: 'area', req: true, hint: 'Una línea por dato: «Etiqueta: valor». Admite campos de Cvent.' }],
+    build: function (d) {
+      var pairs = paras(d.text).map(function (p) {
+        var m = p.match(/^([^:{}\[\]]{1,60}):\s+(.+)$/);
+        return '<tr><td align="center" style="border-top:1px solid rgba(255,255,255,0.15);padding:12px 0;">' + (m ? '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:rgba(255,255,255,0.7);letter-spacing:1.5px;text-transform:uppercase;text-align:center;padding-bottom:3px;">' + esc(m[1].replace(/\*\*/g, '').trim()) + '</p>' : '') + '<p style="' + strongFont() + 'font-size:16px;line-height:22px;color:#FFFFFF;text-align:center;word-break:break-word;">' + inline(m ? m[2] : p, '#FFFFFF') + '</p></td></tr>';
+      }).join('');
+      return section(cell('12px 40px', 'center', TBL + ' bgcolor="' + C.band + '" style="background-color:' + C.band + ';border-radius:6px;border-collapse:separate !important;"><tbody><tr><td align="center" style="padding:26px 28px;">' + (has(d.label) ? eyebrow(d.label, C.onDark, 'text-align:center;padding-bottom:8px;') : '') + (has(d.title) ? boxTitle(d.title, 20, 26, '#FFFFFF', 'text-align:center;padding-bottom:14px;') : '') + TBL + '><tbody>' + pairs + '</tbody></table></td></tr></tbody></table>'));
+    }
+  };
+
+  // Paquetes (Arsenal Experiences): uno destacado con cabecera de color, o dos tarjetas con barra superior.
+  var PACKS = K.repeat({ prefix: 'p', countKey: 'pN', max: 2, keys: ['title', 'inc', 'price'], allKeys: ['badge', 'title', 'sub', 'inc', 'note', 'price', 'cur'], titleKey: 'title', noun: 'paquete', more: '＋ Añadir otro paquete',
+    fields: function (n, show) { var k = function (x) { return 'p' + n + '_' + x; }; return [{ k: k('badge'), label: 'Distintivo (opcional)', type: 'text', half: true, ph: '⭐ Recommended', showIf: show }, { k: k('title'), label: 'Nombre del paquete', type: 'text', half: true, req: n === 1, showIf: show }, { k: k('sub'), label: 'Subtítulo (opcional)', type: 'text', showIf: show }, { k: k('inc'), label: 'Incluye (un punto por línea)', type: 'area', hint: TIP, showIf: show }, { k: k('note'), label: 'Nota (opcional)', type: 'text', showIf: show }, { k: k('price'), label: 'Precio', type: 'text', half: true, ph: '$570', showIf: show }, { k: k('cur'), label: 'Moneda o detalle', type: 'text', half: true, ph: 'USD', showIf: show }]; } });
+  M.paquete = {
+    letter: 'M', name: 'Paquetes (destacado o dos tarjetas)', tag: 'PAQUETES',
+    fields: [{ k: 'incLabel', label: 'Rótulo de lo que incluye', type: 'text', half: true, ph: 'Includes' }, { k: 'priceLabel', label: 'Rótulo del precio (destacado)', type: 'text', half: true, ph: 'Price per person' }].concat(PACKS.fields()),
+    build: function (d) {
+      var its = PACKS.items(d); if (!its.length) its = [{ title: 'PENDIENTE: paquete' }];
+      var inc = has(d.incLabel) ? d.incLabel : 'Includes';
+      function price(it, size, lh, color) { return has(it.price) ? '<p style="' + F.ex40 + 'font-size:' + size + 'px;line-height:' + lh + 'px;color:' + color + ';word-break:break-word;">' + esc(it.price.trim()) + (has(it.cur) ? ' <span style="' + F.reg + 'font-size:' + (size > 30 ? 14 : 13) + 'px;">' + esc(it.cur.trim()) + '</span>' : '') + '</p>' : ''; }
+      function body(it) { return (has(it.inc) ? eyebrow(inc, C.label, 'padding:14px 0 6px 0;') + dotLines(it.inc, 14, 22, 0) : '') + (has(it.note) ? '<p style="' + F.reg + 'font-style:italic;font-size:13px;line-height:20px;color:#888888;padding-top:10px;word-break:break-word;">' + inline(it.note) + '</p>' : ''); }
+      if (its.length === 1) {
+        var it = its[0];
+        return section(cell('12px 40px', 'left', TBL + ' style="border:2px solid ' + C.edge + ';border-radius:8px;border-collapse:separate !important;"><tbody><tr><td bgcolor="' + P + '" style="background-color:' + P + ';border-radius:6px 6px 0 0;padding:22px 24px 20px 24px;">' + (has(it.badge) ? pill(it.badge, '#FFFFFF', P) : '') + boxTitle(it.title, 26, 32, '#FFFFFF') + (has(it.sub) ? whiteP(it.sub, 14, 22, 'opacity:0.85;padding-top:4px;') : '') + '</td></tr><tr><td style="padding:6px 24px 22px 24px;">' + body(it) + (has(it.price) ? TBL + ' bgcolor="' + SOFT + '" style="background-color:' + SOFT + ';border-left:4px solid ' + C.edge + ';margin-top:16px;"><tbody><tr><td style="padding:14px 18px;">' + (has(d.priceLabel) ? eyebrow(d.priceLabel, C.label, 'padding-bottom:4px;') : '') + price(it, 34, 40, C.title) + '</td></tr></tbody></table>' : '') + '</td></tr></tbody></table>'));
+      }
+      var cs = its.map(function (it) { return TBL + ' bgcolor="' + SOFT + '" style="background-color:' + SOFT + ';border-top:4px solid ' + C.edge + ';"><tbody><tr><td valign="top" style="padding:20px 20px 22px 20px;">' + (has(it.badge) ? pill(it.badge, P, '#FFFFFF') : '') + boxTitle(it.title, 20, 26, C.title) + (has(it.sub) ? '<p style="' + F.reg + 'font-size:13px;line-height:20px;color:#888888;">' + inline(it.sub) + '</p>' : '') + body(it) + '<div style="height:12px;line-height:12px;font-size:0;">&nbsp;</div>' + price(it, 26, 32, P) + '</td></tr></tbody></table>'; });
+      return section(cell('12px 40px', 'left', cols2(cs[0], cs[1], 279, 12)));
+    }
+  };
+  K.MODULE_ORDER = ['title', 'text', 'list', 'images', 'textimg', 'button', 'botones', 'cards', 'box', 'normas', 'actividad', 'opciones', 'paquete', 'registro', 'datos', 'producto', 'separador', 'compra', 'contacto', 'glance', 'timeline', 'deadlines', 'wallet'];
   // Bloques antiguos: fuera de la paleta, pero se siguen pintando igual en las newsletters que los usan.
   K.LEGACY = { intro: 'text', titulo: 'title', lista: 'list', cierre: 'title', imagen: 'images', fotos3: 'images', boton: 'button', tarjetas: 'cards', info: 'box', step: 'box', cta: 'box', important: 'box' };
 
@@ -1164,24 +1402,41 @@
   // ============================================================
   // opts.preview: solo para la vista previa del editor. Cada módulo va en su propio <tbody data-ksa-section="i">
   // para poder seleccionarlo, arrastrarlo y editar su texto. Nunca se usa en lo que se copia o descarga.
-  function spacedContent(html) {
-    var background=html.match(/<table[^>]*style="background-color:([^;]+);width:650px;" class="wrapper">/);
-    if (background && background[1]!=='#FFFFFF') return html+section('<tr><td height="20" bgcolor="#FFFFFF" style="height:20px;line-height:20px;font-size:0;background-color:#FFFFFF;">&nbsp;</td></tr>');
-    return html.replace(/(class="wrapper"><tbody><tr><td[^>]*style="padding:)([^;]+)(;)/,function(all,start,padding,end){
-      var values=padding.trim().split(/\s+/), top=values[0], right=values[1]||top, bottom=values[2]||top, left=values[3]||right;
-      if (!/^(?:0|[0-9]+px)$/.test(bottom) || parseInt(bottom,10)>=20) return all;
-      return start+top+' '+right+' 20px '+left+end;
-    });
+  // Separación entre bloques, como en las referencias de cada club (docs/brand-kits/referencias): 28 px entre bloque y
+  // bloque, 36 px antes del primero y después del último. Se fija en el padding de arriba/abajo de la celda exterior;
+  // si esa celda tiene fondo de color (bandas), el hueco es una fila blanca aparte para no agrandar la banda.
+  K.BLOCK_GAP = 28; K.BLOCK_EDGE = 36; K.BOX_STACK = 12; K.SEP_ABOVE = 20; K.SEP_BELOW = 22; K.HEADING_GAP = 14; // HEADING_GAP: título solo → su bloque (mínimo)
+  function whiteGap(h) { return section('<tr><td height="' + h + '" bgcolor="#FFFFFF" style="height:' + h + 'px;line-height:' + h + 'px;font-size:0;background-color:#FFFFFF;">&nbsp;</td></tr>'); }
+  function setBlockSpacing(html, top, bottom) {
+    function cells() {
+      var re = /(style="background-color:([^;]+);width:650px;" class="wrapper"><tbody><tr><td[^>]*?style="padding:)([^;"]+)/g, all = [], m;
+      while ((m = re.exec(html))) all.push({ at: m.index + m[1].length, len: m[3].length, white: m[2].toUpperCase() === '#FFFFFF', pad: m[3] });
+      return all;
+    }
+    function edit(w, i, value) {
+      var v = w.pad.trim().split(/\s+/), p = [v[0], v[1] || v[0], v[2] || v[0], v[3] || v[1] || v[0]];
+      if (typeof value === 'object') value = Math.max(parseInt(p[i], 10) || 0, value.min); // { min: n }: como mínimo n px
+      p[i] = value ? value + 'px' : '0';
+      html = html.slice(0, w.at) + p.join(' ') + html.slice(w.at + w.len);
+    }
+    var c = cells(); if (!c.length) return html;
+    if (bottom != null) { var last = c[c.length - 1]; if (last.white) edit(last, 2, bottom); else if (bottom) html += whiteGap(bottom.min || bottom); }
+    if (top != null) { var first = cells()[0]; if (first.white) edit(first, 0, top); else if (top) html = whiteGap(top) + html; }
+    return html;
   }
   K.build = function (st, opts) {
-    var previousProfile = renderingProfile, previousWCH = renderingWCH;
+    var previousProfile = renderingProfile, previousWCH = renderingWCH, previousLook = LOOK;
     renderingProfile = !!(K.Designs && K.Designs.active(st));
     try {
     var t = K.BrandKits ? K.BrandKits.effectiveTournament(st) : K.tournament(st.tournament), kit = K.BrandKits ? K.BrandKits.forState(st) : null, parts = [], n = 0;
     var profile = renderingProfile && K.Designs.get(kit && kit.designId || (K.Designs.forSection(st.tournament)||{}).id), wch = profile && profile.id==='rmf-wch'; renderingWCH=!!wch;
+    // Estilo de cada pieza según las referencias del kit (solo newsletters con el diseño actual o con kit de perfil).
+    LOOK = (profile && K.Designs.look && K.Designs.look(profile, kit)) || {};
     var useSpacing = !!(K.Designs && (st.designVersion===K.Designs.version || renderingProfile));
-    function content(html) { return useSpacing ? spacedContent(html) : html; }
     function add(tag, html) { parts.push('<!-- [' + (n++) + '] ' + tag + ' -->\n' + html); }
+    // Bloques de contenido: se añaden al final de la vuelta, cuando ya se sabe cuál es el primero y el último (separación común).
+    var blocks = [];
+    function addBlock(tag, html, o) { o = o || {}; blocks.push({ at: parts.length, tag: tag, html: html, wrap: o.wrap, heading: !!o.heading, tight: !!o.tight }); add(tag, ''); }
     var off = wch ? {} : (st.off || {});
     if (!off.header && t.header) add('HEADER', imgFull(t.header, has(st.headerAlt) ? st.headerAlt : (kit ? (kit.header.name || kit.name) : (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name))));
     var banner = kit ? kit.mediaBanner.url : (t.club ? t.mediaBanner : K.CLIENT.mediaBanner);
@@ -1224,19 +1479,31 @@
         var pieces = secs.slice(g.start, g.end + 1), nextG = groups[gi + 1];
         var cellHtml = K.flowCell(pieces, g.align, preview ? function (j, part) { return '<div data-ksa-section="' + map[g.start + j] + '">' + part + '</div>'; } : null);
         tight = wch && pieces.length === 1 && pieces[0].type === 'title' && titleStyle(pieces[0].d || {}) === 'seccion' && !!nextG && !nextG.align && nextG.start !== vPending;
-        add(pieces.map(function (s) { return M[s.type].tag; }).join(' + '), tight ? setPad(cellHtml, 'bottom', '0') : content(cellHtml));
+        // Un título solo (sin texto debajo) encabeza el bloque siguiente: no lleva el hueco entre bloques, sino su margen propio.
+        addBlock(pieces.map(function (s) { return M[s.type].tag; }).join(' + '), tight ? setPad(cellHtml, 'bottom', '0') : cellHtml,
+          { tight: tight, heading: pieces.every(function (s) { return s.type === 'title'; }) && !!nextG && nextG.start !== vPending });
         return;
       }
       var s = secs[g.start], i = map[g.start], m = M[s.type]; if (!m) return;
       var built = m.build(s.d || {}, t); if (tight) built = setPad(built, 'top', '0'); tight = false;
-      var part = content(built);
-      add(m.tag, preview ? '</tbody><tbody data-ksa-section="' + i + '">' + part + '</tbody><tbody>' : part);
+      addBlock(m.tag, built, { wrap: preview ? function (part) { return '</tbody><tbody data-ksa-section="' + i + '">' + part + '</tbody><tbody>'; } : null });
     });
     if (vPending >= secs.length) { hiddenUpTo(pendingAt); add('BLOQUE NUEVO', PENDING); }
     else if (preview && !all.length) add('VACÍO', '</tbody><tbody data-ksa-empty="1"><tr><td align="center" style="padding:48px 24px;background:#F7F4FC;border:2px dashed #A5A0C4;font-family:Arial,Helvetica,sans-serif;font-size:15px;line-height:22px;color:#48237E;">Arrastra aquí un bloque desde «＋ Añadir bloque»<br />o haz clic para elegir uno</td></tr></tbody><tbody>');
     hiddenUpTo(Infinity);
     // WCH: contacto y firma fijos, como en sus emails de ejemplo (si la newsletter tiene un bloque Contacto, ese bloque ya los pinta).
-    if (wch && !secs.some(function(s){return s.type==='contacto' && !s.hidden;})) add('CONTACTO', wchContact(t));
+    if (wch && !secs.some(function(s){return s.type==='contacto' && !s.hidden;})) addBlock('CONTACTO', wchContact(t));
+    blocks.forEach(function (b, k) {
+      var html = b.html;
+      // 36 px arriba del primero y abajo del último; 28 px entre bloques (arriba 0, abajo 28). Un título solo encabeza
+      // el bloque siguiente: queda a 14 px de él (o a su margen propio si es mayor); el par título + bloque de WCH no cambia.
+      // Dos cajas seguidas van más juntas (12 px), como en las referencias (p. ej. hotel y comidas en PSG Experiences).
+      var stacked = b.tag === 'CAJA' && blocks[k + 1] && blocks[k + 1].tag === 'CAJA';
+      // Línea divisoria: 20 px encima y 22 px debajo, como en las referencias (antes 28 + 28).
+      var toSep = blocks[k + 1] && blocks[k + 1].tag === 'SEPARADOR', isSep = b.tag === 'SEPARADOR';
+      if (useSpacing) html = setBlockSpacing(html, k ? 0 : K.BLOCK_EDGE, k === blocks.length - 1 ? K.BLOCK_EDGE : b.tight ? null : b.heading ? { min: K.HEADING_GAP } : stacked ? K.BOX_STACK : toSep ? K.SEP_ABOVE : isSep ? K.SEP_BELOW : K.BLOCK_GAP);
+      parts[b.at] += b.wrap ? b.wrap(html) : html;
+    });
     if (t.footer && !off.footer) add('IMAGEN FOOTER', imgFull(t.footer, t.footerAlt));
     add('OPT-OUT', section(cell('16px 20px', 'center', '<p style="' + F.reg + 'font-size:10px;line-height:14px;color:' + GREY + ';text-align:center;word-break:break-word;padding:3px 0;"><span style="color: ' + GREY + ';">If you no longer want to receive emails from {[P-FIRST NAME]} {[P-LAST NAME]}, please {[EMAIL OPT OUT]}.</span></p>')));
     var title = (t.club ? t.brand : K.CLIENT.name + ' · ' + t.name) + (has(st.name) ? ' – ' + st.name.trim() : '');
@@ -1257,6 +1524,11 @@
     if (theme.grey) html = html.replace(/#A5A0C4/gi, theme.grey);
     if (theme.soft) html = html.replace(/#F7F4FC/gi, theme.soft);
     html = html.replace(/%%C:(\w+)%%/g, function (m, k) { return theme[k] || C_DEFAULT[k]; });
+    // Bayern: su fuente de titulares (Cond Extra Bold) es alta y estrecha; con el interlineado común queda muy suelta.
+    // Interlineado = 1,05 × el tamaño en titulares y cifras de esa fuente (newsletters con el diseño actual; el HTML antiguo no cambia).
+    // Kits con referencias: en móvil, márgenes laterales de 20 px como todas sus newsletters de referencia (24 px en el resto).
+    if (renderingProfile) html = html.replace('.mobile-pad {\n    padding-left: 24px !important;\n    padding-right: 24px !important;', '.mobile-pad {\n    padding-left: 20px !important;\n    padding-right: 20px !important;');
+    if (t.club === 'bayern' && useSpacing) html = html.replace(/(font-family:'(?:Extenda60|Extenda40|DinProBlack)'[^"]*?font-size:(\d+)px;line-height:)(\d+)px/g, function (m, a, size) { return a + Math.ceil(size * 1.05) + 'px'; });
     if(preview) html=html.replace(/<img src="\{\[C-QRCODE_LINK\]\}"[^>]*\/>/g,'<table role="presentation" border="0" cellpadding="0" cellspacing="0" width="180" style="width:180px;height:180px;border:1px dashed #AAAAAA;background:#F5F5F5;"><tbody><tr><td align="center" style="padding:16px;font-family:Arial,Helvetica,sans-serif;font-size:12px;line-height:18px;color:#444444;">QR personal de Cvent<br />{[C-QRCODE_LINK]}<br />Se genera para cada destinatario</td></tr></tbody></table>');
     if (preview) html = html.replace(new RegExp('(<p style="[^"]*)">' + BOX_EMPTY + '</p>', 'g'), '$1color:#8A84A3;font-style:italic;">Caja vacía · escribe su texto en el panel de la derecha</p>');
     var bodyAt = html.indexOf('<body');
@@ -1273,7 +1545,7 @@
       html = html.replace(new RegExp("font-family:\\s*'" + role + "'[^;\"}]*", 'g'), function () { return 'font-family:' + t.families[role]; });
     });
     return html;
-    } finally { renderingProfile = previousProfile; renderingWCH = previousWCH; }
+    } finally { renderingProfile = previousProfile; renderingWCH = previousWCH; LOOK = previousLook; }
   };
 
   // Estilo de club (referencia: newsletter «Essential Pack» de PSG Experiences): franja del color principal con texto blanco,
@@ -1487,7 +1759,7 @@
   // Newsletter de referencia (PSG Experiences · Essential Pack): cómo se compone una newsletter de club bien hecha.
   // Se da como ejemplo a ChatGPT y la prueba test/club-style.test.js comprueba que se pinta como el original.
   K.REFERENCE_CLUB = { tournament: 'psg-exp', name: 'Essential Pack Information', desc: 'essential_pack_information', franja: 'Paris Saint-Germain Academy Clinic', franjaRight: 'November 2026 · Paris', mediaPackages: false, sections: [
-    { type: 'title', d: { text: 'Your Week in Paris,\n{[C-FIRST NAME:TC]}', style: 'principal', align: 'left' } },
+    { type: 'title', d: { text: 'Your Week in Paris, {[C-FIRST NAME:TC]}', style: 'principal', align: 'left' } },
     { type: 'text', d: { text: 'Here’s how your week in Paris will unfold, day by day, along with everything you need to know about your hotel, meals, and important deadlines' } },
     { type: 'glance', d: { l1: 'Clinic dates', v1: 'Nov 22 – 28\n2026', l2: 'Reference hotel', v2: 'La Défense\ndistrict', l3: 'Final payment', v3: 'September 1\n2026' } },
     { type: 'title', d: { text: 'Your week, day by day', style: 'ante' } },
@@ -1506,9 +1778,11 @@
   function composeGuide(L, tournamentId, context) {
     L.push('- GUÍA DE COMPOSICIÓN (qué pieza usar para cada contenido; respeta el orden del original):');
     L.push('  · Saludo «Dear …» → title (saludo) + text; si en el original «Dear …» es el titular grande (letra de titular), es title (principal). Titular grande de apertura → title (principal) + text; si el original lo alinea a la izquierda, "align":"left". Titular con botón → title (principal) + text + button.');
-    L.push('  · Saltos de línea dentro de un titular o de un dato (p. ej. «Your Week in Paris,» y en otra línea el nombre): escribe \\n en el texto.');
+    L.push('  · Titulares: SIEMPRE en una sola línea, sin \\n (aunque el original los parta en dos; si no caben, el email los ajusta solo). Saltos de línea solo dentro de un dato o un texto: escribe \\n.');
+    L.push('  · Titular de una sección o tema dentro del email (p. ej. «Modifications», «Tentative Schedule», «01 · Tournament Wristbands», «Important information») → title (seccion): la app lo pinta con el estilo de título de sección de cada marca, como en sus newsletters de referencia. title (principal) solo para el titular grande de apertura.');
+    L.push('  · TENTATIVE SCHEDULE (horario o programa provisional): NUNCA lo conviertas en timeline, tabla, list ni texto. Va SIEMPRE como images con la imagen del original (su custom link en f1_src y su alt). En un guion sin URL: images con "f1_src":"PLACEHOLDER" y "f1_alt":"Tentative Schedule". Su titular, si lo tiene, va antes como title.');
     L.push('  · 2 o 3 datos clave cortos en recuadros (fechas, hotel, pago) → glance (l1/v1… = etiqueta y dato; las dos primeras van en recuadro oscuro y la tercera, clara y destacada). Fecha, hora y lugar en una banda de color → datos (de 1 a 4: l1/v1…).');
-    L.push('  · Agenda o programa día a día → title (ante) con el rótulo («Your week, day by day») + timeline con "fmt":"puntos": d = fecha («Nov 22»), s = etiqueta corta bajo la fecha («Arrival», «Training»), t = un punto por línea (\\n). Usa h solo si el día tiene un titular propio. De 1 a 8 hitos.');
+    L.push('  · Agenda día a día escrita como texto (que no sea el Tentative Schedule) → title (ante) con el rótulo («Your week, day by day») + timeline con "fmt":"puntos": d = fecha («Nov 22»), s = etiqueta corta bajo la fecha («Arrival», «Training»), t = un punto por línea (\\n). Usa h solo si el día tiene un titular propio. De 1 a 8 hitos.');
     L.push('  · Información con titular y puntos o párrafos (hotel, comidas, transporte, instrucciones) → box (suave) con el title DENTRO de la caja; si son puntos, "fmt":"puntos". Una caja por tema. No uses title + list para esto.');
     L.push('  · Paso con fecha límite → box (suave) con label, title y deadline. Aviso importante → box (oscura) con label y text.');
     L.push('  · Dos fechas límite o plazos lado a lado → deadlines (l = qué es, d = la fecha). No uses cards para fechas.');
@@ -1517,6 +1791,11 @@
     L.push('  · Opciones, packs o precios paralelos → cards (de 1 a 8: c1_title, c1_price, c1_text…; si cada opción tiene foto, c1_img/c1_alt). Cada servicio con precio e imagen → producto (separador entre dos productos seguidos).');
     L.push('  · Foto con 1 a 3 tarjetas apiladas a su lado (p. ej. una oscura y una clara) → cards con "sideImg", "sideAlt" y "side" ("left" si la foto va a la izquierda) más c1_*, c2_*… No lo separes en images + cards.');
     L.push('  · Lista de datos con etiqueta y valor (resumen de registro: nombre, fecha de nacimiento, talla, confirmación…), sobre todo si son más de 4 → box (suave) con "fmt":"pares", el rótulo en label y una línea por dato «Etiqueta: valor» (copia la etiqueta literal y añade «: »).');
+    L.push('  · BLOQUES ESPECÍFICOS: tarjetas o paneles de normas con emoji (uniforme, objetos perdidos, recogida…) → normas (n1_icon, n1_title, n1_text…); actividades o excursiones con foto, etiqueta, fecha y precio → actividad (a1_tag, a1_title, a1_text, a1_when, a1_price, a1_note, a1_img, a1_alt…); dos a cuatro botones en la misma fila → botones (b1_btn, b1_url, b1_style…); fila «Add to calendar» con los enlaces {[E-CALENDAR URL:…]} → botones con "preset":"calendar"; opciones apiladas con el precio a la derecha → opciones (o1_title, o1_sub, o1_price, o1_per, o1_best para la destacada); tarjeta oscura centrada con datos de registro → registro (label, title, text con «Etiqueta: valor» por línea); paquete destacado con cabecera de color o dos tarjetas de paquete → paquete (p1_badge, p1_title, p1_sub, p1_inc, p1_note, p1_price, p1_cur…); caja suave con subtítulos, puntos y notas mezclados → box suave con "fmt":"mixto" («## subtítulo», «- punto», «> nota» por línea). La presentación (lista o rejilla, foto a un lado o arriba) la pone la marca.');
+    L.push('  · OPCIONES PARA PARECERSE AL ORIGINAL: foto junto a un recuadro claro con barra lateral → textimg con "panel":"soft"; título de sección con barra debajo y la marca no la pone sola → "bar":"yes" (sin barra → "no"); botón blanco con borde de color → "btnStyle":"outline"; aviso claro rojizo con barra roja → box "style":"aviso"; caja suave con barra lateral del color de acento → "edge":"accent"; recuadro con borde y texto a la izquierda → box borde con "boxAlign":"left"; firma o línea de cierre en letra de titular y color de marca → text con "tone":"serif"; título de caja en otro color → "titleColor".');
+    L.push('  · FORMATO DEL TEXTO como el original: cursivas → *así* (p. ej. «Check-in: from 2 PM» si va en cursiva); frases más pequeñas o grises (notas, «Please be aware…», letra pequeña) → su propio text con "size":"small" y, si son grises, "tone":"grey". No subas a tamaño normal lo que en el original es nota.');
+    L.push('  · Líneas divisorias: separador (style neutral) solo donde el original tiene una línea, en el mismo sitio; ninguna más.');
+    L.push('  · TAMAÑO DE LAS IMÁGENES: si en el original una imagen no ocupa todo el ancho (su width es menor de 570 px, p. ej. un rótulo «HOTEL» o un logo), usa images con "scale" = el porcentaje más cercano a width ÷ 570 de las opciones de escala, y "imgAlign":"left" si va alineada a la izquierda. Las imágenes de 650 px van a sangre (sin scale).');
     L.push('  · Imagen que enlaza a algo (badges de App Store/Google Play, QR de Telegram, vídeo) → images con su enlace en f1_url, f2_url… (también campos Cvent como {[E-CUSTOM:Telegram]}). No pierdas el enlace.');
     L.push('  · Párrafo (con titular o botón) junto a una foto, uno al lado del otro → textimg (label, title, text, img, alt; "side":"left" si la foto va a la izquierda). No lo separes en text + images.');
     L.push('  · Lista de puntos suelta, sin caja → title (seccion) + list. Frase con {[E-MODIFY REG LINK]} y datos de registro → compra solo si el original tiene esa caja de compra; si tiene una caja suave, conserva box (suave) y el enlace en text o line. Cierre o despedida → title (entre) + text. Lo que no encaje → text.');
@@ -1535,20 +1814,28 @@
       L.push('- Apertura: si la primera frase presenta el mensaje o interpela al destinatario, promuévela a title principal alineado a la izquierda, aunque en el HTML sea un párrafo normal. El resto de la introducción va en text size intro. No uses el título del documento como contenido nuevo.');
       L.push('- Datos etiquetados de pagos, balances o importes → datos style summary, incluso cuando el original los presente como viñetas. Traslada literalmente las etiquetas a l1/l2/l3 y los valores a v1/v2/v3; el rótulo existente va en title. Conserva notas, paréntesis y puntuación en el valor o en text, sin duplicarlos. Si los importes van mezclados con datos de registro (nombre, talla, confirmación…) en un mismo resumen, usa una sola box (suave) con "fmt":"pares" para todo el resumen.');
       L.push('- Información sobre plazos, pagos o instrucciones agrupadas → box style suave, density editorial. Usa el titular existente si lo hay; si no, title vacío. No la dejes como una sucesión de text solo porque el HTML antiguo use párrafos.');
-      L.push('- Datos de acceso (confirmación y email) → box style suave, density editorial. Conserva el titular existente y el contenido literal; mantén las frases de acceso y sus enlaces antes o después de la caja según su orden. No uses box borde para credenciales. Reserva borde para una llamada final de ayuda o acción.');
-      L.push('- INTERPRETAR DATOS: extrae 2–3 hechos clave de los párrafos y destácalos en glance density editorial, aunque no tengan etiquetas explícitas. Puedes redactar etiquetas breves en el idioma del envío. En un recordatorio de pago: importe del primer pago, fecha del primer pago y fecha del pago final. Conserva la cifra y la fecha exactas; no deduzcas un año ausente ni conviertas un saldo en precio. Si solo hay dos hechos, usa deadlines para dos fechas o datos; no inventes un tercero. Mantén los párrafos explicativos originales: repetir sus hechos en las tarjetas es un resumen visual permitido. No crees un glance con datos que el original ya muestra en sus propias tarjetas, cajas o en el antetítulo.');
-      L.push('- Separadores de apoyo → separador style neutral; evita líneas del color principal entre todos los párrafos. No hace falta añadir separadores junto a cajas que ya delimitan el contenido.');
+      L.push('- Datos de acceso (confirmación y email): conserva el tipo de caja del original (box borde centrada si el original los pone en un recuadro con borde; box suave con density editorial si van en caja suave). Conserva el titular existente y el contenido literal, con las etiquetas y valores en "fmt":"pares" en la caja suave o como text en la de borde; mantén las frases de acceso y sus enlaces dentro o después de la caja según su orden.');
+      L.push('- TARJETAS DE DATOS (glance): úsalas SOLO si el original ya muestra esos datos en tarjetas o recuadros. No extraigas datos de los párrafos para crear tarjetas nuevas: el email debe parecerse al original. Conserva cifras y fechas exactas; no deduzcas un año ausente.');
+      L.push('- Separadores → separador style neutral, SOLO donde el original tiene una línea divisoria (border-top o hr, p. ej. encima de un rótulo o entre secciones) y en ese mismo sitio. No añadas separadores que el original no tenga ni quites los que tiene.');
       L.push('- PATRÓN ESTRUCTURAL de un recordatorio de pago (los marcadores entre < > se sustituyen por fragmentos literales del envío; nunca se exportan):');
-      L.push(JSON.stringify({sections:[{type:'title',d:{style:'principal',align:'left',text:'<primera frase de apertura>'}},{type:'text',d:{size:'intro',text:'<resto de la introducción>'}},{type:'glance',d:{density:'editorial',l1:'<etiqueta breve del importe>',v1:'<importe literal extraído>',l2:'<etiqueta breve del primer plazo>',v2:'<fecha literal extraída>',l3:'<etiqueta breve del último plazo>',v3:'<fecha literal extraída sin completar un año ausente>'}},{type:'box',d:{style:'suave',density:'editorial',title:'',text:'<párrafos literales de pagos y plazos>'}},{type:'datos',d:{style:'summary',title:'<rótulo literal del resumen>',l1:'<etiqueta literal>',v1:'<valor o campo literal>'}},{type:'box',d:{style:'suave',density:'editorial',title:'<titular literal de acceso>',text:'<datos literales de acceso>'}}]}));
+      L.push(JSON.stringify({sections:[{type:'title',d:{style:'principal',align:'left',text:'<primera frase de apertura>'}},{type:'text',d:{size:'intro',text:'<resto de la introducción>'}},{type:'box',d:{style:'suave',density:'editorial',title:'',text:'<párrafos literales de pagos y plazos>'}},{type:'datos',d:{style:'summary',title:'<rótulo literal del resumen>',l1:'<etiqueta literal>',v1:'<valor o campo literal>'}},{type:'box',d:{style:'suave',density:'editorial',title:'<titular literal de acceso>',text:'<datos literales de acceso>'}}]}));
       if(profile.id.indexOf('arsenal')===0) L.push('- ARSENAL VIGENTE: franja siempre roja y texto compacto (Helvetica/Arial 10/14 px, negrita, espaciado 1 px); titulares Georgia 32/40 px con espaciado -0.5 px. Prevalece sobre instrucciones guardadas que aún mencionen franja negra. El generador aplica estos detalles automáticamente.');
-      L.push('- ESPACIADO COMÚN: la app garantiza al menos 20 px de espacio inferior en cada bloque visual de contenido. No añadas módulos de texto vacíos para crear huecos.');
-      L.push('- REVISIÓN ANTES DE RESPONDER: una apertura que sigue siendo text, importes etiquetados que siguen como list o credenciales dentro de box borde indican una composición pendiente de normalizar. Si el envío contiene tres hechos clave claros que solo aparecen dentro de párrafos y no has creado su glance, añádelo. Corrige esas elecciones antes de devolver el JSON. Comprueba después que no falta ni se ha añadido contenido.');
+      L.push('- ESPACIADO COMÚN: la app pone siempre 28 px entre bloques. No añadas módulos de texto vacíos para crear huecos.');
+      L.push('- REVISIÓN ANTES DE RESPONDER: una apertura que sigue siendo text, importes etiquetados que siguen como list indican una composición pendiente de normalizar. Corrige esas elecciones antes de devolver el JSON. Comprueba después que no falta ni se ha añadido contenido.');
       L.push('No añadas textos de ejemplo: usa solo el contenido recibido. Los widgets Cvent y sus campos son literales. Si el original aporta un email de contacto, inclúyelo en contactEmail; si falta, no lo inventes.');
+      userRules(L);
       if(profile.id==='rmf-wch') L.push('Contacto y firma WCH: la app añade sola, al final, la frase de contacto con el teléfono del evento ({[E-CUSTOM:Event Phone Number]}), «Sincerely,» y la firma. No los copies como texto (esto no cuenta como dejar contenido fuera). Si el original da otro contacto (un email), ponlo en "contactEmail".');
       return;
     }
     L.push('- EJEMPLO DE REFERENCIA (newsletter de club bien compuesta; imítala en la elección de piezas, no en los textos):');
     L.push(JSON.stringify(K.REFERENCE_CLUB));
+    userRules(L);
+  }
+  // Normas fijadas por el usuario (16/11/2026): prevalecen sobre el kit y sobre el aspecto del original.
+  function userRules(L) {
+    L.push('NORMAS FIJAS (prevalecen sobre todo lo anterior):');
+    L.push('- El Tentative Schedule NUNCA se pasa a código (timeline, tabla, list o texto): se mantiene como imagen (images) con su custom link.');
+    L.push('- Titulares en UNA sola línea (sin \\n). Titular de apertura → title principal; titulares de sección → title seccion (estilo de cada marca, como en sus referencias). Sin tarjetas glance que el original no tenga.');
   }
 
   // Newsletter NUEVA a partir de un guion (BANNER 1: texto… / BANNER 2: foto… / BANNER 3: botón…).
@@ -1569,7 +1856,7 @@
     L.push('- Fotos o imágenes: si el guion da una URL de custom.cvent.com, úsala tal cual. Si solo dice «foto», «imagen» o la describe, usa el módulo images con "f1_src":"PLACEHOLDER" y pon en "f1_alt" la descripción del guion (o "" si no hay). Dos o tres fotos en fila → un solo images con f1_*, f2_*, f3_*.');
     L.push('- Botones: el texto del botón en su campo y el enlace solo si el guion lo da; si no, deja el enlace vacío. Botón bajo un titular → button justo después del title principal (y su text). Opciones paralelas con botón → cards (una tarjeta por opción: c1_*, c2_*…). No deduzcas el bloque por el campo Cvent: conserva el tratamiento visual del original, usando compra solo para su caja de compra correspondiente.');
     L.push('- NO incluyas header, footer de imagen ni línea de baja (opt-out): la app los pone sola. Si el guion indica la etiqueta de la franja identificadora, ponla en "franja"; si no, "".');
-    L.push('- PIEZAS: cada titular es un módulo title ("style": principal para titulares grandes, seccion para el título de una lista o sección, saludo para «Dear …», entre para la frase de despedida, ante para un rótulo pequeño en mayúsculas); elige la pieza por su función: párrafos narrativos → text; información agrupada → box; etiquetas con valores → datos; lista narrativa suelta → list; botón → button. No conviertas automáticamente cada párrafo en text ni cada lista HTML en list.');
+    L.push('- PIEZAS: cada titular es un módulo title ("style": principal para el titular grande de apertura, seccion para los titulares de cada sección o tema (estilo de la marca), siempre en una línea; saludo para «Dear …», entre para la frase de despedida, ante para un rótulo pequeño en mayúsculas); elige la pieza por su función: párrafos narrativos → text; información agrupada → box; etiquetas con valores → datos; lista narrativa suelta → list; botón → button. No conviertas automáticamente cada párrafo en text ni cada lista HTML en list.');
     composeGuide(L, tournamentId);
     L.push('- No dejes fuera ningún texto del guion.');
     L.push('');
@@ -1614,7 +1901,7 @@
     else L.push('- NO copies iconos, emojis ni símbolos decorativos del original (ni como texto ni como imagen). Quítalos y deja el resto del texto igual.');
     L.push('- Si la newsletter es de Media Packages, pon "mediaPackages": true y NO añadas el banner de Media Packages como imagen.');
     L.push('- Imágenes: solo las que estén en el original y con su URL de custom.cvent.com tal cual. Si no hay URL, no pongas el módulo.');
-    L.push('- PIEZAS: cada titular es un módulo title ("style": principal para titulares grandes, seccion para el título de una lista o sección, saludo para «Dear …», entre para la frase de despedida, ante para un rótulo pequeño en mayúsculas); elige la pieza por su función: párrafos narrativos → text; información agrupada → box; etiquetas con valores → datos; lista narrativa suelta → list; botón → button. No conviertas automáticamente cada párrafo en text ni cada lista HTML en list.');
+    L.push('- PIEZAS: cada titular es un módulo title ("style": principal para el titular grande de apertura, seccion para los titulares de cada sección o tema (estilo de la marca), siempre en una línea; saludo para «Dear …», entre para la frase de despedida, ante para un rótulo pequeño en mayúsculas); elige la pieza por su función: párrafos narrativos → text; información agrupada → box; etiquetas con valores → datos; lista narrativa suelta → list; botón → button. No conviertas automáticamente cada párrafo en text ni cada lista HTML en list.');
     composeGuide(L, tournamentId, context);
     L.push('- No pongas dos text ni dos datos seguidos: une su contenido en un solo módulo. Varias cajas (box) seguidas sí están bien si son temas distintos. No dejes fuera ningún texto del original.');
     L.push('');
@@ -1647,29 +1934,58 @@
   }
   function normalizeWalletImports(sections,notes) {
     var out=[],converted=0;
+    function mergeWallets(a,b) {
+      // Separate passes/QRs and distinct human copy must not be silently collapsed.
+      var merged=Object.assign({},a), conflict=false;
+      ['title','text'].forEach(function(k){
+        if(has(a[k])&&has(b[k])&&String(a[k]).trim()!==String(b[k]).trim())conflict=true;
+        else if(!has(a[k])&&has(b[k]))merged[k]=b[k];
+      });
+      function mode(d){return /^(both|apple|google|none)$/.test(d.buttons)?d.buttons:'both';}
+      function active(d,kind){return kind==='qr'?d.qr==='personal':mode(d)==='both'||mode(d)===kind;}
+      function combine(key,kind) {
+        var aa=active(a,kind),bb=active(b,kind);
+        if(!aa&&!bb)return;
+        var av=String(a[key]||'').trim()||WALLET_DEFAULTS[key],bv=String(b[key]||'').trim()||WALLET_DEFAULTS[key];
+        if(aa&&bb&&av!==bv&&av!==WALLET_DEFAULTS[key]&&bv!==WALLET_DEFAULTS[key]) {conflict=true;return;}
+        // A configured URL/image wins over a repeated default token or official badge.
+        merged[key]=!aa?bv:!bb?av:av===WALLET_DEFAULTS[key]?bv:av;
+      }
+      combine('appleUrl','apple');combine('appleImage','apple');
+      combine('googleUrl','google');combine('googleImage','google');combine('qrUrl','qr');
+      if(conflict)return null;
+      var apple=active(a,'apple')||active(b,'apple'),google=active(a,'google')||active(b,'google');
+      merged.buttons=apple&&google?'both':apple?'apple':google?'google':'none';
+      if(active(a,'qr')||active(b,'qr'))merged.qr='personal';
+      return merged;
+    }
     function append(s,detected) {
-      var previous=out[out.length-1];
-      if(detected && previous && previous.type==='wallet') {
-        var a=previous.d,b=s.d,am=a.buttons||'both',bm=b.buttons||'both';
-        var apple=/^(both|apple)$/.test(am)||/^(both|apple)$/.test(bm),google=/^(both|google)$/.test(am)||/^(both|google)$/.test(bm);
-        a.buttons=apple&&google?'both':apple?'apple':google?'google':'none';
-        if(b.qr==='personal'){a.qr='personal';a.qrUrl=b.qrUrl;}
-        ['appleUrl','googleUrl'].forEach(function(k){if(!has(a[k])&&has(b[k]))a[k]=b[k];});
-      } else out.push(s);
+      var previous=out[out.length-1],merged=previous&&previous.type==='wallet'?mergeWallets(previous.d,s.d):null;
+      if(merged) {previous.d=merged;if(!detected)converted++;}
+      else {
+        if(previous&&previous.type==='wallet')notes.push('Wallet: se conservan separados los bloques con enlaces, QR o textos diferentes para no perder sus datos.');
+        out.push(s);
+      }
       if(detected)converted++;
     }
     function technicalLabel(v){return /^(?:Apple Wallet|Google Wallet|Add to Apple Wallet(?: Button)?|Add to Google Wallet(?: Button)?|QR Code|image)$/i.test(v.trim().replace(/^[*_]+|[*_]+$/g,''));}
     sections.forEach(function(source){
       if(!source||!source.d){out.push(source);return;}
       var s=JSON.parse(JSON.stringify(source)),d=s.d;
-      if(s.type==='wallet'){append(s,false);return;}
+      if(s.type==='wallet'){if(K.cleanWallet(d))notes.push('Wallet: eliminados textos técnicos de imágenes; el QR personal se conserva como imagen de Cvent.');append(s,false);return;}
       if(s.type==='images'||s.type==='imagen') {
         var count=s.type==='imagen'?1:3, pending=[],found=false;
-        function flush(){if(!pending.length)return;var rest=Object.assign({},d);for(var n=1;n<=3;n++){delete rest['f'+n+'_src'];delete rest['f'+n+'_alt'];}pending.forEach(function(pic,i){rest['f'+(i+1)+'_src']=pic.src;rest['f'+(i+1)+'_alt']=pic.alt;});out.push({type:'images',d:rest});pending=[];}
+        function flush(){
+          if(!pending.length)return;
+          var rest=Object.assign({},d);
+          for(var n=1;n<=3;n++){delete rest['f'+n+'_src'];delete rest['f'+n+'_alt'];delete rest['f'+n+'_url'];}
+          pending.forEach(function(pic,i){rest['f'+(i+1)+'_src']=pic.src;rest['f'+(i+1)+'_alt']=pic.alt;if(pic.url!=null)rest['f'+(i+1)+'_url']=pic.url;});
+          out.push({type:'images',d:rest});pending=[];
+        }
         for(var n=1;n<=count;n++){
-          var src=d[s.type==='imagen'?'src':'f'+n+'_src'],alt=d[s.type==='imagen'?'alt':'f'+n+'_alt'];if(!has(src))continue;
+          var src=d[s.type==='imagen'?'src':'f'+n+'_src'],alt=d[s.type==='imagen'?'alt':'f'+n+'_alt'],url=d[s.type==='imagen'?'url':'f'+n+'_url'];if(!has(src))continue;
           var sig=walletSignals(src);
-          if(hasWalletSignal(sig)){found=true;flush();append(walletFromSignal(sig),true);}else pending.push({src:src,alt:alt||''});
+          if(hasWalletSignal(sig)){found=true;flush();append(walletFromSignal(sig),true);}else pending.push({src:src,alt:alt||'',url:url});
         }
         if(!found) {out.push(s);return;}
         flush();return;
@@ -1711,7 +2027,8 @@
     var notes = [], uid = 0, okT = K.CLIENT.tournaments.some(function (t) { return t.id === raw.tournament; });
     if (!okT) notes.push('Torneo no reconocido: se mantiene el que tenías elegido.');
     var st = { tournament: okT ? raw.tournament : (fallbackTournament || 'surfcup'), name: String(raw.name || ''), desc: String(raw.desc || ''), headerAlt: '', contactEmail: String(raw.contactEmail || ''), mediaPackages: !!raw.mediaPackages, franjaLeft: String(raw.franja || ''), franjaRight: String(raw.franjaRight || ''), look: 'auto', designVersion: K.Designs ? K.Designs.version : undefined, off: {}, sections: [] };
-    normalizeWalletImports(raw.sections,notes).forEach(function (s, i) {
+    var incoming = normalizeWalletImports(raw.sections,notes);
+    incoming.forEach(function (s, i) {
       var m = s && M[s.type];
       if (!m) { notes.push('Módulo ' + (i + 1) + ' descartado: tipo «' + (s && s.type) + '» desconocido.'); return; }
       var d = {}, k, src = s.d || {};
@@ -1723,6 +2040,11 @@
         d[f.k] = v;
       });
       Object.keys(src).forEach(function (k2) { if (!m.fields.some(function (f) { return f.k === k2; }) && has(src[k2])) notes.push('Módulo ' + (i + 1) + ' (' + m.name + '): se ha ignorado el campo «' + k2 + '».'); });
+      // Titulares en una sola línea (norma del usuario): se unen los saltos que haya puesto ChatGPT.
+      if (s.type === 'title' && /\n/.test(d.text || '')) d.text = d.text.split(/\s*\n\s*/).filter(Boolean).join(' ');
+      // El Tentative Schedule se mantiene como imagen: si llega como timeline (o justo tras su titular), se avisa.
+      var prevD = (incoming[i - 1] || {}).d || {};
+      if (s.type === 'timeline' && /schedule/i.test([d.h1, prevD.text, prevD.title, prevD.label].join(' '))) notes.push('Módulo ' + (i + 1) + ': el Tentative Schedule ha llegado como timeline. Debe ir como imagen: sustitúyelo por un bloque Imagen con la imagen del original.');
       if(s.type==='wallet' && K.cleanWallet(d)) notes.push('Wallet: eliminados textos técnicos de imágenes; el QR personal se conserva como imagen de Cvent.');
       st.sections.push({ id: 's' + Date.now() + '_' + (uid++), type: s.type, d: d, open: false });
     });

@@ -493,3 +493,57 @@ console.log('OK: recarga en newsletter/carpeta, scroll, filtros, cambios pendien
   assert.notEqual(e.nodes['#franja'].value,'WORLD CHALLENGE 2027');
 }
 console.log('OK: editor WCH automático, instrucciones, cambio a Camps Canada y selector de modelos eliminado.');
+
+// New-project identity prompt is optional; saving routes to the chosen section and sets the band.
+{
+ const st={}, session={}, q=boot(st,session,true);
+ q.clickText('Arsenal');q.clickText('Experiences');q.nodes['#new'].click();
+ assert.equal(q.nodes['#new-newsletter-dialog'].open,true);
+ assert.equal(q.nodes['#new-newsletter-tournament'].value,'arsenal-exp');
+ q.nodes['#new-newsletter-name'].value='Payment reminder';q.nodes['#new-newsletter-tournament'].value='psg-canada';
+ q.nodes['#new-newsletter-form'].onsubmit({preventDefault(){}});
+ let p=Object.values(JSON.parse(st[PROJ]))[0];
+ assert.equal(p.state.name,'Payment reminder');assert.equal(p.state.franjaLeft,'Payment reminder');assert.equal(p.state.franjaAuto,true);assert.equal(p.state.tournament,'psg-canada');assert.equal(p.folder,'');
+ assert.equal(q.nodes['#new-newsletter-dialog'].open,false);
+ assert.ok(q.nodes['#settings-summary'].textContent.includes('Paris Saint-Germain'));
+ assert.ok(JSON.parse(st[PROJ])[p.id].state.tournament==='psg-canada');
+ q.nodes['#name'].value='Updated reminder';q.nodes['#name'].handlers.input.call(q.nodes['#name']);q.fire('beforeunload');
+ p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.state.franjaLeft,'Updated reminder');
+ q.nodes['#franja'].value='Custom band';q.nodes['#franja'].handlers.input.call(q.nodes['#franja']);
+ q.nodes['#name'].value='Another name';q.nodes['#name'].handlers.input.call(q.nodes['#name']);q.fire('beforeunload');
+ p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.state.franjaLeft,'Custom band');assert.equal(p.state.franjaAuto,false);
+ q.nodes['#franja-name'].click();q.fire('beforeunload');p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.state.franjaLeft,'Another name');
+ q.nodes['#newsletter-settings-open'].click();assert.equal(q.nodes['#newsletter-settings-dialog'].open,true);q.nodes['#newsletter-settings-close'].click();assert.equal(q.nodes['#newsletter-settings-dialog'].open,false);
+ const reload=boot(st,session,true);assert.equal(reload.nodes['#name'].value,'Another name');assert.equal(reload.nodes['#new-newsletter-dialog'].open,undefined,'Reload does not ask creation details again');
+}
+{
+ const st={},q=boot(st);q.clickText('Surf Cup 2026');q.nodes['#new'].click();
+ q.nodes['#new-newsletter-name'].value='Unconfirmed draft';q.nodes['#new-newsletter-tournament'].value='arsenal-exp';q.nodes['#new-newsletter-close'].click();
+ const p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.state.name,'');assert.equal(p.state.tournament,'surfcup');assert.equal(q.nodes['#new-newsletter-dialog'].open,false);
+}
+{
+ const st={[PROJ]:JSON.stringify({old:{id:'old',updated:1,state:{tournament:'arsenal-exp',name:'Original',franjaLeft:'Keep this band',off:{},sections:[]}}})};
+ const q=boot(st);q.clickText('Arsenal');q.clickText('Experiences');q.clickText('Original');q.nodes['#name'].value='Renamed';q.nodes['#name'].handlers.input.call(q.nodes['#name']);q.fire('beforeunload');
+ assert.equal(JSON.parse(st[PROJ]).old.state.franjaLeft,'Keep this band');
+}
+console.log('OK: nombre y ubicación iniciales opcionales, franja automática/manual, ajustes separados y persistencia.');
+{
+ const st={[HUB]:JSON.stringify({folders:{f1:{id:'f1',name:'Campaigns',tournament:'arsenal-exp',parent:''}},sorts:{},orders:{}})},q=boot(st,{},true);
+ q.clickText('Arsenal');q.clickText('Experiences');q.clickText('📁 Campaigns');q.nodes['#new'].click();
+ q.nodes['#new-newsletter-name'].value='Same folder';q.nodes['#new-newsletter-form'].onsubmit({preventDefault(){}});
+ let p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.folder,'f1','Keeping the same section preserves the folder');
+ q.nodes['#back'].click();q.nodes['#new'].click();q.nodes['#new-newsletter-name'].value='Different club';q.nodes['#new-newsletter-tournament'].value='psg-canada';q.nodes['#new-newsletter-form'].onsubmit({preventDefault(){}});
+ p=Object.values(JSON.parse(st[PROJ])).find(p=>p.state.name==='Different club');assert.equal(p.folder,'');assert.equal(p.state.tournament,'psg-canada');
+ q.nodes['#back'].click();assert.ok((function textOf(n){return [n.textContent||''].concat(n.children.map(textOf)).join(' ');})(q.nodes['#folders']).includes('Different club'),'Returning to the hub opens the chosen destination');
+}
+{
+ const st={},q=boot(st,{},true);q.nodes['#new'].click();q.nodes['#new-newsletter-name'].value='My newsletter';q.nodes['#new-newsletter-form'].onsubmit({preventDefault(){}});
+ q.nodes['#imp-text'].value=JSON.stringify({tournament:'surfcup',name:'',sections:[{type:'text',d:{text:'Imported content'}}]});q.nodes['#imp-go'].click();
+ let p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.state.name,'My newsletter');assert.equal(p.state.franjaLeft,'My newsletter');
+ q.change('#recipe','blank');q.fire('beforeunload');p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.state.name,'My newsletter');assert.equal(p.state.franjaLeft,'My newsletter');
+}
+console.log('OK: ubicación/carpeta elegidas y nombre conservado al importar JSON vacío o aplicar receta.');
+{
+ const st={},q=boot(st,{},true);q.nodes['#from-script'].click();q.nodes['#script-name'].value='Named from script';q.nodes['#script-tournament'].value='psg-canada';q.nodes['#script-answer'].value=JSON.stringify({tournament:'arsenal-exp',name:'AI name',sections:[]});q.nodes['#script-go'].click();
+ const p=Object.values(JSON.parse(st[PROJ]))[0];assert.equal(p.state.name,'Named from script');assert.equal(p.state.franjaLeft,'Named from script');assert.equal(p.state.tournament,'psg-canada');
+}

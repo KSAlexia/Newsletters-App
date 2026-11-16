@@ -1123,7 +1123,7 @@ Petición del usuario: comprobar que todo funciona, comparar cómo hace la app l
 
 ### Interfaz
 
-- **Barra superior en una fila**: «Más acciones ▾» agrupa importar, receta, exportar proyecto y descargar .html; «Descargar .txt (Cvent)» sigue como botón principal. El menú se cierra al usar una opción o al pulsar fuera.
+- **Barra superior en una fila**: «Importar desde ChatGPT…» va fuera del menú, a la vista, porque es lo que más se usa en estas primeras semanas. En el inicio, «＋ Desde un guion con ChatGPT» va como botón principal y delante de «＋ Nueva newsletter»; «Más acciones ▾» agrupa receta, exportar proyecto y descargar .html; «Descargar .txt (Cvent)» sigue como botón principal. El menú se cierra al usar una opción o al pulsar fuera.
 - **«Datos de la newsletter» plegable** (`#settings-box`), con una línea de resumen (sección · nombre). Se pliega sola cuando la newsletter ya tiene bloques y franja, así los bloques quedan arriba; si es nueva, se abre. Las imágenes del kit empiezan plegadas; la sesión recuerda lo último elegido.
 - **Avisos con el estilo de la app** (`#notice-dialog`, `notice()`): resultado de importar, crear desde guion, archivo no válido, carpeta con contenido y versión dañada. Incluye «Ver la revisión». Los `confirm()` de acciones destructivas siguen siendo del navegador.
 - **Tras importar, el menú lateral** muestra la sección nueva.
@@ -1165,3 +1165,94 @@ Comprobación automática de cada envío frente a su original (textos visibles, 
 En el navegador, la sección de Telegram de RMF Exp lleva los mismos enlaces que el original.
 
 Detalle visual: ChatGPT no puso escala a los badges, que salen a 279 px (más grandes que en el original); se ajusta con «Escala» en el bloque Imagen. Siguen sin probarse Cvent, Gmail y Outlook reales.
+
+## Corrección de los tres fallos de Wallet detectados en revisión · 13/11/2026
+
+Autorizado por el usuario tras la revisión. Cambios limitados a la normalización de importaciones JSON y pruebas:
+
+- Al separar una fila mixta de imágenes y badges, se trasladan juntos src/alt/url y se borran los índices antiguos de los tres campos. Una imagen sin enlace no hereda el del badge o de otra imagen; se conservan escala y tamaño.
+- Al agrupar Wallet contiguos compatibles, una URL o imagen configurada tiene prioridad sobre un token/asset predeterminado repetido, sin importar el orden. El QR personalizado se conserva.
+- Los bloques explícitos Wallet y los inferidos se agrupan en ambos sentidos, evitando repetir badges equivalentes. La agrupación mantiene título y texto humanos. Si hay enlaces personalizados, QR o textos diferentes, se conservan los bloques separados con un aviso; no se agrupan a través de otros contenidos.
+- La limpieza previa de bloques Wallet respeta textos representados como arrays en el JSON.
+
+Pruebas de regresión en test/wallet.test.js para los tres fallos en las 19 secciones, orden inverso, enlaces de imágenes a ambos lados del badge, imagen sin enlace, configuración de badges, textos humanos, QR distintos e idempotencia. Chrome real en escritorio y vista móvil: enlace Telegram correcto en el DOM y en su campo de edición, src del QR personalizado intacto y un solo botón por cada grupo equivalente. El QR de esa prueba usa una URL ficticia para verificar conservación de configuración, sin pretender validar su imagen ni su lectura. Todas las suites Node y 268 comparaciones de HTML anterior sin diferencias. El render de proyectos ya guardados no se altera; para reparar una importación anterior, volver a importar su JSON original. Sin envío de prueba en Cvent.
+
+## Creación con identidad y jerarquía del editor · 13/11/2026
+
+Petición del usuario: nombre/franja vinculados por defecto, pedir opcionalmente nombre y club-subbrand al crear y separar ajustes/brand kit del contenido.
+
+- `index.html`: identidad visible al principio del panel (nombre, ubicación y botón «⚙ Ajustes»); datos de envío, franja, nombre de archivo y brand kit en `newsletter-settings-dialog`. La biblioteca de imágenes queda plegada antes de los bloques. Nuevo diálogo opcional de creación con nombre y selector agrupado de las 19 secciones; cerrar o «Ahora no» descarta sus campos y deja el borrador creado como antes. Guion incluye nombre opcional.
+- `js/app.js`: `prepareNewsletterIdentity` activa `franjaAuto` para proyectos nuevos o importados sin franja explícita; renombrar actualiza la franja mientras está vinculada. Editar la franja rompe el vínculo; botón para restaurarlo. No se mutan automáticamente newsletters existentes al abrirlas ni sus franjas personalizadas. WCH conserva su franja fija y controles deshabilitados.
+- Al confirmar creación, se aplica la sección, el kit automático y la ubicación de destino; misma sección mantiene carpeta, otra sección usa su raíz. El árbol se actualiza después de guardar. Volver al hub abre el destino elegido. El nombre no se pierde al importar JSON sin nombre o al aplicar una receta. La apertura automática de la paleta en un proyecto vacío no desplaza el nombre fuera de la vista.
+- `css/app.css`: identidad destacada, jerarquía de contenido, formularios y ventana de ajustes responsive. No se modifica el generador de HTML del email en este cambio.
+
+Verificación: suites Node completas y 268 comparaciones de HTML anterior sin diferencias; pruebas de creación opcional, destino/carpeta, franja auto/manual, reset, nombres importados/recetas/guion, recarga y preservación de franjas antiguas. Chrome real: creación con nombre y otra marca, omitir datos, árbol/destino al volver, nombre/franja sincronizados, override manual y botón de reset, ajustes y acceso a la biblioteca de kits. Ancho 390 px sin desbordamiento horizontal. Sin commit ni push.
+
+## Separación común entre bloques (16/11/2026)
+
+- Petición: los huecos entre bloques eran irregulares (de 0 a 58 px según el tipo de bloque). Las referencias de cada club (`docs/brand-kits/referencias`) usan casi siempre **28 px** entre bloques (Arsenal y PSG Camps; Experiences entre 24 y 30) y 36 px arriba del primero.
+- `K.build` (js/modules.js) monta ahora los bloques de contenido al final y fija el padding de la celda exterior: **36 px antes del primer bloque, 28 px entre bloques y 36 px tras el último** (`K.BLOCK_GAP`, `K.BLOCK_EDGE`). Las bandas de color reciben el hueco como fila blanca aparte. Un título solo que encabeza el bloque siguiente queda a 14 px de él como mínimo (`K.HEADING_GAP`); el par título de sección + bloque de WCH sigue pegado, como en sus ejemplos. Sustituye al mínimo de 20 px anterior (`spacedContent`).
+- Aplica a las newsletters con diseño actual o perfil de marca (las mismas que antes recibían el mínimo de 20 px); el HTML antiguo sin `designVersion` no cambia.
+- Pruebas: `test/spacing-arsenal.test.js` comprueba 36/28/…/36 en todas las marcas, los siete ejemplos de `examples/prueba-cvent` y las bandas; `test/referencias.test.js` actualizado (título de sección de WCH). Comprobado en el navegador con PSG Experiences y Arsenal Camps.
+
+## Ctrl/⌘ + B e I en los cuadros de texto del panel (16/11/2026)
+
+- Antes solo funcionaban al editar directamente en la vista previa; en los cuadros de texto de párrafo del panel derecho (Texto de la caja, Texto, etc.) no hacían nada. Ahora `mdShortcut` (js/app.js) pone o quita `**…**` (negrita) o `*…*` (cursiva) alrededor de la selección; sin selección deja las marcas con el cursor dentro. Los espacios de los extremos de la selección quedan fuera de la marca. Usa `insertText`, así que Ctrl/⌘ + Z del cuadro lo deshace.
+- Comprobado en el navegador con una caja suave: poner y quitar negrita en el panel, deshacer, y negrita desde la edición directa de la vista previa.
+
+## Normas fijas del usuario (16/11/2026)
+
+1. **El Tentative Schedule nunca se pasa a código**: se mantiene como imagen. Las instrucciones de ChatGPT (importar y guion, con y sin kit) lo dicen en la guía y en un bloque final «NORMAS FIJAS» que prevalece sobre el kit: va como `images` con su custom link (en un guion sin URL, `PLACEHOLDER` con alt «Tentative Schedule»); el timeline queda para agendas escritas como texto que no sean el schedule. Si al importar llega un `timeline` justo tras un titular con «schedule», se avisa para sustituirlo por la imagen.
+2. **Titulares como el título principal y en una línea**: las instrucciones piden `title` «principal» (no «seccion») para el titular de cada sección o tema, y sin `\n`. Al importar, los saltos de línea de cualquier titular se unen en una línea. El ejemplo de referencia (`K.REFERENCE_CLUB`) ya no parte «Your Week in Paris, {[C-FIRST NAME:TC]}». El estilo «Sección» sigue disponible a mano en el editor.
+3. **Bayern**: interlineado de su fuente de titulares (Cond Extra Bold: Extenda60/40 y DinProBlack) = 1,05 × tamaño (p. ej. 32/34 en lugar de 32/40), en newsletters con el diseño actual; el HTML antiguo no cambia.
+- Pruebas: nueva `test/normas.test.js`; `test/club-style.test.js` actualizado (titular de la referencia en una línea). Comprobado en el navegador el titular de Bayern en escritorio y móvil.
+
+## Newsletters más parecidas a las referencias de cada kit (16/11/2026)
+
+Comparadas lado a lado las siete referencias (una por kit) con lo que genera la app a partir del mismo contenido (capturas con Chrome sin ventana). Decisiones del usuario: tarjetas «At a glance» solo si el original las tiene; títulos de sección con el estilo propio de cada marca; 12 px entre cajas seguidas; **cada kit sale por defecto como sus referencias**, sin una norma común, y el editor ofrece opciones para ajustarlo.
+
+- **Ficha de estilo por kit** (`K.Designs.look` en js/brand-designs.js, medida en `docs/brand-kits/referencias`): título de sección (Arsenal Experiences: Arial Black 28/34 rojo en mayúsculas con línea gris encima; Arsenal Camps: Georgia 26/32 en mayúsculas; PSG Camps: titular PSG 26/32 en mayúsculas; PSG Experiences: 21/28 azul; RMF: Georgia 24/30; WCH sin cambios), caja con borde (fondo, borde, esquinas, relleno; RMF Camps con borde dorado a la izquierda y botón debajo), botón (ajustado al texto en una línea en Camps y Arsenal; 210 px en cursiva en PSG Experiences; 260 px en RMF Experiences), color de viñetas, título de caja, notas grises (Arsenal Experiences), 8 px entre días del timeline (PSG Experiences), datos «Etiqueta: valor» (11 px #888888 / 14 px negrita; en PSG Camps, valor en la regular) y negrita recta en PSG (antes salía con la fuente cursiva). El emoji suelto de una caja con borde (🎁) va grande dentro de la caja. «Texto + imagen» con kit: foto de 285 px, título 20/26 y texto 14/22. Botones de RMF Camps azul marino y de RMF Experiences dorado, con texto blanco.
+- **Opciones nuevas del editor** («Como en las referencias de la marca» por defecto): ancho del botón (ajustado, 190 px, todo el ancho) en Botón y en los botones de Caja y otros bloques; en la caja con borde, fondo, esquinas y botón dentro/debajo; color del título de la caja; color del texto (gris de nota o color de la marca); alineación a la izquierda de una imagen con escala.
+- **Instrucciones de ChatGPT**: sin la regla que creaba tarjetas «At a glance» con datos de los párrafos (solo si el original las tiene; sin deducir años); titulares de sección como `title` «seccion» (estilo de la marca) y en una línea, principal solo para la apertura; datos de acceso en el tipo de caja del original (Arsenal Experiences usa borde); imágenes más estrechas que 570 px con escala y alineación.
+- Solo afecta a newsletters con el diseño actual y kit de perfil (PSG, Arsenal, RMF, WCH); torneos, Bayern y HTML antiguo no cambian.
+- Pruebas: nueva `test/estilos-kit.test.js`; actualizadas `normas`, `spacing-arsenal` y `arsenal-fidelity`. Comprobado en el navegador el editor (opciones visibles y aplicadas) y en capturas lado a lado Arsenal Camps/Experiences, PSG Camps/Experiences y RMF Camps/Experiences.
+- Pendiente: los ejemplos de `examples/prueba-cvent` se generaron con las instrucciones antiguas (p. ej. el glance de RMF Experiences); hay que volver a importarlos con ChatGPT para ver el efecto de las nuevas. Queda diferente lo que depende del contenido que elija ChatGPT (separadores, notas pequeñas, cursivas de texto).
+
+## Segunda ronda de parecido con las referencias (16/11/2026)
+
+- **Franja de Arsenal**: sin cambios. Las referencias usan #8B0015 y la etiqueta derecha #FFCCCC sin negrita, pero el usuario ya decidió mantener #B4001E con ambas etiquetas en blanco y negrita (ver más arriba y `test/franjas.test.js`). Además, en las referencias la franja no admite saltos de línea y en Arsenal Experiences desborda los 650 px; la app deja que la etiqueta larga se parta.
+- **Instrucciones de ChatGPT**: separadores (gris suave) solo donde el original tiene una línea divisoria y en el mismo sitio; cursivas como *así*; notas pequeñas o grises en su propio texto con `size: small` y `tone: grey`. Resuelve también la línea gris encima de «Your week, day by day» de PSG Experiences, que es un separador del original.
+- **Saludo**: con kit, la línea que sigue a un párrafo «Dear/Hi/Hello …,» va pegada a él (World Challenge).
+- **Separadores**: 20 px encima de la línea y 22 debajo, como en las referencias (antes 28 + 28).
+- **Caja de datos** («Etiqueta: valor» sin título): relleno 14/20 px como las referencias.
+- Pruebas: `test/estilos-kit.test.js` ampliada; `test/spacing-arsenal.test.js` admite 20/22 junto a separadores. Comprobado con capturas lado a lado (World Challenge y Arsenal Camps).
+
+## Móvil y resto de referencias (16/11/2026)
+
+- **Móvil** (375 px, una referencia por kit lado a lado): la app se adapta igual o mejor que las referencias (varias referencias se salen por la derecha). Única diferencia sistemática: márgenes laterales de 20 px en todas las referencias; ahora los kits usan 20 px en móvil (el resto sigue con 24).
+- **Inventario de las otras 48 referencias** (subagente; capturas en el scratchpad de la sesión). Implementado como opciones de bloques existentes (por defecto, «como la marca»):
+  - Título de sección con **barra de 56 px** debajo y centrado: por defecto en Arsenal, PSG y RMF Camps (como sus referencias); opción «Barra debajo» (con/sin).
+  - **Texto + imagen en panel suave** (fondo claro y barra lateral; Arsenal y PSG Experiences).
+  - **Botón con contorno** (blanco con borde y texto de la marca).
+  - **Caja «Aviso claro»** (fondo #FDF3F0, barra y rótulo #C0392B; RMF Camps).
+  - **Barra lateral en color de acento** en cajas suaves (PSG Experiences).
+  - **Caja con borde a la izquierda** (blanca, recta, título 16/22; datos de acceso de Arsenal y PSG Camps).
+  - **Widgets/tablas de Cvent** sueltos ({[C-PAYMENTS]}, widget de registro…) con 20 px de margen lateral para que no se recorten.
+  - **Firma o cierre** en letra de titular y color de marca (texto «tone: serif»).
+  - Instrucciones de ChatGPT: cuándo usar cada opción.
+- **Pendiente (bloques nuevos, a decidir)**: tarjetas de normas con emoji (8 referencias: paneles a todo el ancho en Arsenal/PSG Camps y rejilla 2×2 en RMF Camps), tarjeta de actividad con foto, etiqueta y precio (4), dos botones en fila y fila «Add to calendar» (2), lista de opciones con precio a la derecha (2), tarjeta oscura de datos de registro (2), paquete destacado y tarjetas de paquete con barra superior (1), caja suave con contenido mixto (subtítulos, puntos y notas en la misma caja; 4).
+- Pruebas: `test/estilos-kit.test.js` ampliada. Muestras revisadas con Chrome sin ventana.
+
+## Bloques nuevos copiados de las referencias (16/11/2026)
+
+Seis bloques nuevos en la paleta y un formato nuevo de caja, con las medidas de sus referencias. Cada uno toma por defecto la variante de la marca (`K.Designs.look`: `normas`, `activity`) y el editor permite elegir otra:
+
+- **Tarjetas de normas** (`normas`, hasta 8 con emoji, título y texto): paneles a todo el ancho del color de la marca con el emoji a la derecha (Arsenal y PSG Camps) o rejilla de 2 columnas con colores alternos y esquinas de 10 px (RMF Camps).
+- **Tarjetas de actividad** (`actividad`, hasta 6 con foto, etiqueta, descripción, fecha, precio y nota): foto a la izquierda sobre fondo suave (Arsenal), foto a la derecha con borde fino (RMF) o dos columnas con la foto arriba recortada a 170 px (PSG; el recorte usa `object-fit`, que Outlook de escritorio no aplica).
+- **Fila de botones** (`botones`, 2 a 4 en fila, cualquier estilo incluido el de contorno) y preset **«Añadir al calendario»** con `{[E-CALENDAR URL:GOOGLE|OUTLOOK|ICAL|ICS]}`.
+- **Opciones con precio** (`opciones`): filas apiladas con el precio a la derecha; una puede ir destacada («Best value») y lleva nota en cursiva debajo.
+- **Tarjeta oscura de datos de registro** (`registro`): centrada, rótulo y título, pares «Etiqueta: valor» con línea fina entre ellos.
+- **Paquetes** (`paquete`): uno destacado con cabecera de color, distintivo, lo que incluye y precio grande; o dos tarjetas con barra superior.
+- **Caja suave «Mixto»** (`fmt: mixto`): «## subtítulo», «- punto», «> nota gris» y párrafos en la misma caja.
+- Iconos de paleta y descripciones nuevas; letras únicas en la paleta (B, H, M, Ñ, Y, Z). Instrucciones de ChatGPT: «BLOQUES ESPECÍFICOS» con cuándo usar cada uno.
+- Pruebas: `test/estilos-kit.test.js` ampliada. Muestras revisadas con Chrome sin ventana en Arsenal Camps/Experiences, RMF Camps/Experiences y PSG Experiences; comprobado en el editor que aparecen en la paleta y se añaden.

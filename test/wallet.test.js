@@ -37,3 +37,53 @@ const ordinary=[{type:'text',d:{text:'The QR can be saved in Apple Wallet or Goo
 assert.deepEqual(Array.from(importSections(ordinary).state.sections,x=>x.type),['text','images']);
 const again=importSections(markdown.sections).state;assert.equal(again.sections.length,markdown.sections.length);assert.equal(again.sections.filter(x=>x.type==='wallet').length,1);
 console.log('OK: detección automática desde imágenes, enlaces, tokens y tabla Markdown en las 19 secciones; sin duplicar ni confundir Telegram.');
+// Regressions found in the review: mixed linked images, configured QR and duplicated badges.
+for(const brand of K.CLIENT.tournaments){
+ const linked=importSections([{type:'images',d:{size:'inset',scale:'70',f1_src:A,f1_url:'{[C-PASSBOOK_LINK]}',f2_src:'https://custom.cvent.com/telegram.png',f2_alt:'Telegram QR',f2_url:'https://t.me/club',f3_src:'https://custom.cvent.com/photo.jpg',f3_alt:'Photo'}}],brand.id).state;
+ const pics=linked.sections.find(x=>x.type==='images').d;
+ assert.equal(pics.f1_src,'https://custom.cvent.com/telegram.png');assert.equal(pics.f1_url,'https://t.me/club',brand.id);
+ assert.equal(pics.f2_src,'https://custom.cvent.com/photo.jpg');assert.equal(pics.f2_url,undefined,'A photo without a link must not inherit one');
+ assert.equal(pics.f3_url,undefined);assert.equal(pics.size,'inset');assert.equal(pics.scale,'70');
+ assert.ok(K.build(linked).includes('href="https://t.me/club"'));
+ const customQr='https://custom.cvent.com/event-specific-qr.png';
+ for(const sections of [
+  [{type:'wallet',d:{qr:'personal',qrUrl:customQr}},{type:'text',d:{text:'{[C-QRCODE_LINK]}'}}],
+  [{type:'text',d:{text:'{[C-QRCODE_LINK]}'}},{type:'wallet',d:{qr:'personal',qrUrl:customQr}}]
+ ]){
+  const fixed=importSections(sections,brand.id).state;
+  assert.equal(fixed.sections.length,1);assert.equal(fixed.sections[0].d.qrUrl,customQr);assert.ok(K.build(fixed).includes('src="'+customQr+'"'));
+ }
+ for(const sections of [
+  [{type:'images',d:{f1_src:A}},{type:'wallet',d:{buttons:'apple'}}],
+  [{type:'wallet',d:{buttons:'apple'}},{type:'images',d:{f1_src:A}}],
+  [{type:'wallet',d:{buttons:'apple'}},{type:'wallet',d:{buttons:'apple'}}]
+ ]){
+  const fixed=importSections(sections,brand.id).state;
+  assert.equal(fixed.sections.length,1);assert.equal(fixed.sections[0].d.buttons,'apple');
+  assert.equal((K.build(fixed).match(/alt="Add to Apple Wallet"/g)||[]).length,1,brand.id);
+ }
+}
+// Both sides of a mixed row retain their own links after splitting.
+const split=importSections([{type:'images',d:{f1_src:'https://custom.cvent.com/photo1.jpg',f1_alt:'Before',f1_url:'https://example.com/before',f2_src:A,f2_url:'{[C-PASSBOOK_LINK]}',f3_src:'https://custom.cvent.com/photo3.jpg',f3_alt:'After',f3_url:'https://example.com/after'}}]).state;
+assert.equal(split.sections[0].d.f1_url,'https://example.com/before');assert.equal(split.sections[2].d.f1_url,'https://example.com/after');assert.equal(split.sections[2].d.f2_url,undefined);
+// Preserve configured links/badges and human copy when eliminating repeated defaults.
+const settings={buttons:'apple',appleUrl:'https://example.com/my-pass',appleImage:'https://custom.cvent.com/my-badge.png',title:'Save your pass',text:'Show this at check-in.'};
+for(const sequence of [[{type:'images',d:{f1_src:A}},{type:'wallet',d:settings}],[{type:'wallet',d:settings},{type:'images',d:{f1_src:A}}]]){
+ const result=importSections(sequence).state;assert.equal(result.sections.length,1);
+ for(const key of Object.keys(settings))assert.equal(result.sections[0].d[key],settings[key]);
+ assert.equal(importSections(result.sections).state.sections.length,1,'Reimporting a normalized block does not create duplicates');
+}
+// Distinct passes and distinct QR images represent different content: keep both, with a notice.
+for(const pair of [
+ [{buttons:'apple',appleUrl:'https://example.com/pass-a'},{buttons:'apple',appleUrl:'https://example.com/pass-b'}],
+ [{buttons:'none',qr:'personal',qrUrl:'https://custom.cvent.com/qr-a.png'},{buttons:'none',qr:'personal',qrUrl:'https://custom.cvent.com/qr-b.png'}],
+ [{title:'Player pass'},{title:'Parent pass'}],
+ [{text:'Information A'},{text:'Information B'}]
+]){
+ const result=importSections(pair.map(d=>({type:'wallet',d})));assert.equal(result.state.sections.length,2);assert.ok(result.notes.some(n=>n.includes('se conservan separados')));
+}
+const separated=importSections([{type:'wallet',d:{buttons:'apple'}},{type:'text',d:{text:'Another part of the email'}},{type:'wallet',d:{buttons:'apple'}}]).state;
+assert.equal(separated.sections.length,3,'Do not move badges across intervening content');
+console.log('OK: tres regresiones corregidas en las 19 secciones; enlaces, QR configurados, textos y pases distintos conservados.');
+
+const arrayWallet=importSections([{type:'wallet',d:{text:['Human text','Apple Wallet','{[C-QRCODE_LINK]}']}}]).state;assert.equal(arrayWallet.sections[0].d.text,'Human text');assert.equal(arrayWallet.sections[0].d.qr,'personal');

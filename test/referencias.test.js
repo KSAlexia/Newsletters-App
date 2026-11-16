@@ -32,7 +32,7 @@ assert.ok(head && head.includes('MADRID · MARCH') && head.includes('SCHEDULE &a
 assert.ok(head.includes('36px;line-height:44px') && head.includes('letter-spacing:-0.5px') && head.includes('padding-top:8px;'), 'H1 36/44, -0.5 px, pegado al rótulo');
 const sec = blocks.find(b => b.startsWith('TITULO -->') && b.includes('Tentative Schedule'));
 assert.ok(!/text-align:center/.test(sec) && !/height="3"/.test(sec), 'Título de sección a la izquierda y sin barra');
-assert.match(sec, /padding:30px 40px 0 40px/, 'Sin hueco bajo el título de sección');
+assert.match(sec, /padding:0 40px 0 40px/, 'Sin hueco bajo el título de sección (el de encima son los 28 px entre bloques)');
 const box = blocks.find(b => b.startsWith('CAJA') && b.includes('PLAN YOUR'));
 assert.match(box, /padding:0 40px/, 'La caja sigue al título sin hueco');
 assert.ok(box.indexOf('PLAN YOUR') > box.indexOf('border-left:4px'), 'Etiqueta dentro de la caja');

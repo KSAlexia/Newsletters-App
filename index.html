@@ -10,10 +10,10 @@
 <header class="top">
   <div class="brand"><span class="dot"></span><strong>Newsletters</strong><span class="muted">Kaptiva · v0.3</span><button id="back" class="ed">← Newsletters</button><button id="switch" class="ed" title="Ir a otra newsletter (Ctrl/⌘ + K)">Ir a otra newsletter…</button><button id="history" class="ed" title="Versiones guardadas de esta newsletter. Ctrl/⌘ + Z deshace y Ctrl/⌘ + Shift + Z rehace">Historial</button></div>
   <div class="actions ed">
+    <button id="import" title="Monta la newsletter a partir de la antigua (HTML) o de un guion de texto con ayuda de ChatGPT">Importar desde ChatGPT…</button>
     <details id="more-actions" class="more-menu">
       <summary>Más acciones</summary>
       <div class="more-menu-list">
-        <button id="import">Importar desde ChatGPT…</button>
         <select id="recipe" title="Sustituir el contenido por una receta"></select>
         <button id="save" class="ghost">Exportar proyecto (.json)</button>
         <button id="dl-html">Descargar .html (vista previa)</button>
@@ -42,8 +42,8 @@
     <span class="spacer"></span>
     <button id="brand-kits-open" class="btn ghost2">Brand kits</button>
     <button id="new-folder" class="btn ghost2" hidden>＋ Nueva carpeta</button>
+    <button id="from-script" type="button" class="btn" title="Crea la newsletter a partir de un guion de texto con ayuda de ChatGPT">＋ Desde un guion con ChatGPT</button>
     <button id="new" type="button" class="btn">＋ Nueva newsletter</button>
-    <button id="from-script" type="button" class="btn ghost2">＋ Desde un guion</button>
     <button id="open" class="btn ghost2">Abrir archivo de proyecto</button>
   </div>
   <p class="muted lobby-note">Se guardan en este navegador. Arrastra una newsletter sobre una carpeta (aquí o en el menú) para moverla. Para pasársela a otra persona, usa «Exportar proyecto» dentro de ella.</p>
@@ -85,32 +85,14 @@
 <main id="editor-layout">
   <div id="editor-resize" role="separator" tabindex="0" aria-label="Ancho del panel de edición" aria-orientation="vertical" aria-controls="editor-panel" title="Arrastra para ajustar el panel. Flechas para cambiar el ancho; doble clic para restablecer."></div>
   <section id="editor-panel" class="editor" aria-label="Panel de edición">
-    <details id="settings-box" class="card settings-box" open>
-    <summary><span class="settings-title">Datos de la newsletter</span><span id="settings-summary" class="settings-summary"></span></summary>
-    <div class="settings">
-      <label>Torneo o sección<select id="tournament"></select></label>
-      <label>Brand kit<select id="brand-kit"></select></label>
-      <details id="kit-guidelines" class="kit-guidelines"><summary>Instrucciones del brand kit</summary><p id="kit-design-status"></p><pre id="kit-guidelines-text"></pre></details>
-      <small>El kit automático comparte los ajustes de su marca. Un kit independiente se guarda como copia en esta newsletter.</small>
-      <button id="brand-kits-editor" type="button" class="btn ghost2">Gestionar brand kits</button>
-      <label><span id="contact-caption">Contacto de esta newsletter (opcional)</span><input id="contact-email" type="text" placeholder="Email o campo de Cvent"><small>Se usa en la caja de contacto; no cambia el contacto de otros eventos.</small></label>
-      <label>Nombre de la newsletter<input id="name" type="text" placeholder="p. ej. Registration Confirmation"></label>
-      <label>Nombre de archivo<input id="desc" type="text" placeholder="p. ej. registration_confirmation"><small id="filename"></small></label>
-      <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner del kit bajo el header)</label>
-      <label>Franja identificadora · etiqueta izquierda *<input id="franja" type="text" placeholder="p. ej. Registration Confirmation"></label>
-      <label>Franja · etiqueta derecha (opcional)<input id="franja-right" type="text" placeholder="Por defecto, el torneo o la marca"></label>
-      <p class="fixed">Automático: header y footer del kit elegido, franja identificadora y footer legal con la baja.</p>
-      <details class="more">
-        <summary>Más opciones</summary>
-        <label class="check"><input id="on-header" type="checkbox"> Mostrar el header del kit</label>
-        <label class="check"><input id="on-franja" type="checkbox"> Mostrar la franja identificadora</label>
-        <label class="check"><input id="on-footer" type="checkbox"> Mostrar el footer de imagen</label>
-        <small>Solo para casos puntuales: se aplica a este proyecto y la revisión lo avisa. El footer legal con la baja no se puede quitar.</small>
-      </details>
-    </div>
-    </details>
+    <section class="card newsletter-identity" aria-label="Nombre y ubicación de la newsletter">
+      <label for="name">Nombre de la newsletter</label>
+      <input id="name" type="text" placeholder="Newsletter sin nombre" autocomplete="off">
+      <div class="identity-location"><p id="settings-summary"></p><button id="newsletter-settings-open" type="button" class="btn ghost2" aria-haspopup="dialog">⚙ Ajustes</button></div>
+    </section>
+    <h2 class="editor-content-title">Contenido de la newsletter</h2>
     <details id="image-panel" class="card image-panel">
-      <summary>Imágenes y banners del brand kit</summary>
+      <summary>Biblioteca de imágenes y banners</summary>
       <p class="image-panel-note">Arrastra una imagen, un banner o el placeholder hasta un bloque (abierto o plegado). Arrastra la miniatura de un bloque a otro para intercambiar sus imágenes.</p>
       <h3 class="image-panel-group">Imágenes</h3>
       <div id="image-panel-list" class="image-panel-list"></div>
@@ -178,6 +160,43 @@
   <div class="dlg-actions"><button id="notice-review" type="button" class="btn ghost2">Ver la revisión</button><button id="notice-ok" type="button" class="btn">Entendido</button></div>
 </dialog>
 
+<dialog id="newsletter-settings-dialog" aria-labelledby="newsletter-settings-title">
+  <div class="identity-dialog-heading"><h2 id="newsletter-settings-title">Ajustes de la newsletter</h2><button id="newsletter-settings-close" type="button" class="btn ghost2">Cerrar</button></div>
+    <div class="settings">
+      <h3>Ubicación</h3>
+      <label>Club, sub-brand o torneo<select id="tournament"></select></label>
+      <label><span id="contact-caption">Contacto de esta newsletter (opcional)</span><input id="contact-email" type="text" placeholder="Email o campo de Cvent"><small>Se usa en la caja de contacto; no cambia el contacto de otros eventos.</small></label>
+      <label>Nombre de archivo<input id="desc" type="text" placeholder="p. ej. registration_confirmation"><small id="filename"></small></label>
+      <label class="check"><input id="mp" type="checkbox"> Es una newsletter de Media Packages (añade el banner del kit bajo el header)</label>
+      <label>Franja identificadora · etiqueta izquierda *<input id="franja" type="text" placeholder="Por defecto, el nombre de la newsletter"></label>
+      <button id="franja-name" type="button" class="btn ghost2">Usar el nombre de la newsletter</button>
+      <label>Franja · etiqueta derecha (opcional)<input id="franja-right" type="text" placeholder="Por defecto, el torneo o la marca"></label>
+      <p class="fixed">Automático: header y footer del kit elegido, franja identificadora y footer legal con la baja.</p>
+      <details class="more">
+        <summary>Más opciones</summary>
+        <label class="check"><input id="on-header" type="checkbox"> Mostrar el header del kit</label>
+        <label class="check"><input id="on-franja" type="checkbox"> Mostrar la franja identificadora</label>
+        <label class="check"><input id="on-footer" type="checkbox"> Mostrar el footer de imagen</label>
+        <small>Solo para casos puntuales: se aplica a este proyecto y la revisión lo avisa. El footer legal con la baja no se puede quitar.</small>
+      </details>
+      <h3>Diseño y brand kit</h3>
+      <label>Brand kit<select id="brand-kit"></select></label>
+      <details id="kit-guidelines" class="kit-guidelines"><summary>Instrucciones del brand kit</summary><p id="kit-design-status"></p><pre id="kit-guidelines-text"></pre></details>
+      <small>El kit automático comparte los ajustes de su marca. Un kit independiente se guarda como copia en esta newsletter.</small>
+      <button id="brand-kits-editor" type="button" class="btn ghost2">Gestionar brand kits</button>
+    </div>
+</dialog>
+<dialog id="new-newsletter-dialog" aria-labelledby="new-newsletter-title">
+  <div class="identity-dialog-heading"><h2 id="new-newsletter-title">Nueva newsletter</h2><button id="new-newsletter-close" type="button" class="btn ghost2" aria-label="Cerrar sin completar los datos">✕</button></div>
+  <p class="muted">Ponle un nombre y elige dónde guardarla. Puedes completar estos datos más adelante.</p>
+  <form id="new-newsletter-form" class="identity-form">
+    <label>Nombre de la newsletter<input id="new-newsletter-name" type="text" placeholder="p. ej. Recordatorio de pago" autocomplete="off"></label>
+    <label>Club, sub-brand o torneo<select id="new-newsletter-tournament"></select></label>
+    <p class="muted">El diseño de la marca se aplica automáticamente.</p>
+    <div class="dlg-actions"><button id="new-newsletter-skip" type="button" class="btn ghost2">Ahora no</button><button type="submit" class="btn">Guardar y continuar</button></div>
+  </form>
+</dialog>
+
 <dialog id="dlg">
   <h2>Importar una newsletter</h2>
   <p class="muted">ChatGPT reparte el contenido en módulos y la app lo monta con el diseño correcto.</p>
@@ -195,7 +214,8 @@
   <h2 id="script-title">Nueva newsletter desde un guion</h2>
   <p class="muted">ChatGPT reparte el guion en módulos y la app lo monta con el diseño del torneo o club. Los textos se copian tal cual; las fotos sin custom link salen como placeholder.</p>
   <ol class="script-steps">
-    <li><label>Torneo o sección<select id="script-tournament"></select></label></li>
+    <li><label>Nombre de la newsletter (opcional)<input id="script-name" type="text" placeholder="p. ej. Información del viaje"></label></li>
+    <li><label>Club, sub-brand o torneo<select id="script-tournament"></select></label></li>
     <li><label>Escribe o pega el guion
       <textarea id="script-text" rows="7" spellcheck="false" placeholder="BANNER 1: Título: …&#10;BANNER 2: Texto: …&#10;BANNER 3: Foto: jugadores celebrando&#10;BANNER 4: Botón: Reserva ya – https://…"></textarea>
       <small>Si lo dejas vacío, pégalo tú en ChatGPT justo debajo de las instrucciones.</small></label></li>
